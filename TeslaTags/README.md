@@ -93,3 +93,11 @@ References:
 * TeslaTunes, for macOS.
 	See the `twiddleTags` function in https://github.com/tattwamasi/TeslaTunes/blob/bb56bca7c86750b1b9b5f88f13297d8cc7678dcb/TeslaTunes/CopyConvertDirs.mm
 
+Test files needed to confirm practicality of proposed fixes:
+============================================================
+
+* What happens if there's a mismatch between ID3v1 and ID3v2 values? which does Tesla MP prefer?
+* What forms of ID3v2 Unicode encoding are supported? (We know it is supported as it shows non-Latin artist names correctly, and they sell their cars in China too)
+* ID3v1 does not define text encoding, should try ASCII, UTF-8, UTF-16LE, UTF-16BE and see what happens. (Would UTF-16BE be different on ARM vs x86 MCUs?)
+* How does it handle leading invisible Unicode whitespace? Does it do a Trim()?
+
