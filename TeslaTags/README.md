@@ -87,3 +87,9 @@ Tesla media library Folder view: Working, though tracks are sorted by Title rath
 Proposed fix:
 * No action necessary, tracks will be displayed in Folder view correctly.
 
+References:
+===========
+
+* TeslaTunes, for macOS.
+	See the `twiddleTags` function in https://github.com/tattwamasi/TeslaTunes/blob/bb56bca7c86750b1b9b5f88f13297d8cc7678dcb/TeslaTunes/CopyConvertDirs.mm
+
