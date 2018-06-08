@@ -1,12 +1,51 @@
-﻿<Window x:Class="TeslaTags.Gui.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:TeslaTags.Gui"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+﻿<Window
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:local="clr-namespace:TeslaTags.Gui"
+	
+	mc:Ignorable="d"
+	x:Class="TeslaTags.Gui.MainWindow"
+	DataContext="{Binding Source={StaticResource Locator}, Path=MainWindow}"
+	
+	Title="TeslaTags"
+	Height="450"
+	Width="800"
+>
+	<Grid>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="*" />
+		</Grid.ColumnDefinitions>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+
+		<Grid Grid.Row="0">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
+
+			<Label Grid.Column="0" Margin="3" Content="Music root" />
+			<TextBox Grid.Column="1" Margin="3" Text="{Binding DirectoryPath}" VerticalAlignment="Center" />
+
+			<StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+				<Button Margin="3" Width="75" Content="Browse..." Name="browseButton" />
+				<Button Margin="3" Width="75" Content="Start" />
+			</StackPanel>
+
+		</Grid>
+
+		<DataGrid Grid.Row="1">
+			
+			
+		</DataGrid>
+		
+	</Grid>
+	
 </Window>
+ 

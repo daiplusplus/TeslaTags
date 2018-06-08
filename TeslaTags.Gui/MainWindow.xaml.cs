@@ -13,16 +13,36 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using Microsoft.WindowsAPICodePack.Dialogs;
+
 namespace TeslaTags.Gui
 {
-	/// <summary>
-	/// Interaction logic for MainWindow.xaml
-	/// </summary>
 	public partial class MainWindow : Window
 	{
 		public MainWindow()
 		{
-			InitializeComponent();
+			this.InitializeComponent();
+
+			this.browseButton.Click += this.BrowseButton_Click;
 		}
+
+		private void BrowseButton_Click(Object sender, RoutedEventArgs e)
+		{
+			using( CommonOpenFileDialog fbd = new CommonOpenFileDialog() )
+			{
+				fbd.IsFolderPicker = true;
+				fbd.Title = "Browse for root of music directory";
+
+				CommonFileDialogResult result = fbd.ShowDialog( this );
+				if( result == CommonFileDialogResult.Ok )
+				{
+					this.ViewModel.DirectoryPath = fbd.FileName;
+				}
+			}
+		}
+
+		private MainViewModel ViewModel => (MainViewModel)this.DataContext;
+
+
 	}
 }

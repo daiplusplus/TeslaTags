@@ -1,8 +1,7 @@
 /*
   In App.xaml:
   <Application.Resources>
-      <vm:ViewModelLocator xmlns:vm="clr-namespace:TeslaTags.Gui"
-                           x:Key="Locator" />
+      <vm:ViewModelLocator xmlns:vm="clr-namespace:TeslaTags.Gui" x:Key="Locator" />
   </Application.Resources>
   
   In the View:
@@ -14,7 +13,8 @@
 
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
-using Microsoft.Practices.ServiceLocation;
+//using Microsoft.Practices.ServiceLocation;
+using CommonServiceLocator;
 
 namespace TeslaTags.Gui.ViewModel
 {
@@ -45,7 +45,7 @@ namespace TeslaTags.Gui.ViewModel
             SimpleIoc.Default.Register<MainViewModel>();
         }
 
-        public MainViewModel Main
+        public MainViewModel MainWindow
         {
             get
             {
