@@ -164,21 +164,33 @@ namespace TeslaTags
 			}
 		}
 
-		public static void RetagForArtistAlbum(List<LoadedFile> files)
+		public static void RetagForArtistAlbum(List<LoadedFile> files, List<String> errors)
 		{
 			// NOOP. Handled correctly.
+			// But ensure album-art is present:
+			foreach( LoadedFile file in files )
+			{
+				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.Album ) || String.IsNullOrWhiteSpace( file.Id3v2Tag.FirstPerformer ) ) errors.Add( file.FileInfo.FullName + "\t" + "Album or Artist ID3V2 tag not set." );
+
+				Int32 pictureCount = file.Id3v2Tag.Pictures?.Length ?? 0;
+				if( pictureCount == 0 ) errors.Add( file.FileInfo.FullName + "\t" + "Contains no ID3 images (i.e. album art)." );
+			}
 		}
 
-		public static void RetagForArtistAlbumWithGuestArtists(List<LoadedFile> files)
+		public static Int32 RetagForArtistAlbumWithGuestArtists(List<LoadedFile> files, List<String> errors)
 		{
 			// 1. Copy Artist to Title.
 			// 2. Use AlbumArtist as Artist (note that all tracks will have the same AlbumArtist value, so copy it from the first track).
 			
 			String albumArtist = files.First().Id3v2Tag.AlbumArtists.Single();
 
+			Int32 modified = 0;
+
 			foreach( LoadedFile file in files )
 			{
-				String artist      = file.Id3v2Tag.Performers.Single();
+				if( file.Id3v2Tag.Performers.Length > 1 ) errors.Add( file.FileInfo.FullName + "\t" + "Contains multiple Performers: \"" + file.Id3v2Tag.JoinedPerformers + "\"." );
+
+				String artist      = file.Id3v2Tag.Performers.First();
 				String title       = file.Id3v2Tag.Title;
 
 				// 1:
@@ -187,29 +199,44 @@ namespace TeslaTags
 				file.Id3v2Tag.Performers = new String[] { albumArtist };
 
 				file.IsModified = true;
+				modified++;
+
+				Int32 pictureCount = file.Id3v2Tag.Pictures?.Length ?? 0;
+				if( pictureCount == 0 ) errors.Add( file.FileInfo.FullName + "\t" + "Contains no ID3 images (i.e. album art)." );
 			}
+
+			return modified;
 		}
 
-		public static void RetagForCompilationAlbum(List<LoadedFile> files)
+		public static Int32 RetagForCompilationAlbum(List<LoadedFile> files, List<String> errors)
 		{
 			// 1. Copy Artist as Title prefix.
 			// 2. Set Artist to "Various Artists"
 
+			Int32 modified = 0;
 			foreach( LoadedFile file in files )
 			{
 				String artist      = file.Id3v2Tag.Performers.First();
 				String title       = file.Id3v2Tag.Title;
 
-				// 1:
-				file.Id3v2Tag.Title = artist + " - " + title;
-				// 2:
-				file.Id3v2Tag.Performers = new String[] { "Various Artists" };
+				if( artist != "Various Artists" )
+				{
+					// 1:
+					file.Id3v2Tag.Title = artist + " - " + title;
+					// 2:
+					file.Id3v2Tag.Performers = new String[] { "Various Artists" };
 
-				file.IsModified = true;
+					file.IsModified = true;
+					modified++;
+
+					Int32 pictureCount = file.Id3v2Tag.Pictures?.Length ?? 0;
+					if( pictureCount == 0 ) errors.Add( file.FileInfo.FullName + "\t" + "Contains no ID3 images (i.e. album art)." );
+				}
 			}
+			return modified;
 		}
 
-		public static void RetagForAssortedFiles(List<LoadedFile> files)
+		public static Int32 RetagForAssortedFiles(List<LoadedFile> files)
 		{
 			// Artist and Title tags are correct as-is.
 			// Clear the Album and TrackNumber tags.
@@ -217,20 +244,46 @@ namespace TeslaTags
 			// TODO: Add "Genre" as the name of the folder or playlist?
 			// Will they show-up at all as they lack albums?
 
+			Int32 modified = 0;
 			foreach( LoadedFile file in files )
 			{
-				// 1:
-				file.Id3v2Tag.Album = null;
-				//file.Id3v2Tag.Track = 0; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
+				if( !String.IsNullOrWhiteSpace( file.Id3v2Tag.Album ) )
+				{
+					// 1:
+					file.Id3v2Tag.Album = null;
+					//file.Id3v2Tag.Track = 0; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
 
-				file.IsModified = true;
+					file.IsModified = true;
+
+					modified++;
+				}
 			}
+			return modified;
+		}
+
+		public static Int32 RetagForArtistAssortedFiles(List<LoadedFile> files, List<String> errors)
+		{
+			// We want it displayed in the main Artists list, which means it needs an album set. Use "No album" for those:
+
+			Int32 modified = 0;
+			foreach( LoadedFile file in files )
+			{
+				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.FirstPerformer ) ) errors.Add( file.FileInfo.FullName + "\t" + "Album ID3V2 tag not set." );
+
+				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.Album ) )
+				{
+					// 1:
+					file.Id3v2Tag.Album = "No Album";
+					//file.Id3v2Tag.Track = 0; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
+
+					file.IsModified = true;
+
+					modified++;
+				}
+			}
+			return modified;
 		}
 	}
-
-	
-
-	
 
 	public enum FolderType
 	{
@@ -238,6 +291,7 @@ namespace TeslaTags
 		Container,
 		ArtistAlbum,
 		ArtistAlbumWithGuestArtists,
+		ArtistAssorted,
 		CompilationAlbum,
 		AssortedFiles
 	}

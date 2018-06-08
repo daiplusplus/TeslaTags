@@ -101,3 +101,20 @@ Test files needed to confirm practicality of proposed fixes:
 * ID3v1 does not define text encoding, should try ASCII, UTF-8, UTF-16LE, UTF-16BE and see what happens. (Would UTF-16BE be different on ARM vs x86 MCUs?)
 * How does it handle leading invisible Unicode whitespace? Does it do a Trim()?
 
+Future work:
+============
+
+
+* Dan Wentz (Freespace 2 soundtrack). Tags are messed-up.
+* Where's my Tubeway Army and other Gary Numan songs?
+* Non-"Various artists" songs that are missing an album are not displayed
+   * specifically, when they're not located under my "_Downloads" directory.
+   * e.g. Art of Noise - Paranoimia feat. Max Headroom
+   * Solution: Give them a bogus Album value, e.g. "No album"
+
+
+Ideas:
+* Ensure ID3v2 is present, warn otherwise.
+* Warn if album-year is missing?
+* Experiment to see if the (Artist/Album/etc)Sort tags (as seen in iTunes) work
+* Make processing idempotent, so running it again on the same USB stick won't make any redundant or destructive changes.

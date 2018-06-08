@@ -8,32 +8,36 @@ using TagLib.Mpeg;
 
 namespace TeslaTags
 {
-	public static class Folder
+	static class Folder
 	{
-		public static FolderType Process(String path)
+		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String path, List<String> errors)
 		{
 			List<LoadedFile> files = LoadFiles( path );
 			try
 			{
 				FolderType folderType = DetermineFolderType( files );
+				Int32 modifiedCount = 0;
 				switch( folderType )
 				{
 					case FolderType.ArtistAlbum:
-						Retagger.RetagForArtistAlbum( files );
+						Retagger.RetagForArtistAlbum( files, errors );
 						break;
 					case FolderType.ArtistAlbumWithGuestArtists:
-						Retagger.RetagForArtistAlbumWithGuestArtists( files );
+						modifiedCount = Retagger.RetagForArtistAlbumWithGuestArtists( files, errors );
+						break;
+					case FolderType.ArtistAssorted:
+						modifiedCount = Retagger.RetagForArtistAssortedFiles( files, errors );
 						break;
 					case FolderType.AssortedFiles:
-						Retagger.RetagForAssortedFiles( files );
+						modifiedCount = Retagger.RetagForAssortedFiles( files );
 						break;
 					case FolderType.CompilationAlbum:
-						Retagger.RetagForCompilationAlbum( files );
+						modifiedCount = Retagger.RetagForCompilationAlbum( files, errors );
 						break;
 					case FolderType.Container:
 						break;
 				}
-				return folderType;
+				return (folderType, modifiedCount, files.Count);
 			}
 			finally
 			{
@@ -65,7 +69,7 @@ namespace TeslaTags
 					file = TagLib.File.Create( fi.FullName );
 					if( file is AudioFile audioFile )
 					{
-						Tag id3v2 = file.GetTag(TagTypes.Id3v2);
+						TagLib.Id3v2.Tag id3v2 = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2);
 						files.Add( new LoadedFile( fi, audioFile, id3v2 ) );
 					}
 				}
@@ -88,19 +92,19 @@ namespace TeslaTags
 		{
 			if( files.Count == 0 ) return FolderType.Container;
 
-			//List<TagSummary> filesTags = files.Select( f => TagSummary.Create( f ) ).ToList();
+			List<TagSummary> filesTags = files.Select( f => TagSummary.Create( f.Id3v2Tag ) ).ToList();
 
-			Boolean allVariousArtists = files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
+			Boolean allVariousArtists  = filesTags.All( ft => ft.AlbumArtist.EqualsCI( "Various Artists" ) ); //files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
 
-			String firstAlbumArtist = files.First().Id3v2Tag.AlbumArtists.FirstOrDefault();
-			Boolean allSameAlbumArtist = files.All( f => String.Equals( firstAlbumArtist, f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
+			String  firstAlbumArtist   = filesTags.First().AlbumArtist; //files.First().Id3v2Tag.AlbumArtists.FirstOrDefault();
+			Boolean allSameAlbumArtist = filesTags.All( ft => ft.AlbumArtist.EqualsCI( firstAlbumArtist ) ); //files.All( f => String.Equals( firstAlbumArtist, f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
 
-			String firstArtist = files.First().Id3v2Tag.Performers.FirstOrDefault();
-			Boolean allSameArtist      = files.All( f => String.Equals( firstArtist, f.Id3v2Tag.Performers.SingleOrDefault(), StringComparison.Ordinal ) );
+			String  firstArtist        = filesTags.First().Artist; //files.First().Id3v2Tag.Performers.FirstOrDefault();
+			Boolean allSameArtist      = filesTags.All( ft => ft.Artist.EqualsCI( firstArtist ) ); //files.All( f => String.Equals( firstArtist, f.Id3v2Tag.Performers.SingleOrDefault(), StringComparison.Ordinal ) );
 
-			String firstAlbum = files.First().Id3v2Tag.Album;
-			Boolean sameAlbum = files.All( f => String.Equals( firstAlbum, f.Id3v2Tag.Album, StringComparison.Ordinal ) );
-			Boolean noAlbum   = files.All( f => String.IsNullOrWhiteSpace( f.Id3v2Tag.Album ) );
+			String  firstAlbum         = filesTags.First().Album; //files.First().Id3v2Tag.Album;
+			Boolean sameAlbum          = filesTags.All( ft => ft.Album.EqualsCI( firstAlbum ) ); //files.All( f => String.Equals( firstAlbum, f.Id3v2Tag.Album, StringComparison.Ordinal ) );
+			Boolean noAlbum            = filesTags.All( ft => String.IsNullOrWhiteSpace( ft.Album ) ); //files.All( f => String.IsNullOrWhiteSpace( f.Id3v2Tag.Album ) );
 
 			if( allVariousArtists )
 			{
@@ -112,9 +116,11 @@ namespace TeslaTags
 			}
 			else
 			{
-				if( allSameArtist ) return FolderType.ArtistAlbum;
+				if( allSameArtist && sameAlbum ) return FolderType.ArtistAlbum;
 
-				if( allSameAlbumArtist ) return FolderType.ArtistAlbumWithGuestArtists;
+				if( allSameAlbumArtist && sameAlbum ) return FolderType.ArtistAlbumWithGuestArtists;
+
+				if( noAlbum ) return FolderType.ArtistAssorted;
 
 				throw new Exception( "Unexpected folder type. All tracks have different Artist and AlbumArtist values." );
 			}
@@ -136,20 +142,29 @@ namespace TeslaTags
 
 			public TagSummary(String artist, String albumArtist, String album, UInt32 trackNumber, UInt32 discNumber, UInt32 albumYear)
 			{
-				this.Artist = artist;
+				this.Artist      = artist;
 				this.AlbumArtist = albumArtist;
-				this.Album = album;
+				this.Album       = album;
 				this.TrackNumber = trackNumber;
-				this.DiscNumber = discNumber;
-				this.AlbumYear = albumYear;
+				this.DiscNumber  = discNumber;
+				this.AlbumYear   = albumYear;
 			}
 
-			public String Artist      { get; }
-			public String AlbumArtist { get; }
-			public String Album       { get; }
-			public UInt32 TrackNumber { get; }
-			public UInt32 DiscNumber  { get; }
-			public UInt32 AlbumYear   { get; }
+			public String  Artist      { get; }
+			public String  AlbumArtist { get; }
+			public String  Album       { get; }
+			public UInt32  TrackNumber { get; }
+			public UInt32  DiscNumber  { get; }
+			public UInt32  AlbumYear   { get; }
+			public Boolean HasAlbumArt { get; }
+		}
+	}
+
+	public static class Extensions
+	{
+		public static Boolean EqualsCI( this String x, String y )
+		{
+			return String.Equals( x, y, StringComparison.OrdinalIgnoreCase );
 		}
 	}
 }

@@ -8,7 +8,7 @@ namespace TeslaTags
 {
 	internal sealed class LoadedFile : IDisposable
 	{
-		public LoadedFile( FileInfo fileInfo, AudioFile audioFile, Tag id3v2Tag )
+		public LoadedFile( FileInfo fileInfo, AudioFile audioFile, TagLib.Id3v2.Tag id3v2Tag )
 		{
 			this.FileInfo  = fileInfo  ?? throw new ArgumentNullException( nameof( fileInfo ) );
 			this.AudioFile = audioFile ?? throw new ArgumentNullException( nameof( audioFile ) );
@@ -22,7 +22,7 @@ namespace TeslaTags
 
 		public FileInfo  FileInfo  { get; }
 		public AudioFile AudioFile { get; }
-		public Tag       Id3v2Tag  { get; }
+		public TagLib.Id3v2.Tag Id3v2Tag  { get; }
 
 		public Boolean IsModified { get; set; }
 	}
