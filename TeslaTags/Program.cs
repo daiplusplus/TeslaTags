@@ -1,15 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-
-using TagLib;
-using TagLib.Id3v1;
-using TagLib.Id3v2;
-using TagLib.Ape;
-using TagLib.Mpeg;
-using System.IO;
 
 namespace TeslaTags
 {
@@ -17,45 +10,34 @@ namespace TeslaTags
 	{
 		public static void Main(String[] args)
 		{
-			// TODO: Strip APE tags?
-			// TODO: Warn about inconsistent values
-			// TODO: Warn about similar Artists names, e.g. "P.O.D" and "P.O.D." or "The Hives" and "Hives".
-
-			String directory = @"Zero 7 - 2002-02-18 - Another Late Night";
-			//String directory = @"UNKLESounds - 2015 - Global Underground 41 Naples";
-
-			directory = Path.Combine( @"C:\Users\David\Desktop\TeslaTagsTest\", directory );
-
-			FileInfo[] fileNames = new DirectoryInfo( directory ).GetFiles();
-			Array.Sort( fileNames, (x,y) => x.Name.CompareTo( y.Name ) );
-
-			for( Int32 i = 0; i < fileNames.Length; i++ )
+			HashSet<String> done = new HashSet<String>( StringComparer.OrdinalIgnoreCase );
+			foreach( String line in File.ReadAllLines( "Log.txt" ) )
 			{
-				String fileName = fileNames[i].FullName;
-				TagLib.File file;
-				try
-				{
-					file = TagLib.File.Create( fileName );
-					if( file == null ) continue;
-				}
-				catch( Exception ex )
-				{
-					Console.WriteLine( ex.Message );
-					continue;
-				}
-
-				using( file )
-				{
-					if( file is TagLib.Mpeg.AudioFile audioFile )
-					{
-						Retagger.PrependInvisibleCharactersUsingBase1( audioFile, i, fileNames.Length );
-
-						audioFile.Save();
-					}
-
-				}
+				done.Add( line );
 			}
 
+			List<String> directories = Directory
+				.EnumerateDirectories( @"D:\Music", "*", SearchOption.AllDirectories )
+				.ToList();
+
+			directories.Sort();
+
+			foreach( String directoryPath in directories )
+			{
+				Console.Write( directoryPath + "..." );
+
+				if( done.Contains( directoryPath ) )
+				{
+					Console.WriteLine( " Skipped." );
+				}
+				else
+				{
+					FolderType folderType = Folder.Process( directoryPath );
+					Console.WriteLine( " Done: {0}", folderType );
+					done.Add( directoryPath );
+					File.AppendAllText( "Log.txt", directoryPath + "\r\n", Encoding.UTF8 );
+				}
+			}
 		}
 
 

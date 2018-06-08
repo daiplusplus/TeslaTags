@@ -15,7 +15,7 @@ using TagLib.Mpeg;
 
 namespace TeslaTags
 {
-	public static class Retagger
+	internal static class Retagger
 	{
 		private const Char MongolianVowelSeparator = '\u180E';
 		private const Char ZeroWidthSpace          = '\u200B';
@@ -164,137 +164,73 @@ namespace TeslaTags
 			}
 		}
 
-		public static void RetagForArtistAlbum()
+		public static void RetagForArtistAlbum(List<LoadedFile> files)
 		{
 			// NOOP. Handled correctly.
 		}
 
-		public static void RetagForArtistAlbumWithGuestArtists()
+		public static void RetagForArtistAlbumWithGuestArtists(List<LoadedFile> files)
 		{
+			// 1. Copy Artist to Title.
+			// 2. Use AlbumArtist as Artist (note that all tracks will have the same AlbumArtist value, so copy it from the first track).
+			
+			String albumArtist = files.First().Id3v2Tag.AlbumArtists.Single();
 
+			foreach( LoadedFile file in files )
+			{
+				String artist      = file.Id3v2Tag.Performers.Single();
+				String title       = file.Id3v2Tag.Title;
+
+				// 1:
+				file.Id3v2Tag.Title = artist + " - " + title;
+				// 2:
+				file.Id3v2Tag.Performers = new String[] { albumArtist };
+
+				file.IsModified = true;
+			}
 		}
 
-		public static void RetagForCompilationAlbum()
+		public static void RetagForCompilationAlbum(List<LoadedFile> files)
 		{
-			// Copy Artist as Title prefix.
-			// Set Artist to "Various Artists"
+			// 1. Copy Artist as Title prefix.
+			// 2. Set Artist to "Various Artists"
 
+			foreach( LoadedFile file in files )
+			{
+				String artist      = file.Id3v2Tag.Performers.First();
+				String title       = file.Id3v2Tag.Title;
 
+				// 1:
+				file.Id3v2Tag.Title = artist + " - " + title;
+				// 2:
+				file.Id3v2Tag.Performers = new String[] { "Various Artists" };
+
+				file.IsModified = true;
+			}
 		}
 
-		public static void RetagForAssortedFiles()
+		public static void RetagForAssortedFiles(List<LoadedFile> files)
 		{
 			// Artist and Title tags are correct as-is.
 			// Clear the Album and TrackNumber tags.
 
 			// TODO: Add "Genre" as the name of the folder or playlist?
 			// Will they show-up at all as they lack albums?
-		}
-	}
 
-	public sealed class Folder : IDisposable
-	{
-		public DirectoryInfo Directory { get; }
-		public FolderType Type { get; }
-
-		public List<TagLib.Mpeg.AudioFile> Files { get; }
-
-		private Folder(DirectoryInfo directory, FolderType type, List<TagLib.Mpeg.AudioFile> files)
-		{
-			this.Directory = directory;
-			this.Type      = type;
-			this.Files     = files;
-		}
-
-		public void Dispose()
-		{
-			foreach( var file in this.Files )
+			foreach( LoadedFile file in files )
 			{
-				file.Save();
-				file.Dispose();
-			}
-		}
+				// 1:
+				file.Id3v2Tag.Album = null;
+				//file.Id3v2Tag.Track = 0; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
 
-		public static Folder Load(String path)
-		{
-			DirectoryInfo di = new DirectoryInfo( path );
-			FileInfo[] mp3s = di.GetFiles("*.mp3");
-
-			Dictionary<String,Exception> errorsByFile = new Dictionary<String,Exception>();
-
-			List<LoadedFile> files = new List<LoadedFile>();
-			foreach( FileInfo fi in mp3s )
-			{
-				TagLib.File file = null;
-				try
-				{
-					file = TagLib.File.Create( fi.FullName );
-					if( file is AudioFile audioFile )
-					{
-						TagLib.Tag id3v2 = file.GetTag(TagTypes.Id3v2);
-						files.Add( new LoadedFile( fi, audioFile, id3v2 ) );
-					}
-				}
-				catch(Exception ex)
-				{
-					errorsByFile.Add( fi.FullName, ex );
-					if( file != null ) file.Dispose();
-				}
-			}
-
-			///////////////////////
-		}
-
-		private static FolderType DetermineFolderType(List<LoadedFile> files)
-		{
-			if( files.Count == 0 ) return FolderType.Container;
-
-			Boolean allVariousArtists = files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
-
-			String firstAlbumArtist = files.First().Id3v2Tag.AlbumArtists.FirstOrDefault();
-			Boolean allSameAlbumArtist = files.All( f => String.Equals( firstAlbumArtist, f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
-
-			String firstArtist = files.First().Id3v2Tag.Performers.FirstOrDefault();
-			Boolean allSameArtist      = files.All( f => String.Equals( firstArtist, f.Id3v2Tag.Performers.SingleOrDefault(), StringComparison.Ordinal ) );
-
-			String firstAlbum = files.First().Id3v2Tag.Album;
-			Boolean sameAlbum = files.All( f => String.Equals( firstAlbum, f.Id3v2Tag.Album, StringComparison.Ordinal ) );
-			Boolean noAlbum   = files.All( f => String.IsNullOrWhiteSpace( f.Id3v2Tag.Album ) );
-
-			if( allVariousArtists )
-			{
-				if( noAlbum ) return FolderType.AssortedFiles;
-
-				if( sameAlbum ) return FolderType.CompilationAlbum;
-
-				throw new Exception( "Unexpected folder type. All tracks are AlbumArtist=Various Artists, but with different Album names." );
-			}
-			else
-			{
-				if( allSameArtist ) return FolderType.ArtistAlbum;
-
-				if( allSameAlbumArtist ) return FolderType.ArtistAlbumWithGuestArtists;
-
-				throw new Exception( "Unexpected folder type. All tracks have different Artist and AlbumArtist values." );
+				file.IsModified = true;
 			}
 		}
 	}
 
-	internal class LoadedFile
-	{
-		public LoadedFile( FileInfo fileInfo, AudioFile audioFile, TagLib.Tag id3v2Tag )
-		{
-			this.FileInfo = fileInfo ?? throw new ArgumentNullException( nameof( fileInfo ) );
-			this.AudioFile = audioFile ?? throw new ArgumentNullException( nameof( audioFile ) );
-			this.Id3v2Tag = id3v2Tag ?? throw new ArgumentNullException( nameof( id3v2Tag ) );
-		}
+	
 
-		public FileInfo              FileInfo { get; }
-		public TagLib.Mpeg.AudioFile AudioFile { get; }
-		public TagLib.Tag            Id3v2Tag { get; }
-
-		
-	}
+	
 
 	public enum FolderType
 	{
