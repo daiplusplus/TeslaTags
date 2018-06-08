@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27703.2018
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeslaTags", "TeslaTags\TeslaTags.csproj", "{831FE5D4-250F-4F55-9934-5072F2B7CBEE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeslaTags.Gui", "TeslaTags.Gui\TeslaTags.Gui.csproj", "{624055F2-0408-49EA-A6C3-F59EE7DBA1CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{831FE5D4-250F-4F55-9934-5072F2B7CBEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{831FE5D4-250F-4F55-9934-5072F2B7CBEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{831FE5D4-250F-4F55-9934-5072F2B7CBEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{624055F2-0408-49EA-A6C3-F59EE7DBA1CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{624055F2-0408-49EA-A6C3-F59EE7DBA1CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{624055F2-0408-49EA-A6C3-F59EE7DBA1CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{624055F2-0408-49EA-A6C3-F59EE7DBA1CF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
