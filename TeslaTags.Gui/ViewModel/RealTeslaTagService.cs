@@ -52,6 +52,8 @@ namespace TeslaTags.Gui
 						this.EventsListener?.DirectoryUpdate( directoryPath, result.FolderType, result.ModifiedFiles, result.TotalFiles, ++count / total, result.Messages );
 					}
 				}
+
+				if( !this.stopRequested ) tp.DeleteDirectoryLog();
 			}
 
 			this.IsBusy = false;

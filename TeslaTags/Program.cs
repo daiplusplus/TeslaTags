@@ -144,6 +144,11 @@ namespace TeslaTags
 			File.AppendAllText( this.generalLog, String.Format( CultureInfo.InvariantCulture, "Started at {0:yyyy-MM-dd HH:mm:ss} UTC\r\n", DateTime.UtcNow ) );
 		}
 
+		public void DeleteDirectoryLog()
+		{
+			if( File.Exists( this.directoryLog ) ) File.Delete( this.directoryLog );
+		}
+
 		public void Dispose()
 		{
 			File.AppendAllText( Path.Combine( this.root, GeneralLog ), String.Format( CultureInfo.InvariantCulture, "Ended at {0:yyyy-MM-dd HH:mm:ss} UTC\r\n", DateTime.UtcNow ) );
