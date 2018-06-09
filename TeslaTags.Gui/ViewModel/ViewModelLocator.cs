@@ -13,49 +13,44 @@
 
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
-//using Microsoft.Practices.ServiceLocation;
+
 using CommonServiceLocator;
+using System.Configuration;
 
 namespace TeslaTags.Gui.ViewModel
 {
-    /// <summary>
-    /// This class contains static references to all the view models in the
-    /// application and provides an entry point for the bindings.
-    /// </summary>
-    public class ViewModelLocator
-    {
-        /// <summary>
-        /// Initializes a new instance of the ViewModelLocator class.
-        /// </summary>
-        public ViewModelLocator()
-        {
-            ServiceLocator.SetLocatorProvider(() => SimpleIoc.Default);
 
-            ////if (ViewModelBase.IsInDesignModeStatic)
-            ////{
-            ////    // Create design time view services and models
-            ////    SimpleIoc.Default.Register<IDataService, DesignDataService>();
-            ////}
-            ////else
-            ////{
-            ////    // Create run time view services and models
-            ////    SimpleIoc.Default.Register<IDataService, DataService>();
-            ////}
+	public class ViewModelLocator
+	{
+		public ViewModelLocator()
+		{
+			ServiceLocator.SetLocatorProvider( () => SimpleIoc.Default );
 
-            SimpleIoc.Default.Register<MainViewModel>();
-        }
+			if( ViewModelBase.IsInDesignModeStatic || ConfigurationManager.AppSettings["designMode"] == "true" )
+			{
+				// Create design time view services and models
+				SimpleIoc.Default.Register<ITeslaTagsService, DesignTeslaTagService>();
+			}
+			else
+			{
+				// Create run time view services and models
+				SimpleIoc.Default.Register<ITeslaTagsService,RealTeslaTagService>();
+			}
 
-        public MainViewModel MainWindow
-        {
-            get
-            {
-                return ServiceLocator.Current.GetInstance<MainViewModel>();
-            }
-        }
-        
-        public static void Cleanup()
-        {
-            // TODO Clear the ViewModels
-        }
-    }
+			SimpleIoc.Default.Register<MainViewModel>();
+		}
+
+		public MainViewModel MainWindow
+		{
+			get
+			{
+				return ServiceLocator.Current.GetInstance<MainViewModel>();
+			}
+		}
+
+		public static void Cleanup()
+		{
+			// TODO Clear the ViewModels
+		}
+	}
 }

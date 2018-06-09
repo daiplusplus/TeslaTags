@@ -35,12 +35,13 @@
 
 			<StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
 				<Button Margin="3" Width="75" Content="Browse..." Name="browseButton" />
-				<Button Margin="3" Width="75" Content="Start" />
+				<Button Margin="3" Width="75" Content="Start" Command="{Binding StartCommand}" />
+				<Button Margin="3" Width="75" Content="Stop" Command="{Binding StopCommand}" />
 			</StackPanel>
 
 		</Grid>
 
-		<DataGrid Grid.Row="1">
+		<DataGrid Grid.Row="1" ItemsSource="{Binding DirectoriesProgress}">
 			
 			
 		</DataGrid>
