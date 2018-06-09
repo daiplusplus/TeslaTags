@@ -19,6 +19,11 @@ namespace TeslaTags.Gui
 
 			this.StartCommand = new RelayCommand( this.Start, canExecute: () => !this.teslaTagsService.IsBusy );
 			this.StopCommand  = new RelayCommand( this.Stop , canExecute: () =>  this.teslaTagsService.IsBusy );
+
+			if( App.IsTestMode )
+			{
+				this.DirectoryPath = @"F:\MyMusic\Music";
+			}
 		}
 
 		private String directoryPath;
@@ -36,8 +41,12 @@ namespace TeslaTags.Gui
 		public Boolean IsBusy
 		{
 			get { return this.isBusy; }
-			set { this.Set( nameof(this.IsBusy), ref this.isBusy, value ); }
+			set {
+				this.Set( nameof(this.IsBusy), ref this.isBusy, value );
+				this.RaisePropertyChanged( nameof(this.IsNotBusy) );
+			}
 		}
+		public Boolean IsNotBusy => !this.IsBusy;
 
 		public RelayCommand StartCommand { get; }
 
@@ -67,6 +76,7 @@ namespace TeslaTags.Gui
 
 		void ITeslaTagEvents.IsBusyChanged(Boolean isBusy)
 		{
+			this.IsBusy = isBusy;
 			this.StartCommand.RaiseCanExecuteChanged();
 			this.StopCommand.RaiseCanExecuteChanged();
 		}
@@ -77,7 +87,7 @@ namespace TeslaTags.Gui
 			this.DirectoriesProgress.Clear();
 			foreach( String directoryPath in directories )
 			{
-				DirectoryProgressViewModel dirVM = new DirectoryProgressViewModel( directoryPath );
+				DirectoryProgressViewModel dirVM = new DirectoryProgressViewModel( directoryPath, prefix: this.DirectoryPath );
 				this.viewModelDict.Add( directoryPath, dirVM );
 				this.DirectoriesProgress.Add( dirVM );
 			}
@@ -116,12 +126,14 @@ namespace TeslaTags.Gui
 
 	public class DirectoryProgressViewModel : ViewModelBase
 	{
-		public DirectoryProgressViewModel(String directoryPath)
+		public DirectoryProgressViewModel(String directoryPath, String prefix)
 		{
-			this.DirectoryPath = directoryPath;
+			this.FullDirectoryPath    = directoryPath;
+			this.DisplayDirectoryPath = directoryPath.StartsWith( prefix, StringComparison.OrdinalIgnoreCase ) ? directoryPath.Substring( prefix.Length ) : directoryPath;
 		}
 
-		public String DirectoryPath { get; }
+		public String FullDirectoryPath { get; }
+		public String DisplayDirectoryPath { get; }
 		
 		private Int32? filesModified;
 		public Int32? FilesModified

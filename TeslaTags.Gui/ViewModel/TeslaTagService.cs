@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Windows.Threading;
 
 namespace TeslaTags.Gui
@@ -28,21 +30,25 @@ namespace TeslaTags.Gui
 
 	public class DesignTeslaTagService : ITeslaTagsService
 	{
+		private String rootDirectory;
+
 		private readonly DispatcherTimer timer;
 
 		private static readonly List<String> _directories = new List<string>()
 		{
-			@"C:\Foobar",
-			@"C:\Foobar\Artist1",
-			@"C:\Foobar\Artist1\Album",
-			@"C:\Foobar\ArtistB\Singles",
-			@"C:\Foobar\Foo",
+			@"Foobar",
+			@"Foobar\Artist1",
+			@"Foobar\Artist1\Album",
+			@"Foobar\ArtistB\Singles",
+			@"Foobar\Foo",
 		};
+
+		private List<String> directories;
 
 		public DesignTeslaTagService()
 		{
 			this.timer = new DispatcherTimer();
-			this.timer.Interval = new TimeSpan( hours: 0, minutes: 0, seconds: 2 );
+			this.timer.Interval = new TimeSpan( hours: 0, minutes: 0, seconds: 1 );
 			this.timer.Tick += this.Timer_Tick;
 		}
 
@@ -62,24 +68,33 @@ namespace TeslaTags.Gui
 			else if( this.processState == 1 )
 			{
 				TimeSpan time = DateTime.UtcNow - this.stateStart;
-				if( time.TotalSeconds > 6 )
+				if( time.TotalSeconds > 2 )
 				{
 					this.processState = 2;
-					this.subscriber?.GotDirectories( _directories );
+					this.subscriber?.GotDirectories( this.directories );
 				}
 			}
 			else if( this.processState == 2 )
 			{
 				TimeSpan time = DateTime.UtcNow - this.stateStart;
-				if( this.directoryIdx < _directories.Count )
+				if( this.directoryIdx < this.directories.Count )
 				{
+					String directory = this.directories[this.directoryIdx];
+
 					Random rng = new Random();
 
 					FolderType randomType = (FolderType)rng.Next( 0, 6 );
 					Int32 totalCount = rng.Next( 0, 30 );
 					Int32 modifiedCount = rng.Next( 0, totalCount + 1 );
 
-					this.subscriber?.DirectoryUpdate( _directories[this.directoryIdx], randomType, modifiedCount, totalCount );
+					this.subscriber?.DirectoryUpdate( directory, randomType, modifiedCount, totalCount );
+
+					for( Int32 i = 0; i < totalCount; i++ )
+					{
+						String fileName = Path.Combine( directory, "File_" + i + ".mp3" );
+						if( rng.Next(0, 4) == 3 ) this.subscriber?.FileWarning( fileName, "Some warning." );
+						if( rng.Next(0, 8) == 3 ) this.subscriber?.FileError( fileName, "Some error." );
+					}
 
 					this.directoryIdx++;
 				}
@@ -114,6 +129,11 @@ namespace TeslaTags.Gui
 
 		public void Start(String directory)
 		{
+			this.rootDirectory = directory;
+			this.directories = _directories
+				.Select( p => Path.Combine( directory, p ) )
+				.ToList();
+
 			this.IsBusy = true;
 			this.timer.Start();
 		}

@@ -13,6 +13,17 @@
 	Height="450"
 	Width="800"
 >
+	<Window.Resources>
+		<SolidColorBrush x:Key="gl" Color="#FFCCCCCC" />
+		<Style TargetType="{x:Type TextBlock}" x:Key="numCol">
+			<Setter Property="HorizontalAlignment" Value="Right" />
+			<Setter Property="Margin" Value="5,0,10,0" />
+		</Style>
+		<Style TargetType="{x:Type TextBlock}" x:Key="txtCol">
+			<Setter Property="Margin" Value="5,0,10,0" />
+		</Style>
+	</Window.Resources>
+	
 	<Grid>
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="*" />
@@ -31,7 +42,7 @@
 			</Grid.ColumnDefinitions>
 
 			<Label Grid.Column="0" Margin="3" Content="Music root" />
-			<TextBox Grid.Column="1" Margin="3" Text="{Binding DirectoryPath}" VerticalAlignment="Center" />
+			<TextBox Grid.Column="1" VerticalAlignment="Center" Margin="3" IsEnabled="{Binding IsNotBusy}" Text="{Binding DirectoryPath}"  />
 
 			<StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
 				<Button Margin="3" Width="75" Content="Browse..." Name="browseButton" />
@@ -41,9 +52,21 @@
 
 		</Grid>
 
-		<DataGrid Grid.Row="1" ItemsSource="{Binding DirectoriesProgress}">
-			
-			
+		<DataGrid
+			Grid.Row="1"
+			ItemsSource="{Binding DirectoriesProgress}"
+			HorizontalGridLinesBrush="{StaticResource gl}"
+			VerticalGridLinesBrush="{StaticResource gl}"
+			AutoGenerateColumns="False"
+		>
+			<DataGrid.Columns>
+				<DataGridTextColumn Header="Directory"      Binding="{Binding DisplayDirectoryPath}"  ElementStyle="{StaticResource txtCol}" />
+				<DataGridTextColumn Header="Total files"    Binding="{Binding TotalFiles}"            ElementStyle="{StaticResource numCol}" />
+				<DataGridTextColumn Header="Files modified" Binding="{Binding FilesModified}"         ElementStyle="{StaticResource numCol}" />
+				<DataGridTextColumn Header="Folder type"    Binding="{Binding FolderType}"            ElementStyle="{StaticResource txtCol}" />
+				<DataGridTextColumn Header="Warnings"       Binding="{Binding Warnings.Count}"        ElementStyle="{StaticResource numCol}" />
+				<DataGridTextColumn Header="Errors"         Binding="{Binding Errors.Count}"          ElementStyle="{StaticResource numCol}" />
+			</DataGrid.Columns>
 		</DataGrid>
 		
 	</Grid>

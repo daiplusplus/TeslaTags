@@ -26,7 +26,7 @@ namespace TeslaTags.Gui.ViewModel
 		{
 			ServiceLocator.SetLocatorProvider( () => SimpleIoc.Default );
 
-			if( ViewModelBase.IsInDesignModeStatic || ConfigurationManager.AppSettings["designMode"] == "true" )
+			if( ViewModelBase.IsInDesignModeStatic || App.IsTestMode )
 			{
 				// Create design time view services and models
 				SimpleIoc.Default.Register<ITeslaTagsService, DesignTeslaTagService>();

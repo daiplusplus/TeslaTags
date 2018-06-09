@@ -13,5 +13,6 @@ namespace TeslaTags.Gui
 	/// </summary>
 	public partial class App : Application
 	{
+		public static Boolean IsTestMode { get; } = ConfigurationManager.AppSettings["designMode"] == "true";
 	}
 }
