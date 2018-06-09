@@ -10,8 +10,12 @@ namespace TeslaTags.Gui
 
 		public ITeslaTagEventsListener EventsListener { get; set; }
 
-		public void Start(String directory)
+		private Boolean isReadOnlyMode;
+
+		public void Start(String directory, Boolean readOnly)
 		{
+			this.isReadOnlyMode = readOnly;
+
 			ThreadPool.QueueUserWorkItem( new WaitCallback( this.StartThread ), directory );
 			this.IsBusy = true;
 		}
@@ -41,20 +45,8 @@ namespace TeslaTags.Gui
 				{
 					if( this.stopRequested ) break;
 
-					DirectoryResult result = tp.ProcessDirectory( directoryPath );
-					this.EventsListener?.DirectoryUpdate( directoryPath, result.FolderType, result.ModifiedFiles, result.TotalFiles, ++count / total );
-
-					foreach( String warning in result.Warnings )
-					{
-						String[] comps = warning.Split( '\t' );
-						this.EventsListener?.FileWarning( comps[0], comps[1] );
-					}
-
-					foreach( String error in result.Errors )
-					{
-						String[] comps = error.Split( '\t' );
-						this.EventsListener?.FileError( comps[0], comps[1] );
-					}
+					DirectoryResult result = tp.ProcessDirectory( directoryPath, this.isReadOnlyMode );
+					this.EventsListener?.DirectoryUpdate( directoryPath, result.FolderType, result.ModifiedFiles, result.TotalFiles, ++count / total, result.Messages );
 				}
 			}
 

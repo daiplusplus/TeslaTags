@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -54,5 +55,23 @@ namespace TeslaTags.Gui
 		private MainViewModel ViewModel => (MainViewModel)this.DataContext;
 
 
+	}
+
+	public class FullPathToRelativePathConverter : IValueConverter
+	{
+		public Object Convert(Object value, Type targetType, Object parameter, CultureInfo culture)
+		{
+			String fullPath = (String)value;
+			String prefix = (String)parameter;
+
+			if( fullPath.StartsWith( prefix, StringComparison.OrdinalIgnoreCase ) ) return fullPath.Substring( prefix.Length );
+
+			return fullPath;
+		}
+
+		public Object ConvertBack(Object value, Type targetType, Object parameter, CultureInfo culture)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

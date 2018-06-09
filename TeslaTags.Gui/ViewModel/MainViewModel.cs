@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Windows.Threading;
+
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 
@@ -20,11 +20,10 @@ namespace TeslaTags.Gui
 			this.StartCommand = new RelayCommand( this.Start, canExecute: () => !this.teslaTagsService.IsBusy );
 			this.StopCommand  = new RelayCommand( this.Stop , canExecute: () =>  this.teslaTagsService.IsBusy );
 
-			if( App.IsTestMode )
-			{
-				this.DirectoryPath = @"F:\MyMusic\Music";
-			}
+			this.OnlyValidate = true;
 		}
+
+		#region Two-way
 
 		private String directoryPath;
 		public String DirectoryPath
@@ -33,9 +32,35 @@ namespace TeslaTags.Gui
 			set { this.Set( nameof(this.DirectoryPath), ref this.directoryPath, value ); }
 		}
 
+		private Boolean onlyValidate;
+		public Boolean OnlyValidate
+		{
+			get { return this.onlyValidate; }
+			set { this.Set( nameof(this.OnlyValidate), ref this.onlyValidate, value ); }
+		}
+
 		private readonly Dictionary<String,DirectoryProgressViewModel> viewModelDict = new Dictionary<String,DirectoryProgressViewModel>( StringComparer.OrdinalIgnoreCase );
 
 		public ObservableCollection<DirectoryProgressViewModel> DirectoriesProgress { get; } = new ObservableCollection<DirectoryProgressViewModel>();
+
+		#endregion
+
+		#region One-way from ViewModel
+
+		public Boolean IsValid
+		{
+			get
+			{
+				try
+				{
+					return !String.IsNullOrWhiteSpace( this.DirectoryPath ) && Directory.Exists( this.DirectoryPath );
+				}
+				catch
+				{
+					return false;
+				}
+			}
+		}
 
 		private Boolean isBusy;
 		public Boolean IsBusy
@@ -67,13 +92,17 @@ namespace TeslaTags.Gui
 		}
 		public Boolean ProgressIndeterminate { get; private set; }
 
+		#endregion
+
+		#region Commands
+
 		public RelayCommand StartCommand { get; }
 
 		public RelayCommand StopCommand { get; }
 
 		private void Start()
 		{
-			this.teslaTagsService.Start( this.DirectoryPath );
+			this.teslaTagsService.Start( this.DirectoryPath, this.OnlyValidate );
 			this.ProgressPerc = -1;
 			this.IsBusy = this.teslaTagsService.IsBusy;
 		}
@@ -82,6 +111,10 @@ namespace TeslaTags.Gui
 		{
 			this.teslaTagsService.Stop();
 		}
+
+		#endregion
+
+		#region ITeslaTagEvents
 
 		private DirectoryProgressViewModel GetDirectoryProgressViewModel( String directory )
 		{
@@ -92,8 +125,6 @@ namespace TeslaTags.Gui
 			}
 			return dirVM;
 		}
-
-		#region ITeslaTagEvents
 
 		void ITeslaTagEventsListener.Started()
 		{
@@ -111,34 +142,16 @@ namespace TeslaTags.Gui
 			}
 		}
 
-		void ITeslaTagEventsListener.DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc)
+		void ITeslaTagEventsListener.DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc, List<Message> messages)
 		{
 			DirectoryProgressViewModel dirVM = this.GetDirectoryProgressViewModel( directory );
 			dirVM.FilesModified = modifiedCount;
 			dirVM.FolderType    = folderType;
 			dirVM.TotalFiles    = totalCount;
 
+			foreach( Message message in messages ) dirVM.Messages.Add( message );
+
 			this.ProgressPerc = totalPerc;
-		}
-
-		void ITeslaTagEventsListener.FileError(String fileName, String message)
-		{
-			String directory = Path.GetDirectoryName( fileName );
-
-			DirectoryProgressViewModel dirVM = this.GetDirectoryProgressViewModel( directory );
-
-			String filesName = Path.GetFileName( fileName );
-			dirVM.Errors.Add( new FileMessageViewModel( fileName, filesName, message ) );
-		}
-
-		void ITeslaTagEventsListener.FileWarning(String fileName, String message)
-		{
-			String directory = Path.GetDirectoryName( fileName );
-
-			DirectoryProgressViewModel dirVM = this.GetDirectoryProgressViewModel( directory );
-
-			String filesName = Path.GetFileName( fileName );
-			dirVM.Warnings.Add( new FileMessageViewModel( fileName, filesName, message ) );
 		}
 
 		void ITeslaTagEventsListener.Complete(Boolean stoppedEarly)
@@ -181,21 +194,6 @@ namespace TeslaTags.Gui
 			set { this.Set( nameof(this.FolderType), ref this.folderType, value ); }
 		}
 
-		public ObservableCollection<FileMessageViewModel> Errors   { get; } = new ObservableCollection<FileMessageViewModel>();
-		public ObservableCollection<FileMessageViewModel> Warnings { get; } = new ObservableCollection<FileMessageViewModel>();
-	}
-	
-	public class FileMessageViewModel : ViewModelBase
-	{
-		public FileMessageViewModel( String fileName, String displayFileName, String message )
-		{
-			this.FullFileName    = fileName;
-			this.DisplayFileName = displayFileName;
-			this.Message         = message;
-		}
-
-		public String FullFileName { get; }
-		public String DisplayFileName { get; }
-		public String Message { get; }
+		public ObservableCollection<Message> Messages { get; } = new ObservableCollection<Message>();
 	}
 }

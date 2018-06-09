@@ -5,7 +5,7 @@ namespace TeslaTags.Gui
 {
 	public interface ITeslaTagsService
 	{
-		void Start(String directory);
+		void Start(String directory, Boolean readOnly);
 		
 		void Stop();
 
@@ -18,9 +18,7 @@ namespace TeslaTags.Gui
 	{
 		void Started();
 		void GotDirectories(List<String> directories);
-		void DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc);
-		void FileError(String fileName, String message);
-		void FileWarning(String fileName, String message);
+		void DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc, List<Message> messages);
 		void Complete(Boolean stoppedEarly);
 	}
 }

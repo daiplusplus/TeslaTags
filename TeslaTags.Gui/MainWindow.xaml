@@ -22,6 +22,7 @@
 		<Style TargetType="{x:Type TextBlock}" x:Key="txtCol">
 			<Setter Property="Margin" Value="5,0,10,0" />
 		</Style>
+		<local:FullPathToRelativePathConverter x:Key="prefixPath" />
 	</Window.Resources>
 	
 	<Grid>
@@ -47,6 +48,7 @@
 
 			<StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
 				<Button Margin="3" Width="75" Content="Browse..." Name="browseButton" />
+				<CheckBox Margin="3" Content="Validate only" VerticalAlignment="Center" IsChecked="{Binding OnlyValidate}" />
 				<Button Margin="3" Width="75" Content="Start" Command="{Binding StartCommand}" />
 				<Button Margin="3" Width="75" Content="Stop" Command="{Binding StopCommand}" />
 			</StackPanel>
@@ -63,36 +65,28 @@
 			AutoGenerateColumns="False"
 		>
 			<DataGrid.Columns>
-				<DataGridTextColumn Header="Directory"      Binding="{Binding DisplayDirectoryPath}"  ElementStyle="{StaticResource txtCol}" />
-				<DataGridTextColumn Header="Total files"    Binding="{Binding TotalFiles}"            ElementStyle="{StaticResource numCol}" />
-				<DataGridTextColumn Header="Files modified" Binding="{Binding FilesModified}"         ElementStyle="{StaticResource numCol}" />
-				<DataGridTextColumn Header="Folder type"    Binding="{Binding FolderType}"            ElementStyle="{StaticResource txtCol}" />
-				<DataGridTextColumn Header="Warnings"       Binding="{Binding Warnings.Count}"        ElementStyle="{StaticResource numCol}" />
-				<DataGridTextColumn Header="Errors"         Binding="{Binding Errors.Count}"          ElementStyle="{StaticResource numCol}" />
+				<DataGridTextColumn Header="Directory"      Binding="{Binding DisplayDirectoryPath}"  ElementStyle="{StaticResource txtCol}" IsReadOnly="True" />
+				<DataGridTextColumn Header="Total files"    Binding="{Binding TotalFiles}"            ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
+				<DataGridTextColumn Header="Files modified" Binding="{Binding FilesModified}"         ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
+				<DataGridTextColumn Header="Folder type"    Binding="{Binding FolderType}"            ElementStyle="{StaticResource txtCol}" IsReadOnly="True" />
+				<DataGridTextColumn Header="Messages"       Binding="{Binding Messages.Count}"        ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
 			</DataGrid.Columns>
 
 			<DataGrid.RowDetailsTemplate>
 				<DataTemplate>
 					<StackPanel Margin="50,10,10,10">
-						
-						<Label Content="Warnings" />
-						<DataGrid ItemsSource="{Binding Warnings}" MaxHeight="150" AutoGenerateColumns="False">
+
+						<Label Content="Messages" />
+						<DataGrid ItemsSource="{Binding Messages}" MaxHeight="200" AutoGenerateColumns="False">
 							<DataGrid.Columns>
-								<DataGridTextColumn Header="File" Binding="{Binding DisplayFileName}" />
-								<DataGridTextColumn Header="Message" Binding="{Binding Message}" />
+								<DataGridTextColumn Header="Severity" Binding="{Binding Severity}" />
+								<DataGridTextColumn Header="Path"     Binding="{Binding RelativePath}" /><!-- , Converter={StaticResource prefixPath}, ConverterParameter={Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}}" /> -->
+								<DataGridTextColumn Header="Message"  Binding="{Binding Text}" />
 							</DataGrid.Columns>
 						</DataGrid>
-						
-						<Label Content="Errors" />
-						<DataGrid ItemsSource="{Binding Errors}" MaxHeight="150" AutoGenerateColumns="False">
-							<DataGrid.Columns>
-								<DataGridTextColumn Header="File" Binding="{Binding DisplayFileName}" />
-								<DataGridTextColumn Header="Message" Binding="{Binding Message}" />
-							</DataGrid.Columns>
-						</DataGrid>
+
 					</StackPanel>
-					
-					
+
 				</DataTemplate>
 			</DataGrid.RowDetailsTemplate>
 			

@@ -65,14 +65,16 @@ namespace TeslaTags.Gui
 					Int32 totalCount = rng.Next( 0, 30 );
 					Int32 modifiedCount = rng.Next( 0, totalCount + 1 );
 
-					this.EventsListener?.DirectoryUpdate( directory, randomType, modifiedCount, totalCount, ((Single)this.directoryIdx + 1f) / (Single)this.directories.Count );
-
+					List<Message> messages = new List<Message>();
+					if( rng.Next( 0, 2 ) == 1 ) messages.Add( new Message( MessageSeverity.Warning, directory, directory, "A directory warning" ) );
 					for( Int32 i = 0; i < totalCount; i++ )
 					{
 						String fileName = Path.Combine( directory, "File_" + i + ".mp3" );
-						if( rng.Next(0, 4) == 3 ) this.EventsListener?.FileWarning( fileName, "Some warning." );
-						if( rng.Next(0, 8) == 3 ) this.EventsListener?.FileError( fileName, "Some error." );
+						if( rng.Next(0, 4) == 3 ) messages.Add( new Message( MessageSeverity.Warning, directory, fileName, "Some file warning" ) );
+						if( rng.Next(0, 8) == 3 ) messages.Add( new Message( MessageSeverity.Warning, directory, fileName, "Some file error" ) );
 					}
+
+					this.EventsListener?.DirectoryUpdate( directory, randomType, modifiedCount, totalCount, ((Single)this.directoryIdx + 1f) / (Single)this.directories.Count, messages );
 
 					this.directoryIdx++;
 				}
@@ -96,7 +98,7 @@ namespace TeslaTags.Gui
 
 		public ITeslaTagEventsListener EventsListener { get; set; }
 
-		public void Start(String directory)
+		public void Start(String directory, Boolean readOnly)
 		{
 			this.rootDirectory = directory;
 			this.directories = _directories

@@ -19,19 +19,9 @@ namespace TeslaTags.Gui
 			DispatcherHelper.CheckBeginInvokeOnUI( () => this.sink.Complete( stoppedEarly ) );
 		}
 
-		public void DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc)
+		public void DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc, List<Message> messages)
 		{
-			DispatcherHelper.CheckBeginInvokeOnUI( () => this.sink.DirectoryUpdate( directory, folderType, modifiedCount, totalCount, totalPerc ) );
-		}
-
-		public void FileError(String fileName, String message)
-		{
-			DispatcherHelper.CheckBeginInvokeOnUI( () => this.sink.FileError( fileName, message ) );
-		}
-
-		public void FileWarning(String fileName, String message)
-		{
-			DispatcherHelper.CheckBeginInvokeOnUI( () => this.sink.FileWarning( fileName, message ) );
+			DispatcherHelper.CheckBeginInvokeOnUI( () => this.sink.DirectoryUpdate( directory, folderType, modifiedCount, totalCount, totalPerc, messages ) );
 		}
 
 		public void GotDirectories(List<String> directories)

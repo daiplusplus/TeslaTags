@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 using TagLib;
 using TagLib.Mpeg;
@@ -10,55 +12,70 @@ namespace TeslaTags
 {
 	static class Folder
 	{
-		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String path, List<String> errors, List<String> warnings)
+		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String directoryPath, Boolean readOnly, List<Message> messages)
 		{
-			List<LoadedFile> files = LoadFiles( path );
+			List<LoadedFile> files = LoadFiles( directoryPath, messages );
 			try
 			{
-				FolderType folderType = DetermineFolderType( files );
-				Int32 modifiedCount = 0;
+				FolderType folderType = DetermineFolderType( directoryPath, files, messages );
 				switch( folderType )
 				{
 					case FolderType.ArtistAlbum:
-						Retagger.RetagForArtistAlbum( files, errors, warnings );
+						Retagger.RetagForArtistAlbum( files, messages );
 						break;
 					case FolderType.ArtistAlbumWithGuestArtists:
-						modifiedCount = Retagger.RetagForArtistAlbumWithGuestArtists( files, errors, warnings );
+						Retagger.RetagForArtistAlbumWithGuestArtists( files, messages );
 						break;
 					case FolderType.ArtistAssorted:
-						modifiedCount = Retagger.RetagForArtistAssortedFiles( files, errors, warnings );
+						Retagger.RetagForArtistAssortedFiles( files, messages );
 						break;
 					case FolderType.AssortedFiles:
-						modifiedCount = Retagger.RetagForAssortedFiles( files, errors, warnings );
+						Retagger.RetagForAssortedFiles( files, messages );
 						break;
 					case FolderType.CompilationAlbum:
-						modifiedCount = Retagger.RetagForCompilationAlbum( files, errors, warnings );
+						Retagger.RetagForCompilationAlbum( files, messages );
 						break;
-					case FolderType.Container:
+					case FolderType.Empty:
+					case FolderType.UnableToDetermine:
+					case FolderType.Skipped:
+					default:
 						break;
 				}
+
+				Int32 modifiedCount = 0;
+				foreach( LoadedFile file in files )
+				{
+					if( !readOnly && file.IsModified )
+					{
+						try
+						{
+							file.AudioFile.Save();
+						}
+						catch(Exception ex)
+						{
+							messages.Add( new Message( MessageSeverity.Error, directoryPath, file.FileInfo.FullName, "Could not save file: " + ex.Message ) );
+						}
+						
+						modifiedCount++;
+					}
+				}
+
 				return (folderType, modifiedCount, files.Count);
 			}
 			finally
 			{
 				foreach( LoadedFile file in files )
 				{
-					if( file.IsModified )
-					{
-						file.AudioFile.Save();
-					}
 					file.AudioFile.Dispose();
 					file.Dispose();
 				}
 			}
 		}
 
-		private static List<LoadedFile> LoadFiles( String path )
+		private static List<LoadedFile> LoadFiles( String directoryPath, List<Message> messages )
 		{
-			DirectoryInfo di = new DirectoryInfo( path );
+			DirectoryInfo di = new DirectoryInfo( directoryPath );
 			FileInfo[] mp3s = di.GetFiles("*.mp3");
-
-			Dictionary<String,Exception> errorsByFile = new Dictionary<String,Exception>();
 
 			List<LoadedFile> files = new List<LoadedFile>();
 			foreach( FileInfo fi in mp3s )
@@ -67,34 +84,41 @@ namespace TeslaTags
 				try
 				{
 					file = TagLib.File.Create( fi.FullName );
+					if( file.CorruptionReasons?.Any() ?? false )
+					{
+						foreach( String reason in file.CorruptionReasons )
+						{
+							messages.Add( new Message( MessageSeverity.Error, directoryPath, fi.FullName, "File corrupted: " + reason ) );
+						}
+					}
+
 					if( file is AudioFile audioFile )
 					{
 						TagLib.Id3v2.Tag id3v2 = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2);
 						files.Add( new LoadedFile( fi, audioFile, id3v2 ) );
 					}
+					else
+					{
+						file.Dispose();
+					}
 				}
 				catch(Exception ex)
 				{
-					errorsByFile.Add( fi.FullName, ex );
+					messages.Add( new Message( MessageSeverity.Error, directoryPath, fi.FullName, "Could not load file: " + ex.Message ) );
 					if( file != null ) file.Dispose();
 				}
-			}
-
-			if( errorsByFile.Count > 0 )
-			{
-				System.Diagnostics.Debugger.Break();
 			}
 
 			return files;
 		}
 
-		private static FolderType DetermineFolderType(List<LoadedFile> files)
+		private static FolderType DetermineFolderType( String directoryPath, List<LoadedFile> files, List<Message> messages )
 		{
-			if( files.Count == 0 ) return FolderType.Container;
+			if( files.Count == 0 ) return FolderType.Empty;
 
 			List<TagSummary> filesTags = files.Select( f => TagSummary.Create( f.Id3v2Tag ) ).ToList();
 
-			Boolean allVariousArtists  = filesTags.All( ft => ft.AlbumArtist.EqualsCI( "Various Artists" ) ); //files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
+			Boolean allAlbumArtistsAreVariousArtists = filesTags.All( ft => ft.AlbumArtist.EqualsCI( "Various Artists" ) ); //files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
 
 			String  firstAlbumArtist   = filesTags.First().AlbumArtist; //files.First().Id3v2Tag.AlbumArtists.FirstOrDefault();
 			Boolean allSameAlbumArtist = filesTags.All( ft => ft.AlbumArtist.EqualsCI( firstAlbumArtist ) ); //files.All( f => String.Equals( firstAlbumArtist, f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
@@ -106,13 +130,21 @@ namespace TeslaTags
 			Boolean sameAlbum          = filesTags.All( ft => ft.Album.EqualsCI( firstAlbum ) ); //files.All( f => String.Equals( firstAlbum, f.Id3v2Tag.Album, StringComparison.Ordinal ) );
 			Boolean noAlbum            = filesTags.All( ft => String.IsNullOrWhiteSpace( ft.Album ) ); //files.All( f => String.IsNullOrWhiteSpace( f.Id3v2Tag.Album ) );
 
-			if( allVariousArtists )
+			if( allAlbumArtistsAreVariousArtists )
 			{
 				if( noAlbum ) return FolderType.AssortedFiles;
 
 				if( sameAlbum ) return FolderType.CompilationAlbum;
 
-				throw new Exception( "Unexpected folder type. All tracks are AlbumArtist=Various Artists, but with different Album names." );
+				List<String> differentAlbums = filesTags
+					.Select( ft => "\"" + ft.Album + "\"" )
+					.Distinct()
+					.OrderBy( s => s )
+					.ToList();
+
+				String messageText = "Unexpected folder type: All tracks have AlbumArtist = \"Various Artists\", but they have different Album values: " + String.Join( ", ", differentAlbums );
+				messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, messageText ) );
+				return FolderType.UnableToDetermine;
 			}
 			else
 			{
@@ -122,7 +154,32 @@ namespace TeslaTags
 
 				if( noAlbum ) return FolderType.ArtistAssorted;
 
-				throw new Exception( "Unexpected folder type. All tracks have different Artist and AlbumArtist values." );
+				List<String> differentArtists = filesTags
+					.Select( ft => "\"" + ft.Artist + "\"" )
+					.Distinct()
+					.OrderBy( s => s)
+					.ToList();
+
+				List<String> differentAlbumArtists = filesTags
+					.Select( ft => "\"" + ft.Artist + "\"" )
+					.Distinct()
+					.OrderBy( s => s)
+					.ToList();
+
+				List<String> differentAlbums = filesTags
+					.Select( ft => "\"" + ft.Album + "\"" )
+					.Distinct()
+					.OrderBy( s => s )
+					.ToList();
+
+				StringBuilder sb = new StringBuilder("Unexpected folder type: ");
+
+				if( differentArtists     .Count > 1 ) sb.Append( "Folder has multiple artists ("       + String.Join( ",", differentArtists      ) + "). " );
+				if( differentAlbumArtists.Count > 1 ) sb.Append( "Folder has multiple album-artists (" + String.Join( ",", differentAlbumArtists ) + "). " );
+				if( differentAlbums      .Count > 1 ) sb.Append( "Folder has multiple albums ("        + String.Join( ",", differentAlbums       ) + "). " );
+
+				messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, sb.ToString() ) );
+				return FolderType.UnableToDetermine;
 			}
 		}
 
@@ -165,6 +222,26 @@ namespace TeslaTags
 		public static Boolean EqualsCI( this String x, String y )
 		{
 			return String.Equals( x, y, StringComparison.OrdinalIgnoreCase );
+		}
+
+		public static void AddFileWarning( this List<Message> messages, String filePath, String text )
+		{
+			messages.Add( new Message( MessageSeverity.Warning, Path.GetDirectoryName( filePath ), filePath, text ) );
+		}
+
+		public static void AddFileWarning( this List<Message> messages, String filePath, String format, params Object[] args )
+		{
+			Extensions.AddFileWarning( messages, filePath, text: String.Format( CultureInfo.InvariantCulture, format, args ) );
+		}
+
+		public static void AddFileError( this List<Message> messages, String filePath, String text )
+		{
+			messages.Add( new Message( MessageSeverity.Error, Path.GetDirectoryName( filePath ), filePath, text ) );
+		}
+
+		public static void AddFileError( this List<Message> messages, String filePath, String format, params Object[] args )
+		{
+			Extensions.AddFileError( messages, filePath, text: String.Format( CultureInfo.InvariantCulture, format, args ) );
 		}
 	}
 }
