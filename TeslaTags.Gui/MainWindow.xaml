@@ -30,6 +30,7 @@
 		</Grid.ColumnDefinitions>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
 
@@ -52,8 +53,10 @@
 
 		</Grid>
 
+		<ProgressBar Grid.Row="1" Height="20" Margin="3" Minimum="0" Maximum="1" Value="{Binding ProgressPerc}" IsIndeterminate="{Binding ProgressIndeterminate}" />
+
 		<DataGrid
-			Grid.Row="1"
+			Grid.Row="2"
 			ItemsSource="{Binding DirectoriesProgress}"
 			HorizontalGridLinesBrush="{StaticResource gl}"
 			VerticalGridLinesBrush="{StaticResource gl}"
@@ -67,6 +70,32 @@
 				<DataGridTextColumn Header="Warnings"       Binding="{Binding Warnings.Count}"        ElementStyle="{StaticResource numCol}" />
 				<DataGridTextColumn Header="Errors"         Binding="{Binding Errors.Count}"          ElementStyle="{StaticResource numCol}" />
 			</DataGrid.Columns>
+
+			<DataGrid.RowDetailsTemplate>
+				<DataTemplate>
+					<StackPanel Margin="50,10,10,10">
+						
+						<Label Content="Warnings" />
+						<DataGrid ItemsSource="{Binding Warnings}" MaxHeight="150" AutoGenerateColumns="False">
+							<DataGrid.Columns>
+								<DataGridTextColumn Header="File" Binding="{Binding DisplayFileName}" />
+								<DataGridTextColumn Header="Message" Binding="{Binding Message}" />
+							</DataGrid.Columns>
+						</DataGrid>
+						
+						<Label Content="Errors" />
+						<DataGrid ItemsSource="{Binding Errors}" MaxHeight="150" AutoGenerateColumns="False">
+							<DataGrid.Columns>
+								<DataGridTextColumn Header="File" Binding="{Binding DisplayFileName}" />
+								<DataGridTextColumn Header="Message" Binding="{Binding Message}" />
+							</DataGrid.Columns>
+						</DataGrid>
+					</StackPanel>
+					
+					
+				</DataTemplate>
+			</DataGrid.RowDetailsTemplate>
+			
 		</DataGrid>
 		
 	</Grid>

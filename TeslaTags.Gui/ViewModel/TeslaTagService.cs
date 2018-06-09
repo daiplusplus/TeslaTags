@@ -23,7 +23,7 @@ namespace TeslaTags.Gui
 	{
 		void IsBusyChanged(Boolean isBusy);
 		void GotDirectories(List<String> directories);
-		void DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount);
+		void DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc);
 		void FileError(String fileName, String message);
 		void FileWarning(String fileName, String message);
 	}
@@ -87,7 +87,7 @@ namespace TeslaTags.Gui
 					Int32 totalCount = rng.Next( 0, 30 );
 					Int32 modifiedCount = rng.Next( 0, totalCount + 1 );
 
-					this.subscriber?.DirectoryUpdate( directory, randomType, modifiedCount, totalCount );
+					this.subscriber?.DirectoryUpdate( directory, randomType, modifiedCount, totalCount, ((Single)this.directoryIdx + 1f) / (Single)this.directories.Count );
 
 					for( Int32 i = 0; i < totalCount; i++ )
 					{

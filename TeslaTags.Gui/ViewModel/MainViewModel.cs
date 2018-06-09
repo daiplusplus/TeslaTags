@@ -48,6 +48,22 @@ namespace TeslaTags.Gui
 		}
 		public Boolean IsNotBusy => !this.IsBusy;
 
+		private Single progressPerc;
+		public Single ProgressPerc
+		{
+			get { return this.progressPerc; }
+			set {
+				this.Set( nameof(this.ProgressPerc), ref this.progressPerc, value );
+				Boolean indeterminate = value == -1;
+				if( indeterminate != this.ProgressIndeterminate )
+				{
+					this.ProgressIndeterminate = indeterminate;
+					this.RaisePropertyChanged( nameof(this.ProgressIndeterminate) );
+				}
+			}
+		}
+		public Boolean ProgressIndeterminate { get; private set; }
+
 		public RelayCommand StartCommand { get; }
 
 		public RelayCommand StopCommand { get; }
@@ -55,6 +71,7 @@ namespace TeslaTags.Gui
 		private void Start()
 		{
 			this.teslaTagsService.Start( this.DirectoryPath );
+			this.ProgressPerc = -1;
 		}
 
 		private void Stop()
@@ -93,12 +110,14 @@ namespace TeslaTags.Gui
 			}
 		}
 
-		void ITeslaTagEvents.DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount)
+		void ITeslaTagEvents.DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc)
 		{
 			DirectoryProgressViewModel dirVM = this.GetDirectoryProgressViewModel( directory );
 			dirVM.FilesModified = modifiedCount;
 			dirVM.FolderType    = folderType;
 			dirVM.TotalFiles    = totalCount;
+
+			this.ProgressPerc = totalPerc;
 		}
 
 		void ITeslaTagEvents.FileError(String fileName, String message)
@@ -108,7 +127,7 @@ namespace TeslaTags.Gui
 			DirectoryProgressViewModel dirVM = this.GetDirectoryProgressViewModel( directory );
 
 			String filesName = Path.GetFileName( fileName );
-			dirVM.Errors.Add( filesName + ": " + message );
+			dirVM.Errors.Add( new FileMessageViewModel( fileName, filesName, message ) );
 		}
 
 		void ITeslaTagEvents.FileWarning(String fileName, String message)
@@ -118,7 +137,7 @@ namespace TeslaTags.Gui
 			DirectoryProgressViewModel dirVM = this.GetDirectoryProgressViewModel( directory );
 
 			String filesName = Path.GetFileName( fileName );
-			dirVM.Warnings.Add( filesName + ": " + message );
+			dirVM.Warnings.Add( new FileMessageViewModel( fileName, filesName, message ) );
 		}
 
 		#endregion
@@ -156,8 +175,21 @@ namespace TeslaTags.Gui
 			set { this.Set( nameof(this.FolderType), ref this.folderType, value ); }
 		}
 
-		public ObservableCollection<String> Errors   { get; } = new ObservableCollection<String>();
-		public ObservableCollection<String> Warnings { get; } = new ObservableCollection<String>();
+		public ObservableCollection<FileMessageViewModel> Errors   { get; } = new ObservableCollection<FileMessageViewModel>();
+		public ObservableCollection<FileMessageViewModel> Warnings { get; } = new ObservableCollection<FileMessageViewModel>();
 	}
 	
+	public class FileMessageViewModel : ViewModelBase
+	{
+		public FileMessageViewModel( String fileName, String displayFileName, String message )
+		{
+			this.FullFileName    = fileName;
+			this.DisplayFileName = displayFileName;
+			this.Message         = message;
+		}
+
+		public String FullFileName { get; }
+		public String DisplayFileName { get; }
+		public String Message { get; }
+	}
 }
