@@ -166,16 +166,26 @@ namespace TeslaTags
 
 		private static Boolean ValidateFile( LoadedFile file, Boolean albumArtistRequired, Boolean albumRequired, Boolean trackNumberRequired, Boolean warnIfTrackNumberPresent, Boolean warnMissingAlbumArt, List<Message> messages )
 		{
+			const Boolean titleRequired = true;
 			const Boolean artistRequired = true;
 
 			Boolean isValid = true;
+
+			if( titleRequired )
+			{
+				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.Title ) )
+				{
+					isValid = false;
+					messages.AddFileError( file.FileInfo.FullName, "Title ID3V2 tag not set." );
+				}
+			}
 
 			if( artistRequired )
 			{
 				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.FirstPerformer ) )
 				{
 					isValid = false;
-					messages.AddFileWarning( file.FileInfo.FullName, "Artist ID3V2 tag not set." );
+					messages.AddFileError( file.FileInfo.FullName, "Artist ID3V2 tag not set." );
 				}
 			}
 
@@ -188,7 +198,7 @@ namespace TeslaTags
 				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.FirstAlbumArtist ) )
 				{
 					isValid = false;
-					messages.AddFileWarning( file.FileInfo.FullName, "Artist ID3V2 tag not set." );
+					messages.AddFileError( file.FileInfo.FullName, "Album-Artist ID3V2 tag not set." );
 				}
 			}
 
@@ -201,7 +211,7 @@ namespace TeslaTags
 				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.Album ) )
 				{
 					isValid = false;
-					messages.AddFileWarning( file.FileInfo.FullName, "Album ID3V2 tag not set." );
+					messages.AddFileError( file.FileInfo.FullName, "Album ID3V2 tag not set." );
 				}
 			}
 
@@ -212,7 +222,7 @@ namespace TeslaTags
 				if( file.Id3v2Tag.Track == 0 || file.Id3v2Tag.Track > 250 )
 				{
 					isValid = false;
-					messages.AddFileWarning( file.FileInfo.FullName, "TrackNumber ID3V2 tag not set or invalid." );
+					messages.AddFileError( file.FileInfo.FullName, "TrackNumber ID3V2 tag not set or invalid." );
 				}
 			}
 
@@ -283,7 +293,7 @@ namespace TeslaTags
 
 			foreach( LoadedFile file in files )
 			{
-				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: true, trackNumberRequired: true, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, messages );
+				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: true, trackNumberRequired: false /*true*/, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, messages );
 				if( isValid )
 				{
 					String artist = file.Id3v2Tag.Performers.First();

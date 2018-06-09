@@ -161,7 +161,7 @@ namespace TeslaTags
 					.ToList();
 
 				List<String> differentAlbumArtists = filesTags
-					.Select( ft => "\"" + ft.Artist + "\"" )
+					.Select( ft => "\"" + ft.AlbumArtist + "\"" )
 					.Distinct()
 					.OrderBy( s => s)
 					.ToList();

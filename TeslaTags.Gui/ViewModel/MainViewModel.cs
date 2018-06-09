@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
@@ -168,6 +170,15 @@ namespace TeslaTags.Gui
 		{
 			this.FullDirectoryPath    = directoryPath;
 			this.DisplayDirectoryPath = directoryPath.StartsWith( prefix, StringComparison.OrdinalIgnoreCase ) ? directoryPath.Substring( prefix.Length ) : directoryPath;
+
+			this.Messages.CollectionChanged += this.Messages_CollectionChanged;
+		}
+
+		private void Messages_CollectionChanged(Object sender, NotifyCollectionChangedEventArgs e)
+		{
+			this.RaisePropertyChanged( nameof(this.InfoCount) );
+			this.RaisePropertyChanged( nameof(this.WarnCount) );
+			this.RaisePropertyChanged( nameof(this.ErrorCount) );
 		}
 
 		public String FullDirectoryPath { get; }
@@ -195,5 +206,10 @@ namespace TeslaTags.Gui
 		}
 
 		public ObservableCollection<Message> Messages { get; } = new ObservableCollection<Message>();
+
+		public Int32 InfoCount  => this.Messages.Count( m => m.Severity == MessageSeverity.Info );
+		public Int32 WarnCount  => this.Messages.Count( m => m.Severity == MessageSeverity.Warning );
+		public Int32 ErrorCount => this.Messages.Count( m => m.Severity == MessageSeverity.Error );
+		
 	}
 }

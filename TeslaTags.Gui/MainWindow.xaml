@@ -15,14 +15,33 @@
 >
 	<Window.Resources>
 		<SolidColorBrush x:Key="gl" Color="#FFCCCCCC" />
-		<Style TargetType="{x:Type TextBlock}" x:Key="numCol">
-			<Setter Property="HorizontalAlignment" Value="Right" />
-			<Setter Property="Margin" Value="5,0,10,0" />
-		</Style>
+
 		<Style TargetType="{x:Type TextBlock}" x:Key="txtCol">
 			<Setter Property="Margin" Value="5,0,10,0" />
 		</Style>
-		<local:FullPathToRelativePathConverter x:Key="prefixPath" />
+		<Style TargetType="{x:Type TextBlock}" x:Key="numCol" BasedOn="{StaticResource txtCol}">
+			<Setter Property="HorizontalAlignment" Value="Right" />
+			<Setter Property="Margin" Value="5,0,10,0" />
+		</Style>
+
+		<Style TargetType="{x:Type DataGridCell}" x:Key="warnCellStyle">
+			<Setter Property="Background" Value="#FFFFC846" />
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding WarnCount}" Value="0">
+					<Setter Property="Background" Value="White" />
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+
+		<Style TargetType="{x:Type DataGridCell}" x:Key="errorCellStyle">
+			<Setter Property="Background" Value="#FFFF8080" />
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding ErrorCount}" Value="0">
+					<Setter Property="Background" Value="White" />
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+
 	</Window.Resources>
 	
 	<Grid>
@@ -69,7 +88,9 @@
 				<DataGridTextColumn Header="Total files"    Binding="{Binding TotalFiles}"            ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
 				<DataGridTextColumn Header="Files modified" Binding="{Binding FilesModified}"         ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
 				<DataGridTextColumn Header="Folder type"    Binding="{Binding FolderType}"            ElementStyle="{StaticResource txtCol}" IsReadOnly="True" />
-				<DataGridTextColumn Header="Messages"       Binding="{Binding Messages.Count}"        ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
+				<DataGridTextColumn Header="Info"           Binding="{Binding InfoCount}"             ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
+				<DataGridTextColumn Header="Warnings"       Binding="{Binding WarnCount}"             ElementStyle="{StaticResource numCol}" IsReadOnly="True" CellStyle="{StaticResource warnCellStyle}" />
+				<DataGridTextColumn Header="Errors"         Binding="{Binding ErrorCount}"            ElementStyle="{StaticResource numCol}" IsReadOnly="True" CellStyle="{StaticResource errorCellStyle}" />
 			</DataGrid.Columns>
 
 			<DataGrid.RowDetailsTemplate>
@@ -77,11 +98,17 @@
 					<StackPanel Margin="50,10,10,10">
 
 						<Label Content="Messages" />
-						<DataGrid ItemsSource="{Binding Messages}" MaxHeight="200" AutoGenerateColumns="False">
+						<DataGrid
+							ItemsSource="{Binding Messages}"
+							MaxHeight="200"
+							AutoGenerateColumns="False"
+							HorizontalGridLinesBrush="{StaticResource gl}"
+							VerticalGridLinesBrush="{StaticResource gl}"
+						>
 							<DataGrid.Columns>
-								<DataGridTextColumn Header="Severity" Binding="{Binding Severity}" />
-								<DataGridTextColumn Header="Path"     Binding="{Binding RelativePath}" /><!-- , Converter={StaticResource prefixPath}, ConverterParameter={Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}}" /> -->
-								<DataGridTextColumn Header="Message"  Binding="{Binding Text}" />
+								<DataGridTextColumn Header="Severity" Binding="{Binding Severity}"     ElementStyle="{StaticResource txtCol}" />
+								<DataGridTextColumn Header="Path"     Binding="{Binding RelativePath}" ElementStyle="{StaticResource txtCol}" />
+								<DataGridTextColumn Header="Message"  Binding="{Binding Text}"         ElementStyle="{StaticResource txtCol}" />
 							</DataGrid.Columns>
 						</DataGrid>
 
