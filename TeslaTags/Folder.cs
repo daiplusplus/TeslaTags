@@ -10,7 +10,7 @@ namespace TeslaTags
 {
 	static class Folder
 	{
-		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String path, List<String> errors)
+		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String path, List<String> errors, List<String> warnings)
 		{
 			List<LoadedFile> files = LoadFiles( path );
 			try
@@ -20,19 +20,19 @@ namespace TeslaTags
 				switch( folderType )
 				{
 					case FolderType.ArtistAlbum:
-						Retagger.RetagForArtistAlbum( files, errors );
+						Retagger.RetagForArtistAlbum( files, errors, warnings );
 						break;
 					case FolderType.ArtistAlbumWithGuestArtists:
-						modifiedCount = Retagger.RetagForArtistAlbumWithGuestArtists( files, errors );
+						modifiedCount = Retagger.RetagForArtistAlbumWithGuestArtists( files, errors, warnings );
 						break;
 					case FolderType.ArtistAssorted:
-						modifiedCount = Retagger.RetagForArtistAssortedFiles( files, errors );
+						modifiedCount = Retagger.RetagForArtistAssortedFiles( files, errors, warnings );
 						break;
 					case FolderType.AssortedFiles:
-						modifiedCount = Retagger.RetagForAssortedFiles( files );
+						modifiedCount = Retagger.RetagForAssortedFiles( files, errors, warnings );
 						break;
 					case FolderType.CompilationAlbum:
-						modifiedCount = Retagger.RetagForCompilationAlbum( files, errors );
+						modifiedCount = Retagger.RetagForCompilationAlbum( files, errors, warnings );
 						break;
 					case FolderType.Container:
 						break;

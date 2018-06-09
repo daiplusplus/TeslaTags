@@ -164,20 +164,94 @@ namespace TeslaTags
 			}
 		}
 
-		public static void RetagForArtistAlbum(List<LoadedFile> files, List<String> errors)
+		private static Boolean ValidateFile( LoadedFile file, Boolean albumArtistRequired, Boolean albumRequired, Boolean trackNumberRequired, Boolean warnIfTrackNumberPresent, Boolean warnMissingAlbumArt, List<String> warnings )
+		{
+			const Boolean artistRequired = true;
+
+			Boolean isValid = true;
+
+			if( artistRequired )
+			{
+				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.FirstPerformer ) )
+				{
+					isValid = false;
+					warnings.Add( file.FileInfo.FullName + "\t" + "Artist ID3V2 tag not set." );
+				}
+			}
+
+			if( file.Id3v2Tag.Performers?.Length > 1 ) warnings.Add( file.FileInfo.FullName + "\t" + "Has multiple Artists: \"" + file.Id3v2Tag.JoinedPerformers + "\". The first value was used." );
+
+			//
+
+			if( albumArtistRequired )
+			{
+				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.FirstAlbumArtist ) )
+				{
+					isValid = false;
+					warnings.Add( file.FileInfo.FullName + "\t" + "Artist ID3V2 tag not set." );
+				}
+			}
+
+			if( file.Id3v2Tag.AlbumArtists?.Length > 1 ) warnings.Add( file.FileInfo.FullName + "\t" + "Has multiple AlbumArtists: \"" + file.Id3v2Tag.JoinedAlbumArtists + "\". The first value was used." );
+
+			//
+
+			if( albumRequired )
+			{
+				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.Album ) )
+				{
+					isValid = false;
+					warnings.Add( file.FileInfo.FullName + "\t" + "Album ID3V2 tag not set." );
+				}
+			}
+
+			//
+
+			if( trackNumberRequired )
+			{
+				if( file.Id3v2Tag.Track == 0 || file.Id3v2Tag.Track > 250 )
+				{
+					isValid = false;
+					warnings.Add( file.FileInfo.FullName + "\t" + "TrackNumber ID3V2 tag not set or invalid." );
+				}
+			}
+
+			if( warnIfTrackNumberPresent )
+			{
+				if( file.Id3v2Tag.Track != 0 ) warnings.Add( file.FileInfo.FullName + "\t" + "Assorted file has a track number. This program cannot currently remove track numbers. Please use another program to remove/clear this tag field." );
+				
+				if( file.Id3v2Tag.Disc  != 0 ) warnings.Add( file.FileInfo.FullName + "\t" + "Assorted file has a disc number. This program cannot currently remove disc numbers. Please use another program to remove/clear this tag field." );
+			}
+
+			//
+
+			if( warnMissingAlbumArt )
+			{
+				IPicture[] art = file.Id3v2Tag.Pictures;
+				if( art == null || art.Length == 0 )
+				{
+					warnings.Add( file.FileInfo.FullName + "\t" + "No Album Art." ); // TODO: Validate the name/description of the IPicture? I'm not sure how Id3v2 stores it (using a 0-255 byte enum? but there are strings too, so does it matter?)
+				}
+				else if( art.Length > 1 )
+				{
+					warnings.Add( file.FileInfo.FullName + "\t" + "Multiple embedded pictures." );
+				}
+			}
+
+			return isValid;
+		}
+
+		public static void RetagForArtistAlbum(List<LoadedFile> files, List<String> errors, List<String> warnings)
 		{
 			// NOOP. Handled correctly.
-			// But ensure album-art is present:
+			// But do file validation.
 			foreach( LoadedFile file in files )
 			{
-				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.Album ) || String.IsNullOrWhiteSpace( file.Id3v2Tag.FirstPerformer ) ) errors.Add( file.FileInfo.FullName + "\t" + "Album or Artist ID3V2 tag not set." );
-
-				Int32 pictureCount = file.Id3v2Tag.Pictures?.Length ?? 0;
-				if( pictureCount == 0 ) errors.Add( file.FileInfo.FullName + "\t" + "Contains no ID3 images (i.e. album art)." );
+				ValidateFile( file, albumArtistRequired: true, albumRequired: true, trackNumberRequired: true, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, warnings );
 			}
 		}
 
-		public static Int32 RetagForArtistAlbumWithGuestArtists(List<LoadedFile> files, List<String> errors)
+		public static Int32 RetagForArtistAlbumWithGuestArtists(List<LoadedFile> files, List<String> errors, List<String> warnings)
 		{
 			// 1. Copy Artist to Title.
 			// 2. Use AlbumArtist as Artist (note that all tracks will have the same AlbumArtist value, so copy it from the first track).
@@ -188,27 +262,26 @@ namespace TeslaTags
 
 			foreach( LoadedFile file in files )
 			{
-				if( file.Id3v2Tag.Performers.Length > 1 ) errors.Add( file.FileInfo.FullName + "\t" + "Contains multiple Performers: \"" + file.Id3v2Tag.JoinedPerformers + "\"." );
+				Boolean isValid = ValidateFile( file, albumArtistRequired: true, albumRequired: true, trackNumberRequired: true, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, warnings );
+				if( isValid )
+				{
+					String artist      = file.Id3v2Tag.Performers.First();
+					String title       = file.Id3v2Tag.Title;
 
-				String artist      = file.Id3v2Tag.Performers.First();
-				String title       = file.Id3v2Tag.Title;
+					// 1:
+					file.Id3v2Tag.Title = artist + " - " + title;
+					// 2:
+					file.Id3v2Tag.Performers = new String[] { albumArtist };
 
-				// 1:
-				file.Id3v2Tag.Title = artist + " - " + title;
-				// 2:
-				file.Id3v2Tag.Performers = new String[] { albumArtist };
-
-				file.IsModified = true;
-				modified++;
-
-				Int32 pictureCount = file.Id3v2Tag.Pictures?.Length ?? 0;
-				if( pictureCount == 0 ) errors.Add( file.FileInfo.FullName + "\t" + "Contains no ID3 images (i.e. album art)." );
+					file.IsModified = true;
+					modified++;
+				}
 			}
 
 			return modified;
 		}
 
-		public static Int32 RetagForCompilationAlbum(List<LoadedFile> files, List<String> errors)
+		public static Int32 RetagForCompilationAlbum(List<LoadedFile> files, List<String> errors, List<String> warnings)
 		{
 			// 1. Copy Artist as Title prefix.
 			// 2. Set Artist to "Various Artists"
@@ -216,27 +289,28 @@ namespace TeslaTags
 			Int32 modified = 0;
 			foreach( LoadedFile file in files )
 			{
-				String artist      = file.Id3v2Tag.Performers.First();
-				String title       = file.Id3v2Tag.Title;
-
-				if( artist != "Various Artists" )
+				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: true, trackNumberRequired: true, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, warnings );
+				if( isValid )
 				{
-					// 1:
-					file.Id3v2Tag.Title = artist + " - " + title;
-					// 2:
-					file.Id3v2Tag.Performers = new String[] { "Various Artists" };
+					String artist = file.Id3v2Tag.Performers.First();
+					String title  = file.Id3v2Tag.Title;
 
-					file.IsModified = true;
-					modified++;
+					if( artist != "Various Artists" )
+					{
+						// 1:
+						file.Id3v2Tag.Title = artist + " - " + title;
+						// 2:
+						file.Id3v2Tag.Performers = new String[] { "Various Artists" };
 
-					Int32 pictureCount = file.Id3v2Tag.Pictures?.Length ?? 0;
-					if( pictureCount == 0 ) errors.Add( file.FileInfo.FullName + "\t" + "Contains no ID3 images (i.e. album art)." );
+						file.IsModified = true;
+						modified++;
+					}
 				}
 			}
 			return modified;
 		}
 
-		public static Int32 RetagForAssortedFiles(List<LoadedFile> files)
+		public static Int32 RetagForAssortedFiles(List<LoadedFile> files, List<String> errors, List<String> warnings)
 		{
 			// Artist and Title tags are correct as-is.
 			// Clear the Album and TrackNumber tags.
@@ -247,38 +321,48 @@ namespace TeslaTags
 			Int32 modified = 0;
 			foreach( LoadedFile file in files )
 			{
-				if( !String.IsNullOrWhiteSpace( file.Id3v2Tag.Album ) )
+				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: false, trackNumberRequired: false, warnIfTrackNumberPresent: true, warnMissingAlbumArt: false, warnings );
+				if( isValid )
 				{
-					// 1:
-					file.Id3v2Tag.Album = null;
-					//file.Id3v2Tag.Track = 0; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
+					if( !String.IsNullOrWhiteSpace( file.Id3v2Tag.Album ) )
+					{
+						// 1:
+						file.Id3v2Tag.Album = null;
+						//file.Id3v2Tag.Track = 0; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
 
-					file.IsModified = true;
+						file.IsModified = true;
 
-					modified++;
+						//file.AudioFile.Tag. // https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
+
+						modified++;
+					}
+
+					
 				}
 			}
 			return modified;
 		}
 
-		public static Int32 RetagForArtistAssortedFiles(List<LoadedFile> files, List<String> errors)
+		public static Int32 RetagForArtistAssortedFiles(List<LoadedFile> files, List<String> errors, List<String> warnings)
 		{
 			// We want it displayed in the main Artists list, which means it needs an album set. Use "No album" for those:
 
 			Int32 modified = 0;
 			foreach( LoadedFile file in files )
 			{
-				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.FirstPerformer ) ) errors.Add( file.FileInfo.FullName + "\t" + "Album ID3V2 tag not set." );
-
-				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.Album ) )
+				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: false, trackNumberRequired: false, warnIfTrackNumberPresent: true, warnMissingAlbumArt: false, warnings );
+				if( isValid )
 				{
-					// 1:
-					file.Id3v2Tag.Album = "No Album";
-					//file.Id3v2Tag.Track = 0; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
+					if( file.Id3v2Tag.Album != "No Album" )
+					{
+						// 1:
+						file.Id3v2Tag.Album = "No Album";
+						//file.Id3v2Tag.Track = 0; // uugghhh, but the user gets warned anyway.
 
-					file.IsModified = true;
+						file.IsModified = true;
 
-					modified++;
+						modified++;
+					}
 				}
 			}
 			return modified;
@@ -293,6 +377,7 @@ namespace TeslaTags
 		ArtistAlbumWithGuestArtists,
 		ArtistAssorted,
 		CompilationAlbum,
-		AssortedFiles
+		AssortedFiles,
+		Skipped
 	}
 }

@@ -8,14 +8,14 @@ using GalaSoft.MvvmLight.CommandWpf;
 
 namespace TeslaTags.Gui
 {
-	public class MainViewModel : ViewModelBase, ITeslaTagEvents
+	public class MainViewModel : ViewModelBase, ITeslaTagEventsListener
 	{
 		private readonly ITeslaTagsService teslaTagsService;
 
 		public MainViewModel(ITeslaTagsService teslaTagsService)
 		{
 			this.teslaTagsService = teslaTagsService;
-			this.teslaTagsService.AddSubscriber( this );
+			this.teslaTagsService.EventsListener = this;
 
 			this.StartCommand = new RelayCommand( this.Start, canExecute: () => !this.teslaTagsService.IsBusy );
 			this.StopCommand  = new RelayCommand( this.Stop , canExecute: () =>  this.teslaTagsService.IsBusy );
@@ -44,6 +44,9 @@ namespace TeslaTags.Gui
 			set {
 				this.Set( nameof(this.IsBusy), ref this.isBusy, value );
 				this.RaisePropertyChanged( nameof(this.IsNotBusy) );
+
+				this.StartCommand.RaiseCanExecuteChanged();
+				this.StopCommand.RaiseCanExecuteChanged();
 			}
 		}
 		public Boolean IsNotBusy => !this.IsBusy;
@@ -72,6 +75,7 @@ namespace TeslaTags.Gui
 		{
 			this.teslaTagsService.Start( this.DirectoryPath );
 			this.ProgressPerc = -1;
+			this.IsBusy = this.teslaTagsService.IsBusy;
 		}
 
 		private void Stop()
@@ -91,14 +95,11 @@ namespace TeslaTags.Gui
 
 		#region ITeslaTagEvents
 
-		void ITeslaTagEvents.IsBusyChanged(Boolean isBusy)
+		void ITeslaTagEventsListener.Started()
 		{
-			this.IsBusy = isBusy;
-			this.StartCommand.RaiseCanExecuteChanged();
-			this.StopCommand.RaiseCanExecuteChanged();
 		}
 
-		void ITeslaTagEvents.GotDirectories(List<String> directories)
+		void ITeslaTagEventsListener.GotDirectories(List<String> directories)
 		{
 			this.viewModelDict.Clear();
 			this.DirectoriesProgress.Clear();
@@ -110,7 +111,7 @@ namespace TeslaTags.Gui
 			}
 		}
 
-		void ITeslaTagEvents.DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc)
+		void ITeslaTagEventsListener.DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc)
 		{
 			DirectoryProgressViewModel dirVM = this.GetDirectoryProgressViewModel( directory );
 			dirVM.FilesModified = modifiedCount;
@@ -120,7 +121,7 @@ namespace TeslaTags.Gui
 			this.ProgressPerc = totalPerc;
 		}
 
-		void ITeslaTagEvents.FileError(String fileName, String message)
+		void ITeslaTagEventsListener.FileError(String fileName, String message)
 		{
 			String directory = Path.GetDirectoryName( fileName );
 
@@ -130,7 +131,7 @@ namespace TeslaTags.Gui
 			dirVM.Errors.Add( new FileMessageViewModel( fileName, filesName, message ) );
 		}
 
-		void ITeslaTagEvents.FileWarning(String fileName, String message)
+		void ITeslaTagEventsListener.FileWarning(String fileName, String message)
 		{
 			String directory = Path.GetDirectoryName( fileName );
 
@@ -138,6 +139,11 @@ namespace TeslaTags.Gui
 
 			String filesName = Path.GetFileName( fileName );
 			dirVM.Warnings.Add( new FileMessageViewModel( fileName, filesName, message ) );
+		}
+
+		void ITeslaTagEventsListener.Complete(Boolean stoppedEarly)
+		{
+			this.IsBusy = this.teslaTagsService.IsBusy;
 		}
 
 		#endregion
