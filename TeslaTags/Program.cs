@@ -60,6 +60,7 @@ namespace TeslaTags
 	public enum MessageSeverity
 	{
 		Info,
+		FileModification,
 		Warning,
 		Error
 	}

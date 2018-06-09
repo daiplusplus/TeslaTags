@@ -44,6 +44,7 @@ namespace TeslaTags.Gui
 				foreach( String directoryPath in directories )
 				{
 					if( this.stopRequested ) break;
+					if( directoryPath == null ) continue;
 
 					DirectoryResult result = tp.ProcessDirectory( directoryPath, this.isReadOnlyMode );
 					this.EventsListener?.DirectoryUpdate( directoryPath, result.FolderType, result.ModifiedFiles, result.TotalFiles, ++count / total, result.Messages );

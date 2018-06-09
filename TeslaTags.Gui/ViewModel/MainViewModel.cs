@@ -134,10 +134,24 @@ namespace TeslaTags.Gui
 
 		void ITeslaTagEventsListener.GotDirectories(List<String> directories)
 		{
+			if( App.ExcludeITunes )
+			{
+				for( Int32 i = 0; i < directories.Count; i++ )
+				{
+					String d = directories[i];
+					if( d.IndexOf( "iTunes", StringComparison.OrdinalIgnoreCase ) > -1 )
+					{
+						directories[i] = null;
+					}
+				}
+			}
+
 			this.viewModelDict.Clear();
 			this.DirectoriesProgress.Clear();
 			foreach( String directoryPath in directories )
 			{
+				if( directoryPath == null ) continue;
+
 				DirectoryProgressViewModel dirVM = new DirectoryProgressViewModel( directoryPath, prefix: this.DirectoryPath );
 				this.viewModelDict.Add( directoryPath, dirVM );
 				this.DirectoriesProgress.Add( dirVM );

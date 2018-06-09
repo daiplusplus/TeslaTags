@@ -15,6 +15,8 @@ namespace TeslaTags.Gui
 	{
 		public static Boolean IsTestMode { get; } = ConfigurationManager.AppSettings["designMode"] == "true";
 
+		public static Boolean ExcludeITunes { get; } = ConfigurationManager.AppSettings["excludeITunes"] == "true";
+
 		static App()
 		{
 			GalaSoft.MvvmLight.Threading.DispatcherHelper.Initialize();

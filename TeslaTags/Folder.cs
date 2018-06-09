@@ -243,5 +243,15 @@ namespace TeslaTags
 		{
 			Extensions.AddFileError( messages, filePath, text: String.Format( CultureInfo.InvariantCulture, format, args ) );
 		}
+
+		public static void AddFileChange( this List<Message> messages, String filePath, String field, String oldValue, String newValue )
+		{
+			oldValue = ( oldValue == null ) ? "null" : ("\"" + oldValue + "\"");
+			newValue = ( newValue == null ) ? "null" : ("\"" + newValue + "\"");
+
+			String messageText = String.Concat( field, ": ", oldValue, " -> ", newValue );
+
+			messages.Add( new Message( MessageSeverity.FileModification, Path.GetDirectoryName( filePath ), filePath, messageText ) );
+		}
 	}
 }

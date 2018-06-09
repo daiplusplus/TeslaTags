@@ -273,18 +273,30 @@ namespace TeslaTags
 				Boolean isValid = ValidateFile( file, albumArtistRequired: true, albumRequired: true, trackNumberRequired: true, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, messages );
 				if( isValid )
 				{
-					String artist      = file.Id3v2Tag.Performers.First();
-					String title       = file.Id3v2Tag.Title;
+					String oldArtist      = file.Id3v2Tag.Performers.First();
+					String oldTitle       = file.Id3v2Tag.Title;
 
-					// 1:
-					file.Id3v2Tag.Title = artist + " - " + title;
-					// 2:
-					file.Id3v2Tag.Performers = new String[] { albumArtist };
+					if( oldArtist != albumArtist )
+					{
+						String newArtist      = albumArtist;
+						String newTitle       = oldArtist + " - " + oldTitle;
 
-					file.IsModified = true;
+						messages.AddFileChange( file.FileInfo.FullName, "Artist", oldArtist, newArtist );
+						messages.AddFileChange( file.FileInfo.FullName, "Title" , oldTitle , newTitle  );
+
+						// 1:
+						file.Id3v2Tag.Title = newTitle;
+						// 2:
+						file.Id3v2Tag.Performers = new String[] { albumArtist };
+
+						file.IsModified = true;
+					}
 				}
 			}
 		}
+
+		public const String Values_VariousArtists = "Various Artists";
+		public const String Values_NoAlbum        = "No Album";
 
 		public static void RetagForCompilationAlbum(List<LoadedFile> files, List<Message> messages)
 		{
@@ -296,15 +308,21 @@ namespace TeslaTags
 				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: true, trackNumberRequired: false /*true*/, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, messages );
 				if( isValid )
 				{
-					String artist = file.Id3v2Tag.Performers.First();
-					String title  = file.Id3v2Tag.Title;
+					String oldArtist = file.Id3v2Tag.Performers.First();
+					String oldTitle  = file.Id3v2Tag.Title;
 
-					if( artist != "Various Artists" )
+					if( oldArtist != Values_VariousArtists )
 					{
+						String newArtist = Values_VariousArtists;
+						String newTitle  = oldArtist + " - " + oldTitle;
+
+						messages.AddFileChange( file.FileInfo.FullName, "Artist", oldArtist, newArtist );
+						messages.AddFileChange( file.FileInfo.FullName, "Title" , oldTitle , newTitle  );
+
 						// 1:
-						file.Id3v2Tag.Title = artist + " - " + title;
+						file.Id3v2Tag.Title = newTitle;
 						// 2:
-						file.Id3v2Tag.Performers = new String[] { "Various Artists" };
+						file.Id3v2Tag.Performers = new String[] { newArtist };
 
 						file.IsModified = true;
 					}
@@ -325,8 +343,12 @@ namespace TeslaTags
 				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: false, trackNumberRequired: false, warnIfTrackNumberPresent: true, warnMissingAlbumArt: false, messages );
 				if( isValid )
 				{
-					if( !String.IsNullOrWhiteSpace( file.Id3v2Tag.Album ) )
+					String oldAlbum = file.Id3v2Tag.Album;
+
+					if( !String.IsNullOrWhiteSpace( oldAlbum ) )
 					{
+						messages.AddFileChange( file.FileInfo.FullName, "Album", oldAlbum, null );
+
 						// 1:
 						file.Id3v2Tag.Album = null;
 						//file.Id3v2Tag.Track = 0; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
@@ -348,10 +370,15 @@ namespace TeslaTags
 				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: false, trackNumberRequired: false, warnIfTrackNumberPresent: true, warnMissingAlbumArt: false, messages );
 				if( isValid )
 				{
-					if( file.Id3v2Tag.Album != "No Album" )
+					String oldAlbum = file.Id3v2Tag.Album;
+					String newAlbum = Values_NoAlbum;
+
+					if( oldAlbum != newAlbum )
 					{
+						messages.AddFileChange( file.FileInfo.FullName, "Album", oldAlbum, newAlbum );
+
 						// 1:
-						file.Id3v2Tag.Album = "No Album";
+						file.Id3v2Tag.Album = newAlbum;
 						//file.Id3v2Tag.Track = 0; // uugghhh, but the user gets warned anyway.
 
 						file.IsModified = true;
