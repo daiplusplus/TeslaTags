@@ -15,7 +15,7 @@ namespace TeslaTags.Gui
 		public MainViewModel(ITeslaTagsService teslaTagsService)
 		{
 			this.teslaTagsService = teslaTagsService;
-			this.teslaTagsService.EventsListener = this;
+			this.teslaTagsService.EventsListener = new DispatchTeslaTagEventsListener( this );
 
 			this.StartCommand = new RelayCommand( this.Start, canExecute: () => !this.teslaTagsService.IsBusy );
 			this.StopCommand  = new RelayCommand( this.Stop , canExecute: () =>  this.teslaTagsService.IsBusy );

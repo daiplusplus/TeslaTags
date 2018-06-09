@@ -32,6 +32,16 @@ namespace TeslaTags.Gui
 			{
 				fbd.IsFolderPicker = true;
 				fbd.Title = "Browse for root of music directory";
+				fbd.EnsurePathExists = true;
+				fbd.EnsureValidNames = true;
+
+				if( !String.IsNullOrWhiteSpace( this.ViewModel.DirectoryPath ) )
+				{
+					if( System.IO.Directory.Exists( this.ViewModel.DirectoryPath ) )
+					{
+						fbd.InitialDirectory = this.ViewModel.DirectoryPath;
+					}
+				}
 
 				CommonFileDialogResult result = fbd.ShowDialog( this );
 				if( result == CommonFileDialogResult.Ok )

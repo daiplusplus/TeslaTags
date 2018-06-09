@@ -77,6 +77,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ViewModel\DesignTeslaTagService.cs" />
+    <Compile Include="ViewModel\DispatchTeslaTagEventsListener.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\RealTeslaTagService.cs" />
     <Compile Include="ViewModel\TeslaTagService.cs" />

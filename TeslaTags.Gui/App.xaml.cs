@@ -14,5 +14,11 @@ namespace TeslaTags.Gui
 	public partial class App : Application
 	{
 		public static Boolean IsTestMode { get; } = ConfigurationManager.AppSettings["designMode"] == "true";
+
+		static App()
+		{
+			GalaSoft.MvvmLight.Threading.DispatcherHelper.Initialize();
+		}
+
 	}
 }
