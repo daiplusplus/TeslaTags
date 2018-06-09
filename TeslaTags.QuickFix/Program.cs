@@ -100,9 +100,8 @@ namespace TeslaTags.QuickFix
 				{
 					if( file.IsModified )
 					{
-						file.AudioFile.Save();
+						file.Save();
 					}
-					file.AudioFile.Dispose();
 					file.Dispose();
 				}
 			}
@@ -125,7 +124,7 @@ namespace TeslaTags.QuickFix
 
 			foreach( LoadedFile file in files )
 			{
-				if( file.Id3v2Tag.Track == 0 || mode == Mode.All )
+				if( file.Tag.Track == 0 || mode == Mode.All )
 				{
 					Match fileNameMatch = _fileNameTrackNumberRegex.Match( file.FileInfo.Name );
 					if( !fileNameMatch.Success )
@@ -134,13 +133,13 @@ namespace TeslaTags.QuickFix
 					}
 					else
 					{
-						UInt32 oldTrackNumber = file.Id3v2Tag.Track;
+						UInt32 oldTrackNumber = file.Tag.Track;
 
 						Int32 trackNumber = Int32.Parse( fileNameMatch.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture );
-						file.Id3v2Tag.Track = (UInt32)trackNumber;
+						file.Tag.Track = (UInt32)trackNumber;
 						file.IsModified = true;
 
-						Console.WriteLine( "Updated \"{0}\". Track number {1} is now {2}.", file.FileInfo.Name, oldTrackNumber, file.Id3v2Tag.Track );
+						Console.WriteLine( "Updated \"{0}\". Track number {1} is now {2}.", file.FileInfo.Name, oldTrackNumber, file.Tag.Track );
 					}
 				}
 			}
@@ -185,7 +184,7 @@ namespace TeslaTags.QuickFix
 			
 			foreach( LoadedFile file in files )
 			{
-				IPicture[] pictures = file.Id3v2Tag.Pictures;
+				IPicture[] pictures = file.Tag.Pictures;
 				if( pictures == null || pictures.Length == 0 || mode == Mode.All )
 				{
 					// https://stackoverflow.com/questions/7237346/having-trouble-writing-artwork-with-taglib-sharp-2-0-4-0-in-net
@@ -194,7 +193,7 @@ namespace TeslaTags.QuickFix
 					Int32 idx = pictures.GetUpperBound(0);
 					pictures[idx] = newPicture;
 
-					file.Id3v2Tag.Pictures = pictures;
+					file.Tag.Pictures = pictures;
 					file.IsModified = true;
 
 					Console.WriteLine( "Updated \"{0}\". Now has {1} pictures.", file.FileInfo.Name, pictures.Length );
@@ -208,14 +207,14 @@ namespace TeslaTags.QuickFix
 
 		private static void RemoveApe( List<LoadedFile> files )
 		{
-			foreach( LoadedFile file in files )
+			foreach( MpegLoadedFile mpegFile in files.OfType<MpegLoadedFile>() )
 			{
-				TagLib.Ape.Tag apeTag = (TagLib.Ape.Tag)file.AudioFile.GetTag(TagTypes.Ape);
+				TagLib.Ape.Tag apeTag = (TagLib.Ape.Tag)mpegFile.MpegAudioFile.GetTag(TagTypes.Ape);
 				if( apeTag != null )
 				{
-					file.AudioFile.RemoveTags( TagTypes.Ape );
-					file.IsModified = true;
-					Console.WriteLine( "Removed APE tag from \"{0}\".", file.FileInfo.Name );
+					mpegFile.MpegAudioFile.RemoveTags( TagTypes.Ape );
+					mpegFile.IsModified = true;
+					Console.WriteLine( "Removed APE tag from \"{0}\".", mpegFile.FileInfo.Name );
 				}
 			}
 		}

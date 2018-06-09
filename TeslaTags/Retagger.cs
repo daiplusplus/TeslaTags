@@ -176,7 +176,7 @@ namespace TeslaTags
 
 			if( titleRequired )
 			{
-				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.Title ) )
+				if( String.IsNullOrWhiteSpace( file.Tag.Title ) )
 				{
 					isValid = false;
 					messages.AddFileError( file.FileInfo.FullName, "Title ID3V2 tag not set." );
@@ -185,7 +185,7 @@ namespace TeslaTags
 
 			if( artistRequired )
 			{
-				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.FirstPerformer ) )
+				if( String.IsNullOrWhiteSpace( file.Tag.FirstPerformer ) )
 				{
 					isValid = false;
 					messages.AddFileError( file.FileInfo.FullName, "Artist ID3V2 tag not set." );
@@ -193,34 +193,35 @@ namespace TeslaTags
 			}
 
 			// Check for APE tags:
+			if( file is MpegLoadedFile mpegFile )
 			{
-				TagLib.Ape.Tag apeTag = (TagLib.Ape.Tag)file.AudioFile.GetTag(TagTypes.Ape);
+				TagLib.Ape.Tag apeTag = (TagLib.Ape.Tag)mpegFile.MpegAudioFile.GetTag(TagTypes.Ape);
 				if( apeTag != null )
 				{
 					messages.AddFileWarning( file.FileInfo.FullName, "File has APE tags. Tesla's MCU may be unable to play this file." );
 				}
 			}
 
-			if( file.Id3v2Tag.Performers?.Length > 1 ) messages.AddFileWarning( file.FileInfo.FullName, "Has multiple Artists: \"{0}\". The first value was used.", file.Id3v2Tag.JoinedPerformers );
+			if( file.Tag.Performers?.Length > 1 ) messages.AddFileWarning( file.FileInfo.FullName, "Has multiple Artists: \"{0}\". The first value was used.", file.Tag.JoinedPerformers );
 
 			//
 
 			if( albumArtistRequired )
 			{
-				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.FirstAlbumArtist ) )
+				if( String.IsNullOrWhiteSpace( file.Tag.FirstAlbumArtist ) )
 				{
 					isValid = false;
 					messages.AddFileError( file.FileInfo.FullName, "Album-Artist ID3V2 tag not set." );
 				}
 			}
 
-			if( file.Id3v2Tag.AlbumArtists?.Length > 1 ) messages.AddFileWarning( file.FileInfo.FullName,  "Has multiple AlbumArtists: \"{0}\". The first value was used.", file.Id3v2Tag.JoinedAlbumArtists );
+			if( file.Tag.AlbumArtists?.Length > 1 ) messages.AddFileWarning( file.FileInfo.FullName,  "Has multiple AlbumArtists: \"{0}\". The first value was used.", file.Tag.JoinedAlbumArtists );
 
 			//
 
 			if( albumRequired )
 			{
-				if( String.IsNullOrWhiteSpace( file.Id3v2Tag.Album ) )
+				if( String.IsNullOrWhiteSpace( file.Tag.Album ) )
 				{
 					isValid = false;
 					messages.AddFileError( file.FileInfo.FullName, "Album ID3V2 tag not set." );
@@ -231,7 +232,7 @@ namespace TeslaTags
 
 			if( trackNumberRequired )
 			{
-				if( file.Id3v2Tag.Track == 0 || file.Id3v2Tag.Track > 250 )
+				if( file.Tag.Track == 0 || file.Tag.Track > 250 )
 				{
 					// Only fail a track if the filename starts with a digit and the track field is missing:
 					if( _startsWithDigits.IsMatch( file.FileInfo.Name ) )
@@ -249,16 +250,16 @@ namespace TeslaTags
 
 			if( warnIfTrackNumberPresent )
 			{
-				if( file.Id3v2Tag.Track != 0 ) messages.AddFileWarning( file.FileInfo.FullName, "Assorted file has a track number. This program cannot currently remove track numbers. Please use another program to remove/clear this tag field." );
+				if( file.Tag.Track != 0 ) messages.AddFileWarning( file.FileInfo.FullName, "Assorted file has a track number. This program cannot currently remove track numbers. Please use another program to remove/clear this tag field." );
 				
-				if( file.Id3v2Tag.Disc  != 0 ) messages.AddFileWarning( file.FileInfo.FullName, "Assorted file has a disc number. This program cannot currently remove disc numbers. Please use another program to remove/clear this tag field." );
+				if( file.Tag.Disc  != 0 ) messages.AddFileWarning( file.FileInfo.FullName, "Assorted file has a disc number. This program cannot currently remove disc numbers. Please use another program to remove/clear this tag field." );
 			}
 
 			//
 
 			if( warnMissingAlbumArt )
 			{
-				IPicture[] art = file.Id3v2Tag.Pictures;
+				IPicture[] art = file.Tag.Pictures;
 				if( art == null || art.Length == 0 )
 				{
 					messages.AddFileWarning( file.FileInfo.FullName, "No Album Art." ); // TODO: Validate the name/description of the IPicture? I'm not sure how Id3v2 stores it (using a 0-255 byte enum? but there are strings too, so does it matter?)
@@ -281,11 +282,11 @@ namespace TeslaTags
 
 			foreach( LoadedFile file in files )
 			{
-				UInt32 discAndTrack = ( file.Id3v2Tag.Disc * 100 ) + file.Id3v2Tag.Track;
+				UInt32 discAndTrack = ( file.Tag.Disc * 100 ) + file.Tag.Track;
 				if( discAndTrack != 0 )
 				{
 					Boolean isNewDiscAndTrack = uniqueDiscsAndTracks.Add( discAndTrack );
-					if( !isNewDiscAndTrack ) messages.AddFileWarning( file.FileInfo.FullName, "Duplicate Disc {0} and Track {1} tuple.", file.Id3v2Tag.Disc, file.Id3v2Tag.Track );
+					if( !isNewDiscAndTrack ) messages.AddFileWarning( file.FileInfo.FullName, "Duplicate Disc {0} and Track {1} tuple.", file.Tag.Disc, file.Tag.Track );
 				}
 
 				ValidateFile( file, albumArtistRequired: true, albumRequired: true, trackNumberRequired: true, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, messages );
@@ -297,15 +298,15 @@ namespace TeslaTags
 			// 1. Copy Artist to Title.
 			// 2. Use AlbumArtist as Artist (note that all tracks will have the same AlbumArtist value, so copy it from the first track).
 			
-			String albumArtist = files.First().Id3v2Tag.AlbumArtists.Single();
+			String albumArtist = files.First().Tag.AlbumArtists.Single();
 
 			foreach( LoadedFile file in files )
 			{
 				Boolean isValid = ValidateFile( file, albumArtistRequired: true, albumRequired: true, trackNumberRequired: true, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, messages );
 				if( isValid )
 				{
-					String oldArtist      = file.Id3v2Tag.Performers.First();
-					String oldTitle       = file.Id3v2Tag.Title;
+					String oldArtist      = file.Tag.Performers.First();
+					String oldTitle       = file.Tag.Title;
 
 					if( oldArtist != albumArtist )
 					{
@@ -316,9 +317,9 @@ namespace TeslaTags
 						messages.AddFileChange( file.FileInfo.FullName, "Title" , oldTitle , newTitle  );
 
 						// 1:
-						file.Id3v2Tag.Title = newTitle;
+						file.Tag.Title = newTitle;
 						// 2:
-						file.Id3v2Tag.Performers = new String[] { albumArtist };
+						file.Tag.Performers = new String[] { albumArtist };
 
 						file.IsModified = true;
 					}
@@ -339,8 +340,8 @@ namespace TeslaTags
 				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: true, trackNumberRequired: false /*true*/, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, messages );
 				if( isValid )
 				{
-					String oldArtist = file.Id3v2Tag.Performers.First();
-					String oldTitle  = file.Id3v2Tag.Title;
+					String oldArtist = file.Tag.Performers.First();
+					String oldTitle  = file.Tag.Title;
 
 					if( oldArtist != Values_VariousArtists )
 					{
@@ -351,9 +352,9 @@ namespace TeslaTags
 						messages.AddFileChange( file.FileInfo.FullName, "Title" , oldTitle , newTitle  );
 
 						// 1:
-						file.Id3v2Tag.Title = newTitle;
+						file.Tag.Title = newTitle;
 						// 2:
-						file.Id3v2Tag.Performers = new String[] { newArtist };
+						file.Tag.Performers = new String[] { newArtist };
 
 						file.IsModified = true;
 					}
@@ -374,14 +375,14 @@ namespace TeslaTags
 				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: false, trackNumberRequired: false, warnIfTrackNumberPresent: true, warnMissingAlbumArt: false, messages );
 				if( isValid )
 				{
-					String oldAlbum = file.Id3v2Tag.Album;
+					String oldAlbum = file.Tag.Album;
 
 					if( !String.IsNullOrWhiteSpace( oldAlbum ) )
 					{
 						messages.AddFileChange( file.FileInfo.FullName, "Album", oldAlbum, null );
 
 						// 1:
-						file.Id3v2Tag.Album = null;
+						file.Tag.Album = null;
 						//file.Id3v2Tag.Track = 0; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
 
 						file.IsModified = true;
@@ -401,7 +402,7 @@ namespace TeslaTags
 				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: false, trackNumberRequired: false, warnIfTrackNumberPresent: true, warnMissingAlbumArt: false, messages );
 				if( isValid )
 				{
-					String oldAlbum = file.Id3v2Tag.Album;
+					String oldAlbum = file.Tag.Album;
 					String newAlbum = Values_NoAlbum;
 
 					if( oldAlbum != newAlbum )
@@ -409,7 +410,7 @@ namespace TeslaTags
 						messages.AddFileChange( file.FileInfo.FullName, "Album", oldAlbum, newAlbum );
 
 						// 1:
-						file.Id3v2Tag.Album = newAlbum;
+						file.Tag.Album = newAlbum;
 						//file.Id3v2Tag.Track = 0; // uugghhh, but the user gets warned anyway.
 
 						file.IsModified = true;

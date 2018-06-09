@@ -6,7 +6,8 @@ using System.Linq;
 using System.Text;
 
 using TagLib;
-using TagLib.Mpeg;
+using mpeg = TagLib.Mpeg;
+using flac = TagLib.Flac;
 
 namespace TeslaTags
 {
@@ -49,7 +50,7 @@ namespace TeslaTags
 					{
 						try
 						{
-							file.AudioFile.Save();
+							file.Save();
 						}
 						catch(Exception ex)
 						{
@@ -66,7 +67,6 @@ namespace TeslaTags
 			{
 				foreach( LoadedFile file in files )
 				{
-					file.AudioFile.Dispose();
 					file.Dispose();
 				}
 			}
@@ -75,38 +75,18 @@ namespace TeslaTags
 		public static List<LoadedFile> LoadFiles( String directoryPath, List<Message> messages )
 		{
 			DirectoryInfo di = new DirectoryInfo( directoryPath );
-			FileInfo[] mp3s = di.GetFiles("*.mp3");
+
+			List<FileInfo> audioFiles = new List<FileInfo>();
+			audioFiles.AddRange( di.GetFiles("*.mp3") );
+			audioFiles.AddRange( di.GetFiles("*.flac") );
 
 			List<LoadedFile> files = new List<LoadedFile>();
-			foreach( FileInfo fi in mp3s )
+			foreach( FileInfo fi in audioFiles )
 			{
-				TagLib.File file = null;
-				try
-				{
-					file = TagLib.File.Create( fi.FullName );
-					if( file.CorruptionReasons?.Any() ?? false )
-					{
-						foreach( String reason in file.CorruptionReasons )
-						{
-							messages.Add( new Message( MessageSeverity.Error, directoryPath, fi.FullName, "File corrupted: " + reason ) );
-						}
-					}
-
-					if( file is AudioFile audioFile )
-					{
-						TagLib.Id3v2.Tag id3v2 = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2);
-						files.Add( new LoadedFile( fi, audioFile, id3v2 ) );
-					}
-					else
-					{
-						file.Dispose();
-					}
-				}
-				catch(Exception ex)
-				{
-					messages.Add( new Message( MessageSeverity.Error, directoryPath, fi.FullName, "Could not load file: " + ex.Message ) );
-					if( file != null ) file.Dispose();
-				}
+				LoadedFile loadedFile;
+				if( fi.Extension.ToUpperInvariant() == ".MP3" ) loadedFile = MpegLoadedFile.Create( fi, messages );
+				else if( fi.Extension.ToUpperInvariant() == ".FLAC" ) loadedFile = FlacLoadedFile.Create( fi, messages );
+				else continue;
 			}
 
 			return files;
@@ -128,7 +108,7 @@ namespace TeslaTags
 		{
 			if( files.Count == 0 ) return FolderType.Empty;
 
-			List<TagSummary> filesTags = files.Select( f => TagSummary.Create( f.Id3v2Tag ) ).ToList();
+			List<TagSummary> filesTags = files.Select( f => TagSummary.Create( f.Tag ) ).ToList();
 
 			Boolean allAlbumArtistsAreVariousArtists = filesTags.All( ft => ft.AlbumArtist.EqualsCI( Retagger.Values_VariousArtists ) ); //files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
 
@@ -204,15 +184,15 @@ namespace TeslaTags
 
 		class TagSummary
 		{
-			public static TagSummary Create(TagLib.Id3v2.Tag id3v2Tag)
+			public static TagSummary Create(Tag tag)
 			{
 				return new TagSummary(
-					id3v2Tag.FirstPerformer,
-					id3v2Tag.FirstAlbumArtist,
-					id3v2Tag.Album,
-					id3v2Tag.Track,
-					id3v2Tag.Disc,
-					id3v2Tag.Year
+					tag.FirstPerformer,
+					tag.FirstAlbumArtist,
+					tag.Album,
+					tag.Track,
+					tag.Disc,
+					tag.Year
 				);
 			}
 
@@ -241,6 +221,22 @@ namespace TeslaTags
 		public static Boolean EqualsCI( this String x, String y )
 		{
 			return String.Equals( x, y, StringComparison.OrdinalIgnoreCase );
+		}
+
+		/// <summary>Returns false if there were no reasons.</summary>
+		public static Boolean AddFileCorruptionErrors( this List<Message> messages, String filePath, IEnumerable<String> corruptionReasons )
+		{
+			if( corruptionReasons == null ) return false;
+			
+			Boolean any = false;
+
+			foreach( String reason in corruptionReasons )
+			{
+				messages.AddFileError( filePath, "File corrupted: " + reason );
+				any = true;
+			}
+
+			return any;
 		}
 
 		public static void AddFileWarning( this List<Message> messages, String filePath, String text )
