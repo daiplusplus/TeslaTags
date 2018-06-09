@@ -6,7 +6,7 @@ using TagLib.Mpeg;
 
 namespace TeslaTags
 {
-	internal sealed class LoadedFile : IDisposable
+	public sealed class LoadedFile : IDisposable
 	{
 		public LoadedFile( FileInfo fileInfo, AudioFile audioFile, TagLib.Id3v2.Tag id3v2Tag )
 		{

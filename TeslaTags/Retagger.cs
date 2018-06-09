@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using TagLib;
@@ -164,6 +165,8 @@ namespace TeslaTags
 			}
 		}
 
+		private static readonly Regex _startsWithDigits = new Regex( @"^\d+", RegexOptions.Compiled | RegexOptions.IgnoreCase );
+
 		private static Boolean ValidateFile( LoadedFile file, Boolean albumArtistRequired, Boolean albumRequired, Boolean trackNumberRequired, Boolean warnIfTrackNumberPresent, Boolean warnMissingAlbumArt, List<Message> messages )
 		{
 			const Boolean titleRequired = true;
@@ -186,6 +189,15 @@ namespace TeslaTags
 				{
 					isValid = false;
 					messages.AddFileError( file.FileInfo.FullName, "Artist ID3V2 tag not set." );
+				}
+			}
+
+			// Check for APE tags:
+			{
+				TagLib.Ape.Tag apeTag = (TagLib.Ape.Tag)file.AudioFile.GetTag(TagTypes.Ape);
+				if( apeTag != null )
+				{
+					messages.AddFileWarning( file.FileInfo.FullName, "File has APE tags. Tesla's MCU may be unable to play this file." );
 				}
 			}
 
@@ -221,8 +233,17 @@ namespace TeslaTags
 			{
 				if( file.Id3v2Tag.Track == 0 || file.Id3v2Tag.Track > 250 )
 				{
-					isValid = false;
-					messages.AddFileError( file.FileInfo.FullName, "TrackNumber ID3V2 tag not set or invalid." );
+					// Only fail a track if the filename starts with a digit and the track field is missing:
+					if( _startsWithDigits.IsMatch( file.FileInfo.Name ) )
+					{
+						isValid = false;
+						messages.AddFileError( file.FileInfo.FullName, "Filename starts with a number, but the TrackNumber ID3V2 tag is not set or is invalid." );
+					}
+					else
+					{
+						// don't fail a track if the only thing missing is the track number. Just make it a warning.
+						messages.AddFileWarning( file.FileInfo.FullName, "TrackNumber ID3V2 tag not set or invalid." );
+					}
 				}
 			}
 
@@ -255,8 +276,18 @@ namespace TeslaTags
 		{
 			// NOOP. Handled correctly.
 			// But do file validation.
+
+			HashSet<UInt32> uniqueDiscsAndTracks = new HashSet<UInt32>();
+
 			foreach( LoadedFile file in files )
 			{
+				UInt32 discAndTrack = ( file.Id3v2Tag.Disc * 100 ) + file.Id3v2Tag.Track;
+				if( discAndTrack != 0 )
+				{
+					Boolean isNewDiscAndTrack = uniqueDiscsAndTracks.Add( discAndTrack );
+					if( !isNewDiscAndTrack ) messages.AddFileWarning( file.FileInfo.FullName, "Duplicate Disc {0} and Track {1} tuple.", file.Id3v2Tag.Disc, file.Id3v2Tag.Track );
+				}
+
 				ValidateFile( file, albumArtistRequired: true, albumRequired: true, trackNumberRequired: true, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, messages );
 			}
 		}

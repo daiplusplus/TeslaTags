@@ -10,7 +10,7 @@ using TagLib.Mpeg;
 
 namespace TeslaTags
 {
-	static class Folder
+	public static class Folder
 	{
 		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String directoryPath, Boolean readOnly, List<Message> messages)
 		{
@@ -72,7 +72,7 @@ namespace TeslaTags
 			}
 		}
 
-		private static List<LoadedFile> LoadFiles( String directoryPath, List<Message> messages )
+		public static List<LoadedFile> LoadFiles( String directoryPath, List<Message> messages )
 		{
 			DirectoryInfo di = new DirectoryInfo( directoryPath );
 			FileInfo[] mp3s = di.GetFiles("*.mp3");
@@ -112,13 +112,25 @@ namespace TeslaTags
 			return files;
 		}
 
+		private static String GetList( List<TagSummary> list, Func<TagSummary,String> selector )
+		{
+			List<String> values = list
+				.Select( ft => selector( ft ) ) 
+				.Distinct()
+				.OrderBy( str => str )
+				.Select( str => String.IsNullOrWhiteSpace( str ) ? "null" : ( '"' + str + '"' ) )
+				.ToList();
+
+			return String.Join( ",", values );
+		}
+
 		private static FolderType DetermineFolderType( String directoryPath, List<LoadedFile> files, List<Message> messages )
 		{
 			if( files.Count == 0 ) return FolderType.Empty;
 
 			List<TagSummary> filesTags = files.Select( f => TagSummary.Create( f.Id3v2Tag ) ).ToList();
 
-			Boolean allAlbumArtistsAreVariousArtists = filesTags.All( ft => ft.AlbumArtist.EqualsCI( "Various Artists" ) ); //files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
+			Boolean allAlbumArtistsAreVariousArtists = filesTags.All( ft => ft.AlbumArtist.EqualsCI( Retagger.Values_VariousArtists ) ); //files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
 
 			String  firstAlbumArtist   = filesTags.First().AlbumArtist; //files.First().Id3v2Tag.AlbumArtists.FirstOrDefault();
 			Boolean allSameAlbumArtist = filesTags.All( ft => ft.AlbumArtist.EqualsCI( firstAlbumArtist ) ); //files.All( f => String.Equals( firstAlbumArtist, f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
@@ -136,50 +148,57 @@ namespace TeslaTags
 
 				if( sameAlbum ) return FolderType.CompilationAlbum;
 
-				List<String> differentAlbums = filesTags
-					.Select( ft => "\"" + ft.Album + "\"" )
-					.Distinct()
-					.OrderBy( s => s )
-					.ToList();
-
-				String messageText = "Unexpected folder type: All tracks have AlbumArtist = \"Various Artists\", but they have different Album values: " + String.Join( ", ", differentAlbums );
+				String differentAlbums = GetList( filesTags, ft => ft.Album );
+				String messageText = "Unexpected folder type: All tracks have AlbumArtist = \"Various Artists\", but they have different Album values: " + differentAlbums;
 				messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, messageText ) );
 				return FolderType.UnableToDetermine;
 			}
 			else
 			{
-				if( allSameArtist && sameAlbum ) return FolderType.ArtistAlbum;
+				if( allSameArtist )
+				{
+					if     ( noAlbum   ) return FolderType.ArtistAssorted;
+					else if( sameAlbum ) return FolderType.ArtistAlbum;
+					else
+					{
+						String differentAlbums = GetList( filesTags, ft => ft.Album );
+						messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, "Folder has same artist, but has multiple albums (" + differentAlbums + "). " ) );
+						return FolderType.UnableToDetermine;
+					}
+				}
+				else if( allSameAlbumArtist )
+				{
+					if( noAlbum )
+					{
+						messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, "Folder has no albums" ) );
+						return FolderType.UnableToDetermine;
+					}
+					else if( sameAlbum )
+					{
+						return FolderType.ArtistAlbumWithGuestArtists;
+					}
+					else
+					{
+						String differentArtists = GetList( filesTags, ft => ft.Artist );
+						String differentAlbums  = GetList( filesTags, ft => ft.Album );
 
-				if( allSameAlbumArtist && sameAlbum ) return FolderType.ArtistAlbumWithGuestArtists;
+						messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, "Folder has same album-artist, but multiple artists (" + differentArtists + ") or multiple albums (" + differentAlbums + "). " ) );
+						return FolderType.UnableToDetermine;
+					}
+				}
+				else
+				{
+					// Different Artists and/or Album Artists and/or Albums, i.e. a mess. Inform the user to tidy it up.
 
-				if( noAlbum ) return FolderType.ArtistAssorted;
+					
+					String differentArtists      = GetList( filesTags, ft => ft.Artist );
+					String differentAlbums       = GetList( filesTags, ft => ft.Album );
+					String differentAlbumArtists = GetList( filesTags, ft => ft.AlbumArtist );
 
-				List<String> differentArtists = filesTags
-					.Select( ft => "\"" + ft.Artist + "\"" )
-					.Distinct()
-					.OrderBy( s => s)
-					.ToList();
-
-				List<String> differentAlbumArtists = filesTags
-					.Select( ft => "\"" + ft.AlbumArtist + "\"" )
-					.Distinct()
-					.OrderBy( s => s)
-					.ToList();
-
-				List<String> differentAlbums = filesTags
-					.Select( ft => "\"" + ft.Album + "\"" )
-					.Distinct()
-					.OrderBy( s => s )
-					.ToList();
-
-				StringBuilder sb = new StringBuilder("Unexpected folder type: ");
-
-				if( differentArtists     .Count > 1 ) sb.Append( "Folder has multiple artists ("       + String.Join( ",", differentArtists      ) + "). " );
-				if( differentAlbumArtists.Count > 1 ) sb.Append( "Folder has multiple album-artists (" + String.Join( ",", differentAlbumArtists ) + "). " );
-				if( differentAlbums      .Count > 1 ) sb.Append( "Folder has multiple albums ("        + String.Join( ",", differentAlbums       ) + "). " );
-
-				messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, sb.ToString() ) );
-				return FolderType.UnableToDetermine;
+					String messageText = "Folder has multiple artists (" + differentArtists + "), albums (" + differentAlbums + ") or album-artists (" + differentAlbumArtists + ").";
+					messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, messageText ) );
+					return FolderType.UnableToDetermine;
+				}
 			}
 		}
 

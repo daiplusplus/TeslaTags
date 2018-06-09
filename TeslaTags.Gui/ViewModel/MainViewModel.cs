@@ -173,6 +173,7 @@ namespace TeslaTags.Gui
 		void ITeslaTagEventsListener.Complete(Boolean stoppedEarly)
 		{
 			this.IsBusy = this.teslaTagsService.IsBusy;
+			if( !stoppedEarly ) this.ProgressPerc = 1;
 		}
 
 		#endregion

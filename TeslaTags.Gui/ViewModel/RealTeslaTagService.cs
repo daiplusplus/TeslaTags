@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Linq;
 
 namespace TeslaTags.Gui
 {
@@ -39,15 +40,17 @@ namespace TeslaTags.Gui
 				this.EventsListener?.GotDirectories( directories );
 
 				Single count = 0;
-				Single total = directories.Count;
+				Single total = directories.Count( s => s != null );
 
 				foreach( String directoryPath in directories )
 				{
 					if( this.stopRequested ) break;
-					if( directoryPath == null ) continue;
 
-					DirectoryResult result = tp.ProcessDirectory( directoryPath, this.isReadOnlyMode );
-					this.EventsListener?.DirectoryUpdate( directoryPath, result.FolderType, result.ModifiedFiles, result.TotalFiles, ++count / total, result.Messages );
+					if( directoryPath != null )
+					{
+						DirectoryResult result = tp.ProcessDirectory( directoryPath, this.isReadOnlyMode );
+						this.EventsListener?.DirectoryUpdate( directoryPath, result.FolderType, result.ModifiedFiles, result.TotalFiles, ++count / total, result.Messages );
+					}
 				}
 			}
 
