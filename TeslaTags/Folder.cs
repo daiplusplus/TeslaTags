@@ -80,16 +80,18 @@ namespace TeslaTags
 			audioFiles.AddRange( di.GetFiles("*.mp3") );
 			audioFiles.AddRange( di.GetFiles("*.flac") );
 
-			List<LoadedFile> files = new List<LoadedFile>();
+			List<LoadedFile> loadedFiles = new List<LoadedFile>();
 			foreach( FileInfo fi in audioFiles )
 			{
 				LoadedFile loadedFile;
 				if( fi.Extension.ToUpperInvariant() == ".MP3" ) loadedFile = MpegLoadedFile.Create( fi, messages );
 				else if( fi.Extension.ToUpperInvariant() == ".FLAC" ) loadedFile = FlacLoadedFile.Create( fi, messages );
 				else continue;
+
+				loadedFiles.Add( loadedFile );
 			}
 
-			return files;
+			return loadedFiles;
 		}
 
 		private static String GetList( List<TagSummary> list, Func<TagSummary,String> selector )

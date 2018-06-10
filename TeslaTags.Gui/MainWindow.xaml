@@ -108,7 +108,7 @@
 							<DataGrid.Columns>
 								<DataGridTextColumn Header="Severity" Binding="{Binding Severity}"     ElementStyle="{StaticResource txtCol}" />
 								<DataGridTextColumn Header="Path"     Binding="{Binding RelativePath}" ElementStyle="{StaticResource txtCol}" />
-								<DataGridTextColumn Header="Message"  Binding="{Binding Text}"         ElementStyle="{StaticResource txtCol}" />
+								<DataGridTextColumn Header="Message"  Binding="{Binding Text}"         ElementStyle="{StaticResource txtCol}" MaxWidth="500" />
 							</DataGrid.Columns>
 						</DataGrid>
 
