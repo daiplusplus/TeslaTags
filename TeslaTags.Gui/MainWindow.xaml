@@ -9,7 +9,7 @@
 	x:Class="TeslaTags.Gui.MainWindow"
 	DataContext="{Binding Source={StaticResource Locator}, Path=MainWindow}"
 	
-	Title="TeslaTags"
+	Title="TeslaTags - Because the music library on a $100,000 car SHOULD WORK PROPERLY!"
 	Height="450"
 	Width="800"
 	
