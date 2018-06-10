@@ -79,8 +79,6 @@
     <Compile Include="ViewModel\DesignTeslaTagService.cs" />
     <Compile Include="ViewModel\DispatchTeslaTagEventsListener.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
-    <Compile Include="ViewModel\RealTeslaTagService.cs" />
-    <Compile Include="ViewModel\TeslaTagService.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

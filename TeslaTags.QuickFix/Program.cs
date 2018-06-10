@@ -109,6 +109,9 @@ namespace TeslaTags.QuickFix
 
 		private static void AutoTrackNumbers( List<LoadedFile> files, Mode mode )
 		{
+			throw new NotImplementedException();
+			/*
+
 			if( mode == Mode.Prompt )
 			{
 				Console.WriteLine( "Confirm reset of track numbers. [A] All. [Y] Only missing. [N]. No." );
@@ -141,6 +144,7 @@ namespace TeslaTags.QuickFix
 					}
 				}
 			}
+			*/
 		}
 
 		private enum Mode

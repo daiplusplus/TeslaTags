@@ -12,6 +12,8 @@
 	Title="TeslaTags"
 	Height="450"
 	Width="800"
+	
+	ResizeMode="CanResizeWithGrip"
 >
 	<Window.Resources>
 		<SolidColorBrush x:Key="gl" Color="#FFCCCCCC" />
@@ -42,6 +44,14 @@
 			</Style.Triggers>
 		</Style>
 
+		<Style TargetType="{x:Type Button}">
+			<!-- https://msdn.microsoft.com/en-us/library/windows/desktop/dn742402(v=vs.85).aspx -->
+			<Setter Property="MinWidth" Value="73" />
+			<Setter Property="MinHeight" Value="21" /> <!-- Doc says 23px when using Win32 for 21px visual height. In WPF we can set 21px directly. -->
+			<Setter Property="Margin" Value="4" />
+			<Setter Property="Padding" Value="8,1,8,1" />
+		</Style>
+		
 	</Window.Resources>
 	
 	<Grid>
@@ -63,13 +73,13 @@
 			</Grid.ColumnDefinitions>
 
 			<Label Grid.Column="0" Margin="3" Content="Music root" />
-			<TextBox Grid.Column="1" VerticalAlignment="Center" Margin="3" IsEnabled="{Binding IsNotBusy}" Text="{Binding DirectoryPath}"  />
+			<TextBox Grid.Column="1" VerticalAlignment="Center" Margin="4" IsEnabled="{Binding IsNotBusy}" Text="{Binding DirectoryPath}"  />
 
 			<StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-				<Button Margin="3" Width="75" Content="Browse..." Name="browseButton" />
+				<Button Content="Browse..." Name="browseButton" />
 				<CheckBox Margin="3" Content="Validate only" VerticalAlignment="Center" IsChecked="{Binding OnlyValidate}" />
-				<Button Margin="3" Width="75" Content="Start" Command="{Binding StartCommand}" />
-				<Button Margin="3" Width="75" Content="Stop" Command="{Binding StopCommand}" />
+				<Button Content="Start" Command="{Binding StartCommand}" />
+				<Button Content="Stop" Command="{Binding StopCommand}" />
 			</StackPanel>
 
 		</Grid>
@@ -82,6 +92,8 @@
 			HorizontalGridLinesBrush="{StaticResource gl}"
 			VerticalGridLinesBrush="{StaticResource gl}"
 			AutoGenerateColumns="False"
+			SelectedItem="{Binding SelectedDirectory}"
+			HeadersVisibility="Column"
 		>
 			<DataGrid.Columns>
 				<DataGridTextColumn Header="Directory"      Binding="{Binding DisplayDirectoryPath}"  ElementStyle="{StaticResource txtCol}" IsReadOnly="True" />
@@ -95,7 +107,40 @@
 
 			<DataGrid.RowDetailsTemplate>
 				<DataTemplate>
-					<StackPanel Margin="50,10,10,10">
+					<StackPanel Margin="30,10,10,10">
+
+						<StackPanel Orientation="Horizontal">
+							<Button Command="{Binding OpenFolderCommand}"      Content="Open folder in Explorer" />
+							
+							<Button Command="{Binding RemoveApeTagsCommand}"   Content="Remove APE tags" />
+						</StackPanel>
+
+						<Separator />
+
+						<StackPanel Orientation="Horizontal">
+							<Label Content="Set track numbers" VerticalAlignment="Center" Margin="0,0,10,0" />
+							
+							<Label Content="Offset:" VerticalAlignment="Center" />
+							<TextBox Text="{Binding TrackNumberOffset}" Width="40" VerticalContentAlignment="Center" Margin="4" HorizontalAlignment="Right" HorizontalContentAlignment="Right" />
+
+							<Label Content="Disc number:" VerticalAlignment="Center" />
+							<TextBox Text="{Binding DiscNumber}" Width="40" VerticalContentAlignment="Center" Margin="4" HorizontalAlignment="Right" HorizontalContentAlignment="Right" />
+
+							<Button Command="{Binding SetTrackNumbersCommand}" Content="Set track numbers"  />
+						</StackPanel>
+						
+						<Separator />
+
+						<StackPanel Orientation="Horizontal">
+							<Label Content="Set album art image" VerticalAlignment="Center" />
+							<ComboBox IsEditable="True" ItemsSource="{Binding ImagesInFolder}" IsSynchronizedWithCurrentItem="True" Width="250" VerticalAlignment="Center" Margin="4" Text="{Binding SelectedImageFileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+							<Button Content="Browse..." VerticalAlignment="Center"  />
+							<CheckBox Content="Replace all existing art" IsChecked="{Binding ReplaceAllAlbumArt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" />
+							<Button Content="Apply"  VerticalAlignment="Center" Command="{Binding ApplyAlbumArtCommand}" />
+							<Label Content="{Binding AlbumArtMessage}" />
+						</StackPanel>
+						
+						<Separator />
 
 						<Label Content="Messages" />
 						<DataGrid
@@ -104,6 +149,7 @@
 							AutoGenerateColumns="False"
 							HorizontalGridLinesBrush="{StaticResource gl}"
 							VerticalGridLinesBrush="{StaticResource gl}"
+							HeadersVisibility="Column"
 						>
 							<DataGrid.Columns>
 								<DataGridTextColumn Header="Severity" Binding="{Binding Severity}"     ElementStyle="{StaticResource txtCol}" />

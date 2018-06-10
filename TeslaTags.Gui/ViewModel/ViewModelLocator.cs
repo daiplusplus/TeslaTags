@@ -11,11 +11,10 @@
   See http://www.galasoft.ch/mvvm
 */
 
+using CommonServiceLocator;
+
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
-
-using CommonServiceLocator;
-using System.Configuration;
 
 namespace TeslaTags.Gui.ViewModel
 {
@@ -36,6 +35,8 @@ namespace TeslaTags.Gui.ViewModel
 				// Create run time view services and models
 				SimpleIoc.Default.Register<ITeslaTagsService,RealTeslaTagService>();
 			}
+
+			SimpleIoc.Default.Register<ITeslaTagUtilityService,RealTeslaTagUtilityService>();
 
 			SimpleIoc.Default.Register<MainViewModel>();
 		}

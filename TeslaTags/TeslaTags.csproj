@@ -54,6 +54,8 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Retagger.cs" />
+    <Compile Include="Services\ITeslaTagService.cs" />
+    <Compile Include="Services\RealTeslaTagService.cs" />
     <Compile Include="Values.cs" />
   </ItemGroup>
   <ItemGroup>

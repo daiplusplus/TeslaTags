@@ -139,10 +139,12 @@ namespace TeslaTags
 					else if( sameAlbum )
 					{
 						// If none of the files have track-numbers in their filenames and they're all lacking track number tags, then it's something like a video-game soundtrack dump where track-numbers don't apply:
-						Boolean noneHaveTrackNumbers = files.All( ft => ft.Tag.Track == 0 );
-						Boolean noneHaveTrackNames   = files.All( ft => !Values.FileNameTrackNumberRegex.IsMatch( ft.FileInfo.Name ) );
-						
-						if( noneHaveTrackNumbers && noneHaveTrackNames  ) return FolderType.ArtistAlbumNoTrackNumbers;
+						Boolean noneHaveTrackNumberTags  = files.All( ft => ft.Tag.Track == 0 );
+
+						var folderDiscTrackInfo = Values.GetDiscTrackNumberForAllFiles( directoryPath );
+						Boolean noneHaveTrackNumberNames = folderDiscTrackInfo.hasBest && folderDiscTrackInfo.files.Values.Any( t => t.track != null );
+
+						if( noneHaveTrackNumberTags && noneHaveTrackNumberNames ) return FolderType.ArtistAlbumNoTrackNumbers;
 
 						return FolderType.ArtistAlbum;
 					}
@@ -197,6 +199,11 @@ namespace TeslaTags
 			return String.Equals( x, y, StringComparison.OrdinalIgnoreCase );
 		}
 
+		public static void AddInfo( this List<Message> messages, String filePath, String text )
+		{
+			messages.Add( new Message( MessageSeverity.Info, Path.GetDirectoryName( filePath ), filePath, text ) );
+		}
+
 		/// <summary>Returns false if there were no reasons.</summary>
 		public static Boolean AddFileCorruptionErrors( this List<Message> messages, String filePath, IEnumerable<String> corruptionReasons )
 		{
@@ -231,6 +238,11 @@ namespace TeslaTags
 		public static void AddFileError( this List<Message> messages, String filePath, String format, params Object[] args )
 		{
 			Extensions.AddFileError( messages, filePath, text: String.Format( CultureInfo.InvariantCulture, format, args ) );
+		}
+
+		public static void AddFileChange( this List<Message> messages, String filePath, String messageText )
+		{
+			messages.Add( new Message( MessageSeverity.FileModification, Path.GetDirectoryName( filePath ), filePath, messageText ) );
 		}
 
 		public static void AddFileChange( this List<Message> messages, String filePath, String field, String oldValue, String newValue )
