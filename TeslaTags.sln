@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeslaTags.Gui", "TeslaTags.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeslaTags.QuickFix", "TeslaTags.QuickFix\TeslaTags.QuickFix.csproj", "{00C86126-7A1E-49F0-86BF-22EC16A20AA8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeslaTags.Tests", "TeslaTags.Tests\TeslaTags.Tests.csproj", "{75366CB1-75C2-46C0-81FB-25D864E850ED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{00C86126-7A1E-49F0-86BF-22EC16A20AA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00C86126-7A1E-49F0-86BF-22EC16A20AA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00C86126-7A1E-49F0-86BF-22EC16A20AA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75366CB1-75C2-46C0-81FB-25D864E850ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75366CB1-75C2-46C0-81FB-25D864E850ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75366CB1-75C2-46C0-81FB-25D864E850ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75366CB1-75C2-46C0-81FB-25D864E850ED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
