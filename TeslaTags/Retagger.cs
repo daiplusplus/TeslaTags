@@ -1,18 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 using TagLib;
-using TagLib.Id3v1;
-using TagLib.Id3v2;
-using TagLib.Mpeg;
-//using TagLib.Ape;
-//using TagLib.Mpeg;
 
 namespace TeslaTags
 {
@@ -238,7 +230,7 @@ namespace TeslaTags
 					if( _startsWithDigits.IsMatch( file.FileInfo.Name ) )
 					{
 						isValid = false;
-						messages.AddFileError( file.FileInfo.FullName, "Filename starts with a number, but the TrackNumber ID3V2 tag is not set or is invalid." );
+						messages.AddFileWarning( file.FileInfo.FullName, "Filename starts with a number, but the TrackNumber ID3V2 tag is not set or is invalid." );
 					}
 					else
 					{
@@ -273,7 +265,7 @@ namespace TeslaTags
 			return isValid;
 		}
 
-		public static void RetagForArtistAlbum(List<LoadedFile> files, List<Message> messages)
+		public static void RetagForArtistAlbum(List<LoadedFile> files, List<Message> messages, Boolean trackNumbersExpected)
 		{
 			// NOOP. Handled correctly.
 			// But do file validation.
@@ -289,7 +281,7 @@ namespace TeslaTags
 					if( !isNewDiscAndTrack ) messages.AddFileWarning( file.FileInfo.FullName, "Duplicate Disc {0} and Track {1} tuple.", file.Tag.Disc, file.Tag.Track );
 				}
 
-				ValidateFile( file, albumArtistRequired: true, albumRequired: true, trackNumberRequired: true, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, messages );
+				ValidateFile( file, albumArtistRequired: true, albumRequired: true, trackNumberRequired: trackNumbersExpected, warnIfTrackNumberPresent: false, warnMissingAlbumArt: true, messages );
 			}
 		}
 
@@ -313,8 +305,8 @@ namespace TeslaTags
 						String newArtist      = albumArtist;
 						String newTitle       = oldArtist + " - " + oldTitle;
 
-						messages.AddFileChange( file.FileInfo.FullName, "Artist", oldArtist, newArtist );
-						messages.AddFileChange( file.FileInfo.FullName, "Title" , oldTitle , newTitle  );
+						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Performers), oldArtist, newArtist );
+						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Title)     , oldTitle , newTitle  );
 
 						// 1:
 						file.Tag.Title = newTitle;
@@ -326,9 +318,6 @@ namespace TeslaTags
 				}
 			}
 		}
-
-		public const String Values_VariousArtists = "Various Artists";
-		public const String Values_NoAlbum        = "No Album";
 
 		public static void RetagForCompilationAlbum(List<LoadedFile> files, List<Message> messages)
 		{
@@ -343,13 +332,13 @@ namespace TeslaTags
 					String oldArtist = file.Tag.Performers.First();
 					String oldTitle  = file.Tag.Title;
 
-					if( oldArtist != Values_VariousArtists )
+					if( oldArtist != Values.VariousArtistsConst )
 					{
-						String newArtist = Values_VariousArtists;
+						String newArtist = Values.VariousArtistsConst;
 						String newTitle  = oldArtist + " - " + oldTitle;
 
-						messages.AddFileChange( file.FileInfo.FullName, "Artist", oldArtist, newArtist );
-						messages.AddFileChange( file.FileInfo.FullName, "Title" , oldTitle , newTitle  );
+						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Performers), oldArtist, newArtist );
+						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Title)     , oldTitle , newTitle  );
 
 						// 1:
 						file.Tag.Title = newTitle;
@@ -379,7 +368,7 @@ namespace TeslaTags
 
 					if( !String.IsNullOrWhiteSpace( oldAlbum ) )
 					{
-						messages.AddFileChange( file.FileInfo.FullName, "Album", oldAlbum, null );
+						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Album), oldAlbum, null );
 
 						// 1:
 						file.Tag.Album = null;
@@ -403,11 +392,11 @@ namespace TeslaTags
 				if( isValid )
 				{
 					String oldAlbum = file.Tag.Album;
-					String newAlbum = Values_NoAlbum;
+					String newAlbum = Values.NoAlbumConst;
 
 					if( oldAlbum != newAlbum )
 					{
-						messages.AddFileChange( file.FileInfo.FullName, "Album", oldAlbum, newAlbum );
+						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Album), oldAlbum, newAlbum );
 
 						// 1:
 						file.Tag.Album = newAlbum;
@@ -425,6 +414,7 @@ namespace TeslaTags
 		// TODO: How to consider Disc folders?
 		Empty,
 		ArtistAlbum,
+		ArtistAlbumNoTrackNumbers,
 		ArtistAlbumWithGuestArtists,
 		ArtistAssorted,
 		CompilationAlbum,

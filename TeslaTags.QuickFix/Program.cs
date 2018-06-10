@@ -105,7 +105,7 @@ namespace TeslaTags.QuickFix
 			}
 		}
 
-		private static readonly Regex _fileNameTrackNumberRegex = new Regex( @"^(\d+)", RegexOptions.Compiled );
+		
 
 		private static void AutoTrackNumbers( List<LoadedFile> files, Mode mode )
 		{
@@ -124,7 +124,7 @@ namespace TeslaTags.QuickFix
 			{
 				if( file.Tag.Track == 0 || mode == Mode.All )
 				{
-					Match fileNameMatch = _fileNameTrackNumberRegex.Match( file.FileInfo.Name );
+					Match fileNameMatch = Values.FileNameTrackNumberRegex.Match( file.FileInfo.Name );
 					if( !fileNameMatch.Success )
 					{
 						Console.WriteLine( "Couldn't match {0}", file.FileInfo.Name );

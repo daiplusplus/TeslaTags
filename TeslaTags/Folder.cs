@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 using TagLib;
-using mpeg = TagLib.Mpeg;
-using flac = TagLib.Flac;
 
 namespace TeslaTags
 {
@@ -22,7 +19,8 @@ namespace TeslaTags
 				switch( folderType )
 				{
 					case FolderType.ArtistAlbum:
-						Retagger.RetagForArtistAlbum( files, messages );
+					case FolderType.ArtistAlbumNoTrackNumbers:
+						Retagger.RetagForArtistAlbum( files, messages, trackNumbersExpected: ( folderType != FolderType.ArtistAlbumNoTrackNumbers ) );
 						break;
 					case FolderType.ArtistAlbumWithGuestArtists:
 						Retagger.RetagForArtistAlbumWithGuestArtists( files, messages );
@@ -94,10 +92,10 @@ namespace TeslaTags
 			return loadedFiles;
 		}
 
-		private static String GetList( List<TagSummary> list, Func<TagSummary,String> selector )
+		private static String GetList( List<LoadedFile> files, Func<Tag,String> selector )
 		{
-			List<String> values = list
-				.Select( ft => selector( ft ) ) 
+			List<String> values = files
+				.Select( ft => selector( ft.Tag ) ) 
 				.Distinct()
 				.OrderBy( str => str )
 				.Select( str => String.IsNullOrWhiteSpace( str ) ? "null" : ( '"' + str + '"' ) )
@@ -110,19 +108,17 @@ namespace TeslaTags
 		{
 			if( files.Count == 0 ) return FolderType.Empty;
 
-			List<TagSummary> filesTags = files.Select( f => TagSummary.Create( f.Tag ) ).ToList();
+			Boolean allAlbumArtistsAreVariousArtists = files.All( f => f.Tag.FirstAlbumArtist.EqualsCI( Values.VariousArtistsConst ) ); //files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
 
-			Boolean allAlbumArtistsAreVariousArtists = filesTags.All( ft => ft.AlbumArtist.EqualsCI( Retagger.Values_VariousArtists ) ); //files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
+			String  firstAlbumArtist   = files.First().Tag.FirstAlbumArtist; //files.First().Id3v2Tag.AlbumArtists.FirstOrDefault();
+			Boolean allSameAlbumArtist = files.All( f => f.Tag.FirstAlbumArtist.EqualsCI( firstAlbumArtist ) ); //files.All( f => String.Equals( firstAlbumArtist, f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
 
-			String  firstAlbumArtist   = filesTags.First().AlbumArtist; //files.First().Id3v2Tag.AlbumArtists.FirstOrDefault();
-			Boolean allSameAlbumArtist = filesTags.All( ft => ft.AlbumArtist.EqualsCI( firstAlbumArtist ) ); //files.All( f => String.Equals( firstAlbumArtist, f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
+			String  firstArtist        = files.First().Tag.FirstPerformer; //files.First().Id3v2Tag.Performers.FirstOrDefault();
+			Boolean allSameArtist      = files.All( ft => ft.Tag.FirstPerformer.EqualsCI( firstArtist ) ); //files.All( f => String.Equals( firstArtist, f.Id3v2Tag.Performers.SingleOrDefault(), StringComparison.Ordinal ) );
 
-			String  firstArtist        = filesTags.First().Artist; //files.First().Id3v2Tag.Performers.FirstOrDefault();
-			Boolean allSameArtist      = filesTags.All( ft => ft.Artist.EqualsCI( firstArtist ) ); //files.All( f => String.Equals( firstArtist, f.Id3v2Tag.Performers.SingleOrDefault(), StringComparison.Ordinal ) );
-
-			String  firstAlbum         = filesTags.First().Album; //files.First().Id3v2Tag.Album;
-			Boolean sameAlbum          = filesTags.All( ft => ft.Album.EqualsCI( firstAlbum ) ); //files.All( f => String.Equals( firstAlbum, f.Id3v2Tag.Album, StringComparison.Ordinal ) );
-			Boolean noAlbum            = filesTags.All( ft => String.IsNullOrWhiteSpace( ft.Album ) ); //files.All( f => String.IsNullOrWhiteSpace( f.Id3v2Tag.Album ) );
+			String  firstAlbum         = files.First().Tag.Album; //files.First().Id3v2Tag.Album;
+			Boolean sameAlbum          = files.All( ft => ft.Tag.Album.EqualsCI( firstAlbum ) ); //files.All( f => String.Equals( firstAlbum, f.Id3v2Tag.Album, StringComparison.Ordinal ) );
+			Boolean noAlbum            = files.All( ft => String.IsNullOrWhiteSpace( ft.Tag.Album ) ); //files.All( f => String.IsNullOrWhiteSpace( f.Id3v2Tag.Album ) );
 
 			if( allAlbumArtistsAreVariousArtists )
 			{
@@ -130,7 +126,7 @@ namespace TeslaTags
 
 				if( sameAlbum ) return FolderType.CompilationAlbum;
 
-				String differentAlbums = GetList( filesTags, ft => ft.Album );
+				String differentAlbums = GetList( files, ft => ft.Album );
 				String messageText = "Unexpected folder type: All tracks have AlbumArtist = \"Various Artists\", but they have different Album values: " + differentAlbums;
 				messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, messageText ) );
 				return FolderType.UnableToDetermine;
@@ -140,10 +136,19 @@ namespace TeslaTags
 				if( allSameArtist )
 				{
 					if     ( noAlbum   ) return FolderType.ArtistAssorted;
-					else if( sameAlbum ) return FolderType.ArtistAlbum;
+					else if( sameAlbum )
+					{
+						// If none of the files have track-numbers in their filenames and they're all lacking track number tags, then it's something like a video-game soundtrack dump where track-numbers don't apply:
+						Boolean noneHaveTrackNumbers = files.All( ft => ft.Tag.Track == 0 );
+						Boolean noneHaveTrackNames   = files.All( ft => !Values.FileNameTrackNumberRegex.IsMatch( ft.FileInfo.Name ) );
+						
+						if( noneHaveTrackNumbers && noneHaveTrackNames  ) return FolderType.ArtistAlbumNoTrackNumbers;
+
+						return FolderType.ArtistAlbum;
+					}
 					else
 					{
-						String differentAlbums = GetList( filesTags, ft => ft.Album );
+						String differentAlbums = GetList( files, ft => ft.Album );
 						messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, "Folder has same artist, but has multiple albums (" + differentAlbums + "). " ) );
 						return FolderType.UnableToDetermine;
 					}
@@ -161,8 +166,8 @@ namespace TeslaTags
 					}
 					else
 					{
-						String differentArtists = GetList( filesTags, ft => ft.Artist );
-						String differentAlbums  = GetList( filesTags, ft => ft.Album );
+						String differentArtists = GetList( files, ft => ft.FirstPerformer );
+						String differentAlbums  = GetList( files, ft => ft.Album );
 
 						messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, "Folder has same album-artist, but multiple artists (" + differentArtists + ") or multiple albums (" + differentAlbums + "). " ) );
 						return FolderType.UnableToDetermine;
@@ -173,48 +178,15 @@ namespace TeslaTags
 					// Different Artists and/or Album Artists and/or Albums, i.e. a mess. Inform the user to tidy it up.
 
 					
-					String differentArtists      = GetList( filesTags, ft => ft.Artist );
-					String differentAlbums       = GetList( filesTags, ft => ft.Album );
-					String differentAlbumArtists = GetList( filesTags, ft => ft.AlbumArtist );
+					String differentArtists      = GetList( files, ft => ft.FirstPerformer );
+					String differentAlbums       = GetList( files, ft => ft.Album );
+					String differentAlbumArtists = GetList( files, ft => ft.FirstAlbumArtist );
 
 					String messageText = "Folder has multiple artists (" + differentArtists + "), albums (" + differentAlbums + ") or album-artists (" + differentAlbumArtists + ").";
 					messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, messageText ) );
 					return FolderType.UnableToDetermine;
 				}
 			}
-		}
-
-		class TagSummary
-		{
-			public static TagSummary Create(Tag tag)
-			{
-				return new TagSummary(
-					tag.FirstPerformer,
-					tag.FirstAlbumArtist,
-					tag.Album,
-					tag.Track,
-					tag.Disc,
-					tag.Year
-				);
-			}
-
-			public TagSummary(String artist, String albumArtist, String album, UInt32 trackNumber, UInt32 discNumber, UInt32 albumYear)
-			{
-				this.Artist      = artist;
-				this.AlbumArtist = albumArtist;
-				this.Album       = album;
-				this.TrackNumber = trackNumber;
-				this.DiscNumber  = discNumber;
-				this.AlbumYear   = albumYear;
-			}
-
-			public String  Artist      { get; }
-			public String  AlbumArtist { get; }
-			public String  Album       { get; }
-			public UInt32  TrackNumber { get; }
-			public UInt32  DiscNumber  { get; }
-			public UInt32  AlbumYear   { get; }
-			public Boolean HasAlbumArt { get; }
 		}
 	}
 
