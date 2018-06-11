@@ -51,6 +51,23 @@
 			<Setter Property="Margin" Value="4" />
 			<Setter Property="Padding" Value="8,1,8,1" />
 		</Style>
+
+		<Style TargetType="{x:Type ToggleButton}">
+			<!-- https://msdn.microsoft.com/en-us/library/windows/desktop/dn742402(v=vs.85).aspx -->
+			<Setter Property="MinWidth" Value="73" />
+			<Setter Property="MinHeight" Value="21" />
+			<!-- Doc says 23px when using Win32 for 21px visual height. In WPF we can set 21px directly. -->
+			<Setter Property="Margin" Value="4" />
+			<Setter Property="Padding" Value="8,1,8,1" />
+		</Style>
+
+		<Style TargetType="{x:Type TextBox}">
+			<!-- https://msdn.microsoft.com/en-us/library/windows/desktop/dn742442(v=vs.85).aspx -->
+			<Setter Property="MinHeight" Value="21" /> <!-- Doc says 23px tall (including border) but that looks too tall, and other examples they include elsewhere are 20px tall - I think best to make it match the buttons. -->
+		</Style>
+
+		<Style TargetType="{x:Type Separator}" BasedOn="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}">
+		</Style>
 		
 	</Window.Resources>
 	
@@ -60,31 +77,108 @@
 		</Grid.ColumnDefinitions>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
-			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
 
+		<StackPanel Grid.Row="0" Grid.IsSharedSizeScope="True">
 
-		<Grid Grid.Row="0">
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="Auto" />
-				<ColumnDefinition Width="*" />
-				<ColumnDefinition Width="Auto" />
-			</Grid.ColumnDefinitions>
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto" SharedSizeGroup="firstCol" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
 
-			<Label Grid.Column="0" Margin="3" Content="Music root" />
-			<TextBox Grid.Column="1" VerticalAlignment="Center" Margin="4" IsEnabled="{Binding IsNotBusy}" Text="{Binding DirectoryPath}"  />
+				<Label Grid.Column="0" VerticalContentAlignment="Center"  Content="Music root" />
 
-			<StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-				<Button Content="Browse..." Name="browseButton" />
-				<CheckBox Margin="3" Content="Validate only" VerticalAlignment="Center" IsChecked="{Binding OnlyValidate}" />
-				<Button Content="Start" Command="{Binding StartCommand}" />
-				<Button Content="Stop" Command="{Binding StopCommand}" />
-			</StackPanel>
+				<Grid Grid.Column="1">
 
-		</Grid>
+					<ProgressBar Minimum="0" Maximum="1" Value="{Binding ProgressPerc}" IsIndeterminate="{Binding ProgressIndeterminate}" Background="{x:Static SystemColors.WindowBrush}" Height="{Binding ActualHeight, ElementName=directoryPathTextBox}" />
 
-		<ProgressBar Grid.Row="1" Height="20" Margin="3" Minimum="0" Maximum="1" Value="{Binding ProgressPerc}" IsIndeterminate="{Binding ProgressIndeterminate}" />
+					<TextBox VerticalAlignment="Center" IsEnabled="{Binding IsNotBusy}" Text="{Binding DirectoryPath}" Background="#00ffffff" Name="directoryPathTextBox" />
+
+				</Grid>
+
+				<Button Grid.Row="1" Grid.Column="2" Name="browseButton" VerticalAlignment="Center" Content="Browse..." />
+
+			</Grid>
+
+			<Separator />
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto" SharedSizeGroup="firstCol" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+
+				<Label Grid.Column="0" VerticalContentAlignment="Center" Content="Options: " />
+
+				<StackPanel Grid.Column="1" Orientation="Horizontal">
+
+					<CheckBox VerticalAlignment="Center" IsChecked="{Binding OnlyValidate}" VerticalContentAlignment="Center">
+						<Label Content="Validate only" VerticalAlignment="Center" />
+					</CheckBox>
+
+					<Separator />
+
+					<ToggleButton Content="Genre handling..." Name="genreButton" />
+
+					<Popup
+						Name="genrePopup"
+						PlacementTarget="{Binding ElementName=genreButton}"
+						IsOpen="{Binding IsChecked, ElementName=genreButton}"
+						StaysOpen="False"
+					>
+
+						<Border
+							BorderThickness="1"
+							Background="{x:Static SystemColors.WindowBrush}"
+							BorderBrush="{x:Static SystemColors.ActiveBorderBrush}"
+							Padding="4"
+						>
+							<Border.Effect>
+								<DropShadowEffect Opacity="0.2" />
+							</Border.Effect>
+
+							<StackPanel Margin="1">
+
+								<Label Content="Default:" />
+								<RadioButton Margin="10,3,0,3"  Content="Preserve"         GroupName="a" IsChecked="{Binding GenreRules.DefaultPreserve, Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3"  Content="Clear"            GroupName="b" IsChecked="{Binding GenreRules.DefaultClear, Mode=TwoWay}" />
+
+								<Label Content="Assorted files folders:" />
+								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="c" IsChecked="{Binding GenreRules.AssortedUseDefault, Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3" Content="Use folder name"   GroupName="d" IsChecked="{Binding GenreRules.AssortedUseFolderName, Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="e" IsChecked="{Binding GenreRules.AssortedUseArtistName, Mode=TwoWay}" />
+
+								<Label Content="Compilation folders:" />
+								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="f" IsChecked="{Binding GenreRules.CompilationUseDefault, Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="g" IsChecked="{Binding GenreRules.CompilationUseArtistName, Mode=TwoWay}" />
+
+								<Label Content="Albums' guest artists:" />
+								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="h" IsChecked="{Binding GenreRules.GuestArtistUseDefault, Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="i" IsChecked="{Binding GenreRules.GuestArtistUseArtistName, Mode=TwoWay}" />
+
+							</StackPanel>
+
+						</Border>
+
+					</Popup>
+
+				</StackPanel>
+
+				<StackPanel Grid.Column="2" Orientation="Horizontal">
+
+					<Button Content="Start" Command="{Binding StartCommand}" />
+
+					<Button Content="Stop" Command="{Binding StopCommand}" />
+
+				</StackPanel>
+
+			</Grid>
+
+		</StackPanel>
 
 		<DataGrid
 			Grid.Row="2"

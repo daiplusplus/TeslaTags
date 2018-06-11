@@ -66,7 +66,7 @@ namespace TeslaTags.Tests
 			Int32 i = 0;
 			foreach( TestCase testCase in _testCases )
 			{
-				(Int32? actualDisc, Int32? actualTrack, String err) = Values.GetDiscTrackNumberFromFileName( testCase.FileName, checkSiblings: false );
+				(Int32? actualDisc, Int32? actualTrack, String err) = DiscAndTrackNumberHelper.GetDiscTrackNumberFromFileName( testCase.FileName, checkSiblings: false );
 
 				//Assert.IsNull( err );
 				Boolean fnContainsDigits = System.IO.Path.GetFileNameWithoutExtension( testCase.FileName ).Any( c => Char.IsDigit(c) );
@@ -95,7 +95,7 @@ namespace TeslaTags.Tests
 			Int32 i = 0;
 			foreach( TestCase testCase in _testCases )
 			{
-				(Int32? actualDisc, Int32? actualTrack, String err) = Values.GetDiscTrackNumberFromFileName( testCase.FileName, checkSiblings: true );
+				(Int32? actualDisc, Int32? actualTrack, String err) = DiscAndTrackNumberHelper.GetDiscTrackNumberFromFileName( testCase.FileName, checkSiblings: true );
 
 				//Assert.IsNull( err );
 				Boolean fnContainsDigits = System.IO.Path.GetFileNameWithoutExtension( testCase.FileName ).Any( c => Char.IsDigit(c) );

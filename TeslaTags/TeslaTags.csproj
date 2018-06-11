@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="policy.2.0.taglib-sharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=db62eba44689b5b0, processorArchitecture=MSIL">
       <HintPath>..\packages\taglib.2.1.0.0\lib\policy.2.0.taglib-sharp.dll</HintPath>
     </Reference>
@@ -49,6 +52,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions.cs" />
     <Compile Include="Folder.cs" />
     <Compile Include="LoadedFile.cs" />
     <Compile Include="Program.cs" />
@@ -56,6 +60,9 @@
     <Compile Include="Retagger.cs" />
     <Compile Include="Services\ITeslaTagService.cs" />
     <Compile Include="Services\RealTeslaTagService.cs" />
+    <Compile Include="Services\RealTeslaTagUtilityService.cs" />
+    <Compile Include="TagExperiments.cs" />
+    <Compile Include="TagWriter.cs" />
     <Compile Include="Values.cs" />
   </ItemGroup>
   <ItemGroup>

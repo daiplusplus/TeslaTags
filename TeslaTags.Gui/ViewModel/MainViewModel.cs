@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
@@ -10,29 +11,6 @@ using GalaSoft.MvvmLight.CommandWpf;
 
 namespace TeslaTags.Gui
 {
-	public abstract class BaseViewModel : ViewModelBase
-	{
-		protected List<RelayCommand> BusyDisabledCommands { get; } = new List<RelayCommand>();
-
-		private Boolean isBusy;
-		public Boolean IsBusy
-		{
-			get { return this.isBusy; }
-			set {
-				this.Set( nameof(this.IsBusy), ref this.isBusy, value );
-				this.RaisePropertyChanged( nameof(this.IsNotBusy) );
-
-				foreach( RelayCommand cmd in this.BusyDisabledCommands ) cmd.RaiseCanExecuteChanged();
-			}
-		}
-		public Boolean IsNotBusy => !this.IsBusy;
-
-		protected Boolean CanExecuteWhenNotBusy()
-		{
-			return !this.IsBusy;
-		}
-	}
-
 	public class MainViewModel : BaseViewModel, ITeslaTagEventsListener
 	{
 		private readonly ITeslaTagsService teslaTagsService;
@@ -45,21 +23,21 @@ namespace TeslaTags.Gui
 
 			this.utilityService = utilityService;
 
-			this.StartCommand = new RelayCommand( this.Start, canExecute: () => !this.teslaTagsService.IsBusy );
-			this.StopCommand  = new RelayCommand( this.Stop , canExecute: () =>  this.teslaTagsService.IsBusy );
+			this.StartCommand = this.CreateBusyCommand( this.Start );
+			this.StopCommand  = this.CreateBusyCommand( this.Stop, enabledWhenBusy: true );
 
-			this.BusyDisabledCommands.Add( this.StartCommand );
-			this.BusyDisabledCommands.Add( this.StopCommand );
+			///////////
+			
+			this.DirectoryPath     = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+			this.OnlyValidate      = true;
 
-			this.OnlyValidate = true;
-
-			this.DirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+			//////////
 
 			if( this.IsInDesignMode )
 			{
 				for( Int32 i = 0; i < 10; i++ )
 				{
-					this.DirectoriesProgress.Add( new DirectoryProgressViewModel( utilityService, @"C:\TestData\Folder" + i, @"C:\TestData" ) );
+					this.DirectoriesProgress.Add( new DirectoryViewModel( utilityService, @"C:\TestData\Folder" + i, @"C:\TestData" ) );
 				}
 				this.SelectedDirectory = this.DirectoriesProgress[2];
 
@@ -87,12 +65,14 @@ namespace TeslaTags.Gui
 			set { this.Set( nameof(this.OnlyValidate), ref this.onlyValidate, value ); }
 		}
 
-		private readonly Dictionary<String,DirectoryProgressViewModel> viewModelDict = new Dictionary<String,DirectoryProgressViewModel>( StringComparer.OrdinalIgnoreCase );
+		public GenreRulesViewModel GenreRules { get; } = new GenreRulesViewModel();
 
-		public ObservableCollection<DirectoryProgressViewModel> DirectoriesProgress { get; } = new ObservableCollection<DirectoryProgressViewModel>();
+		private readonly Dictionary<String,DirectoryViewModel> viewModelDict = new Dictionary<String,DirectoryViewModel>( StringComparer.OrdinalIgnoreCase );
 
-		private DirectoryProgressViewModel selectedDirectory;
-		public DirectoryProgressViewModel SelectedDirectory
+		public ObservableCollection<DirectoryViewModel> DirectoriesProgress { get; } = new ObservableCollection<DirectoryViewModel>();
+
+		private DirectoryViewModel selectedDirectory;
+		public DirectoryViewModel SelectedDirectory
 		{
 			get { return this.selectedDirectory; }
 			set { this.Set( nameof(this.SelectedDirectory), ref this.selectedDirectory, value ); }
@@ -143,9 +123,9 @@ namespace TeslaTags.Gui
 
 		private void Start()
 		{
-			this.teslaTagsService.Start( this.DirectoryPath, this.OnlyValidate );
-			this.ProgressPerc = -1;
 			this.IsBusy = this.teslaTagsService.IsBusy;
+			this.ProgressPerc = -1;
+			this.teslaTagsService.Start( this.DirectoryPath, this.OnlyValidate, this.GenreRules.GetRules() );
 		}
 
 		private void Stop()
@@ -157,9 +137,9 @@ namespace TeslaTags.Gui
 
 		#region ITeslaTagEvents
 
-		private DirectoryProgressViewModel GetDirectoryProgressViewModel( String directory )
+		private DirectoryViewModel GetDirectoryProgressViewModel( String directory )
 		{
-			DirectoryProgressViewModel dirVM;
+			DirectoryViewModel dirVM;
 			if( !this.viewModelDict.TryGetValue( directory, out dirVM ) )
 			{
 				throw new InvalidOperationException( "Event raised in previously unreported directory: " + directory );
@@ -191,7 +171,7 @@ namespace TeslaTags.Gui
 			{
 				if( directoryPath == null ) continue;
 
-				DirectoryProgressViewModel dirVM = new DirectoryProgressViewModel( this.utilityService, directoryPath, prefix: this.DirectoryPath );
+				DirectoryViewModel dirVM = new DirectoryViewModel( this.utilityService, directoryPath, prefix: this.DirectoryPath );
 				this.viewModelDict.Add( directoryPath, dirVM );
 				this.DirectoriesProgress.Add( dirVM );
 			}
@@ -199,7 +179,7 @@ namespace TeslaTags.Gui
 
 		void ITeslaTagEventsListener.DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc, List<Message> messages)
 		{
-			DirectoryProgressViewModel dirVM = this.GetDirectoryProgressViewModel( directory );
+			DirectoryViewModel dirVM = this.GetDirectoryProgressViewModel( directory );
 			dirVM.FilesModified = modifiedCount;
 			dirVM.FolderType    = folderType;
 			dirVM.TotalFiles    = totalCount;
@@ -212,186 +192,7 @@ namespace TeslaTags.Gui
 		void ITeslaTagEventsListener.Complete(Boolean stoppedEarly)
 		{
 			this.IsBusy = this.teslaTagsService.IsBusy;
-			if( !stoppedEarly ) this.ProgressPerc = 1;
-		}
-
-		#endregion
-	}
-
-	public class DirectoryProgressViewModel : BaseViewModel
-	{
-		private readonly ITeslaTagUtilityService utilityService;
-
-		public DirectoryProgressViewModel(ITeslaTagUtilityService utilityService, String directoryPath, String prefix)
-		{
-			this.utilityService = utilityService;
-
-			this.FullDirectoryPath    = directoryPath;
-			this.DisplayDirectoryPath = directoryPath.StartsWith( prefix, StringComparison.OrdinalIgnoreCase ) ? directoryPath.Substring( prefix.Length ) : directoryPath;
-
-			this.Messages.CollectionChanged += this.Messages_CollectionChanged;
-
-			this.OpenFolderCommand = new RelayCommand( this.OpenFolder );
-			this.ApplyAlbumArtCommand   = new RelayCommand( this.ApplyAlbumArt  , this.CanExecuteWhenNotBusy );
-			this.RemoveApeTagsCommand   = new RelayCommand( this.RemoveApeTags  , this.CanExecuteWhenNotBusy );
-			this.SetTrackNumbersCommand = new RelayCommand( this.SetTrackNumbers, this.CanExecuteWhenNotBusy );
-
-			this.BusyDisabledCommands.Add( this.ApplyAlbumArtCommand );
-			this.BusyDisabledCommands.Add( this.RemoveApeTagsCommand );
-			this.BusyDisabledCommands.Add( this.SetTrackNumbersCommand );
-
-			IEnumerable<String> imageFiles = Enumerable
-				.Empty<String>()
-				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.jpg" ) )
-				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.jpeg" ) )
-				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.png" ) )
-				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.bmp" ) )
-				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.gif" ) )
-				.Select( fn => Path.GetFileName( fn ) )
-				.OrderBy( fn => fn );
-
-			foreach( String fn in imageFiles )
-			{
-				this.ImagesInFolder.Add( fn );
-			}
-		}
-
-		#region Messages
-
-		private void Messages_CollectionChanged(Object sender, NotifyCollectionChangedEventArgs e)
-		{
-			this.RaisePropertyChanged( nameof(this.InfoCount) );
-			this.RaisePropertyChanged( nameof(this.WarnCount) );
-			this.RaisePropertyChanged( nameof(this.ErrorCount) );
-		}
-
-		public ObservableCollection<Message> Messages { get; } = new ObservableCollection<Message>();
-
-		public Int32 InfoCount  => this.Messages.Count( m => m.Severity == MessageSeverity.Info );
-		public Int32 WarnCount  => this.Messages.Count( m => m.Severity == MessageSeverity.Warning );
-		public Int32 ErrorCount => this.Messages.Count( m => m.Severity == MessageSeverity.Error );
-
-		#endregion
-
-		public String FullDirectoryPath { get; }
-		public String DisplayDirectoryPath { get; }
-		
-		private Int32? filesModified;
-		public Int32? FilesModified
-		{
-			get { return this.filesModified; }
-			set { this.Set( nameof(this.FilesModified), ref this.filesModified, value ); }
-		}
-
-		private Int32? totalFiles;
-		public Int32? TotalFiles
-		{
-			get { return this.totalFiles; }
-			set { this.Set( nameof(this.TotalFiles), ref this.totalFiles, value ); }
-		}
-
-		private FolderType? folderType;
-		public FolderType? FolderType
-		{
-			get { return this.folderType; }
-			set { this.Set( nameof(this.FolderType), ref this.folderType, value ); }
-		}
-		
-		public RelayCommand OpenFolderCommand { get; }
-		public RelayCommand ApplyAlbumArtCommand { get; }
-		public RelayCommand RemoveApeTagsCommand { get; }
-		public RelayCommand SetTrackNumbersCommand { get; }
-
-		public void OpenFolder()
-		{
-			using( System.Diagnostics.Process.Start( this.FullDirectoryPath ) ) { } // `Process.Start()` returns null if it's handled by an existing process, e.g. explorer.exe
-		}
-
-		#region Apply Album Art
-
-		private String selectedImageFileName;
-		public String SelectedImageFileName
-		{
-			get { return this.selectedImageFileName; }
-			set { this.Set( nameof(this.SelectedImageFileName), ref this.selectedImageFileName, value ); }
-		}
-
-		private String albumArtMessage;
-		public String AlbumArtMessage
-		{
-			get { return this.albumArtMessage; }
-			set { this.Set( nameof(this.AlbumArtMessage), ref this.albumArtMessage, value ); }
-		}
-
-		private Boolean replaceAllAlbumArt;
-		public Boolean ReplaceAllAlbumArt
-		{
-			get { return this.replaceAllAlbumArt; }
-			set { this.Set( nameof(this.ReplaceAllAlbumArt), ref this.replaceAllAlbumArt, value ); }
-		}
-
-		public ObservableCollection<String> ImagesInFolder { get; } = new ObservableCollection<String>();
-
-		public async void ApplyAlbumArt()
-		{
-			if( String.IsNullOrWhiteSpace( this.SelectedImageFileName ) )
-			{
-				this.AlbumArtMessage = "No file specified.";
-				return;
-			}
-
-			String fileName = Path.IsPathRooted( this.SelectedImageFileName ) ? this.SelectedImageFileName : Path.Combine( this.FullDirectoryPath, this.SelectedImageFileName );
-
-			if( !File.Exists( fileName ) )
-			{
-				this.AlbumArtMessage = "File \"" + this.SelectedImageFileName + "\" does not exist.";
-				return;
-			}
-
-			this.IsBusy = true;
-
-			List<Message> messages = await this.utilityService.SetAlbumArtAsync( this.FullDirectoryPath, this.SelectedImageFileName, this.ReplaceAllAlbumArt ? AlbumArtSetMode.Replace : AlbumArtSetMode.AddIfMissing );
-			this.Messages.AddRange( messages );
-
-			this.IsBusy = false;
-		}
-
-		#endregion
-
-		public async void RemoveApeTags()
-		{
-			this.IsBusy = true;
-
-			List<Message> messages = await this.utilityService.RemoveApeTagsAsync( this.FullDirectoryPath );
-			this.Messages.AddRange( messages );
-
-			this.IsBusy = false;
-		}
-
-		#region Track numbers
-
-		private Int32 trackNumberOffset;
-		public Int32 TrackNumberOffset
-		{
-			get { return this.trackNumberOffset; }
-			set { this.Set( nameof(this.TrackNumberOffset), ref this.trackNumberOffset, value ); }
-		}
-
-		private Int32? discNumber;
-		public Int32? DiscNumber
-		{
-			get { return this.discNumber; }
-			set { this.Set( nameof(this.DiscNumber), ref this.discNumber, value ); }
-		}
-
-		public async void SetTrackNumbers()
-		{
-			this.IsBusy = true;
-
-			List<Message> messages = await this.utilityService.SetTrackNumbersFromFileNamesAsync( this.FullDirectoryPath, this.TrackNumberOffset, this.DiscNumber );
-			this.Messages.AddRange( messages );
-
-			this.IsBusy = false;
+			if( !stoppedEarly ) this.ProgressPerc = 0;
 		}
 
 		#endregion
@@ -404,6 +205,198 @@ namespace TeslaTags.Gui
 			if( items != null )
 			{
 				foreach( T item in items ) collection.Add( item );
+			}
+		}
+	}
+
+	public class GenreRulesViewModel : BaseViewModel
+	{
+		private readonly GenreRules rules = new GenreRules();
+
+		/// <summary>Creates a copy of the underlying rules model object.</summary>
+		public GenreRules GetRules()
+		{
+			return new GenreRules()
+			{
+				DefaultClear             = this.rules.DefaultClear,
+				AssortedFiles            = this.rules.AssortedFiles,
+				CompilationUseArtistName = this.rules.CompilationUseArtistName,
+				GuestArtistUseArtistName = this.rules.GuestArtistUseArtistName
+			};
+		}
+
+		public Boolean DefaultPreserve
+		{
+			get { return this.rules.DefaultPreserve; }
+			set
+			{
+				Boolean defaultClear = !value;
+				if( defaultClear != this.rules.DefaultClear )
+				{
+					this.rules.DefaultClear = defaultClear;
+					
+					this.RaisePropertyChanged(nameof(this.DefaultPreserve));
+					this.RaisePropertyChanged(nameof(this.DefaultClear));
+				}
+			}
+		}
+
+		public Boolean DefaultClear
+		{
+			get { return this.rules.DefaultClear; }
+			set
+			{
+				if( value != this.rules.DefaultClear )
+				{
+					this.rules.DefaultClear = value;
+					
+					this.RaisePropertyChanged(nameof(this.DefaultPreserve));
+					this.RaisePropertyChanged(nameof(this.DefaultClear));
+				}
+			}
+		}
+
+		public Boolean AssortedUseDefault
+		{
+			get { return this.rules.AssortedFiles == GenreAssortedFiles.UseDefault; }
+			set
+			{
+				Boolean useDefaultNew = value;
+				Boolean useDefaultOld = this.AssortedUseDefault;
+				if( useDefaultNew != useDefaultOld )
+				{
+					if( useDefaultNew )
+					{
+						this.rules.AssortedFiles = GenreAssortedFiles.UseDefault;
+					}
+					else
+					{
+						// NOOP? What does it mean to set this property to false?
+						this.rules.AssortedFiles = GenreAssortedFiles.UseFolderName;
+					}
+					
+					this.RaisePropertyChanged(nameof(this.AssortedUseDefault));
+					this.RaisePropertyChanged(nameof(this.AssortedUseFolderName));
+					this.RaisePropertyChanged(nameof(this.AssortedUseArtistName));
+				}
+			}
+		}
+
+		public Boolean AssortedUseFolderName
+		{
+			get { return this.rules.AssortedFiles == GenreAssortedFiles.UseFolderName; }
+			set
+			{
+				Boolean useFolderNameNew = value;
+				Boolean useFolderNameOld = this.AssortedUseFolderName;
+				if( useFolderNameNew != useFolderNameOld )
+				{
+					if( useFolderNameNew )
+					{
+						this.rules.AssortedFiles = GenreAssortedFiles.UseFolderName;
+					}
+					else
+					{
+						this.rules.AssortedFiles = GenreAssortedFiles.UseDefault;
+					}
+					
+					this.RaisePropertyChanged(nameof(this.AssortedUseDefault));
+					this.RaisePropertyChanged(nameof(this.AssortedUseFolderName));
+					this.RaisePropertyChanged(nameof(this.AssortedUseArtistName));
+				}
+			}
+		}
+
+		public Boolean AssortedUseArtistName
+		{
+			get { return this.rules.AssortedFiles == GenreAssortedFiles.UseArtistName; }
+			set
+			{
+				Boolean useArtistNameNew = value;
+				Boolean useArtistNameOld = this.AssortedUseArtistName;
+				if( useArtistNameNew != useArtistNameOld )
+				{
+					if( useArtistNameNew )
+					{
+						this.rules.AssortedFiles = GenreAssortedFiles.UseArtistName;
+					}
+					else
+					{
+						this.rules.AssortedFiles = GenreAssortedFiles.UseDefault;
+					}
+					
+					this.RaisePropertyChanged(nameof(this.AssortedUseDefault));
+					this.RaisePropertyChanged(nameof(this.AssortedUseFolderName));
+					this.RaisePropertyChanged(nameof(this.AssortedUseArtistName));
+				}
+			}
+		}
+
+		public Boolean CompilationUseDefault
+		{
+			get { return this.rules.CompilationUseDefault; }
+			set
+			{
+				Boolean useArtistNameNew = !value;
+				Boolean useArtistNameOld = this.CompilationUseArtistName;
+				if( useArtistNameNew != useArtistNameOld )
+				{
+					this.rules.CompilationUseArtistName = useArtistNameNew;
+					
+					this.RaisePropertyChanged(nameof(this.CompilationUseDefault));
+					this.RaisePropertyChanged(nameof(this.CompilationUseArtistName));
+				}
+			}
+		}
+
+		public Boolean CompilationUseArtistName
+		{
+			get { return this.rules.CompilationUseArtistName; }
+			set
+			{
+				Boolean useArtistNameNew = value;
+				Boolean useArtistNameOld = this.CompilationUseArtistName;
+				if( useArtistNameNew != useArtistNameOld )
+				{
+					this.rules.CompilationUseArtistName = useArtistNameNew;
+					
+					this.RaisePropertyChanged(nameof(this.CompilationUseDefault));
+					this.RaisePropertyChanged(nameof(this.CompilationUseArtistName));
+				}
+			}
+		}
+
+		public Boolean GuestArtistUseDefault
+		{
+			get { return this.rules.GuestArtistUseDefault; }
+			set
+			{
+				Boolean useArtistNameNew = !value;
+				Boolean useArtistNameOld = this.GuestArtistUseArtistName;
+				if( useArtistNameNew != useArtistNameOld )
+				{
+					this.rules.GuestArtistUseArtistName = useArtistNameNew;
+					
+					this.RaisePropertyChanged(nameof(this.GuestArtistUseDefault));
+					this.RaisePropertyChanged(nameof(this.GuestArtistUseArtistName));
+				}
+			}
+		}
+
+		public Boolean GuestArtistUseArtistName
+		{
+			get { return this.rules.GuestArtistUseArtistName; }
+			set
+			{
+				Boolean useArtistNameNew = value;
+				Boolean useArtistNameOld = this.GuestArtistUseArtistName;
+				if( useArtistNameNew != useArtistNameOld )
+				{
+					this.rules.GuestArtistUseArtistName = useArtistNameNew;
+					
+					this.RaisePropertyChanged(nameof(this.GuestArtistUseDefault));
+					this.RaisePropertyChanged(nameof(this.GuestArtistUseArtistName));
+				}
 			}
 		}
 	}

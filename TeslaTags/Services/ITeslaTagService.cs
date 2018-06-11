@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace TeslaTags
 {
 	public interface ITeslaTagsService
 	{
-		void Start(String directory, Boolean readOnly);
+		void Start(String directory, Boolean readOnly, GenreRules genreRules);
 		
 		void Stop();
 
@@ -36,5 +38,32 @@ namespace TeslaTags
 	{
 		Replace,
 		AddIfMissing
+	}
+
+	public class GenreRules
+	{
+		public Boolean DefaultClear { get; set; }
+		public Boolean DefaultPreserve => !this.DefaultClear;
+
+		public GenreAssortedFiles AssortedFiles { get; set; }
+
+		public Boolean CompilationUseDefault => !this.CompilationUseArtistName;
+		public Boolean CompilationUseArtistName { get; set; }
+
+		public Boolean GuestArtistUseDefault => !this.GuestArtistUseArtistName;
+		public Boolean GuestArtistUseArtistName { get; set; }
+
+		public Boolean AlwaysNoop =>
+			this.DefaultPreserve &&
+			this.AssortedFiles == GenreAssortedFiles.UseDefault &&
+			this.CompilationUseDefault &&
+			this.GuestArtistUseDefault;
+	}
+
+	public enum GenreAssortedFiles
+	{
+		UseDefault,
+		UseFolderName,
+		UseArtistName
 	}
 }

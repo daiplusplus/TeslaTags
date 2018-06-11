@@ -15,6 +15,10 @@ namespace TeslaTags
 		public static String VariousArtists => VariousArtistsConst;
 		public static String NoAlbum        => NoAlbumConst;
 
+	}
+
+	public static class DiscAndTrackNumberHelper
+	{
 		public static Regex FileNameDiscNumberRegex { get; } = new Regex( @"\bdisc\D{0,3}(\d{1,3})", RegexOptions.Compiled | RegexOptions.IgnoreCase );
 
 		public static (Boolean hasBest,Dictionary<String,(Int32? disc, Int32? track, String err)> files) GetDiscTrackNumberForAllFiles(String directoryPath)

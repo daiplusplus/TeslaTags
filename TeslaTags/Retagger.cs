@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -10,153 +9,6 @@ namespace TeslaTags
 {
 	internal static class Retagger
 	{
-		private const Char MongolianVowelSeparator = '\u180E';
-		private const Char ZeroWidthSpace          = '\u200B';
-		private const Char ZeroWidthNoBreakSpace   = '\uFEFF';
-
-		private static readonly Char[] _base3Digits = new[] { MongolianVowelSeparator, ZeroWidthSpace, ZeroWidthNoBreakSpace };
-
-		private static void PrependInvisibleCharactersUsingBase3(TagLib.Mpeg.AudioFile audioFile, Int32 sortOrder, Int32 maxSortOrder)
-		{
-			TagLib.Tag id3v1 = audioFile.GetTag( TagTypes.Id3v1 ); // TODO: What happens if ID3v1 is removed?
-			TagLib.Tag id3v2 = audioFile.GetTag( TagTypes.Id3v2 );
-
-			// Naive approach: Prepend with MongolianVowelSeparator repeated `sortOrder` times (i.e. base-1)
-			// Smarter approach: Treat the 3 zero-width unicode characters as a base-3 radix number system, and encode the sortOrder as that).
-
-			Int32 minStringLength = LengthOfBase3String( maxSortOrder );
-			String prefix = ToBase3( sortOrder, minStringLength );
-
-			String trimmedTitle = Trim( id3v2.Title );
-			String prefixedTitle = prefix + trimmedTitle;
-
-			id3v2.Title = prefixedTitle;
-		}
-
-		private static void PrependInvisibleCharactersUsingBase1(TagLib.Mpeg.AudioFile audioFile, Int32 sortOrder, Int32 maxSortOrder)
-		{
-			TagLib.Tag id3v1 = audioFile.GetTag( TagTypes.Id3v1 );
-			TagLib.Tag id3v2 = audioFile.GetTag( TagTypes.Id3v2 );
-
-			// Naive approach: Prepend with MongolianVowelSeparator repeated `sortOrder` times (i.e. base-1)
-
-			String prefix = String.Empty.PadLeft( sortOrder, MongolianVowelSeparator );
-
-			String trimmedTitle = Trim( id3v2.Title );
-			String prefixedTitle = prefix + trimmedTitle;
-
-			id3v2.Title = prefixedTitle;
-		}
-
-		private static void PrependTrackNumber(TagLib.Mpeg.AudioFile audioFile, Int32 sortOrder, Int32 maxSortOrder)
-		{
-			Int32 maxLength = LengthOfBase10String( (UInt32)maxSortOrder );
-			String prefix = sortOrder.ToString( CultureInfo.InvariantCulture ).PadLeft( maxLength, '0' );
-
-			TagLib.Tag id3v1 = audioFile.GetTag( TagTypes.Id3v1 );
-			TagLib.Tag id3v2 = audioFile.GetTag( TagTypes.Id3v2 );
-			
-			String trimmedTitle = Trim( id3v2.Title );
-			String prefixedTitle = prefix + " - " + trimmedTitle;
-			id3v2.Title = prefixedTitle;
-		}
-
-		private static Int32 LengthOfBase3String(Int32 value)
-		{
-			Int32 count = 0;
-			Int32 workingValue = value;
-			do
-			{
-				workingValue = workingValue / 3;
-				count++;
-			}
-			while( workingValue > 0 );
-
-			return count;
-		}
-
-		private static Int32 LengthOfBase10String(UInt32 value)
-		{
-			if( value < 10 ) return 1;
-			if( value < 100 ) return 2;
-			if( value < 1000 ) return 3;
-			if( value < 10000 ) return 4;
-			throw new ArgumentOutOfRangeException( nameof(value), value, "Value must be in the range 0-9999" );
-		}
-
-		private static String ToBase3(Int32 value, Int32 minStringLength)
-		{
-			Int32 workingValue = value;
-
-			Char[] output = new Char[ Math.Max( minStringLength, 10 ) ];
-			for( Int32 i = 0; i < output.Length; i++ ) output[i] = _base3Digits[0];
-
-			Int32 o = output.GetUpperBound(0);
-
-			do
-			{
-				Int32 digit = workingValue % 3;
-				workingValue = workingValue / 3;
-
-				output[o--] = _base3Digits[digit];
-			}
-			while( o >= 0 && workingValue > 0 );
-
-			//Int32 startIndex = o + 1;
-			//Int32 length     = output.Length - startIndex;
-
-			Int32 startIndex = output.Length - minStringLength;
-			Int32 length     = minStringLength;
-
-			String base3String = new String( output, startIndex, length );
-			return base3String;
-		}
-
-		private static String Trim(String value)
-		{
-			// Fun-fact: String.Trim() uses Char.IsWhiteSpace() to determine what to remove.
-			// However Char.IsWhiteSpace() returns false for the 3 characters we're using because they're considered "Format" characters instead of spacing.
-			// So this reimplementation checks both.
-
-			// optimization: return if it doesn't need trimming:
-
-			Int32 trimFromStart = 0;
-			for( Int32 i = 0; i < value.Length; i++ )
-			{
-				if( IsWhiteSpace( value[i] ) ) trimFromStart++;
-				else break;
-			}
-			
-			if( trimFromStart == value.Length ) return String.Empty;
-
-			Int32 trimFromEnd = 0;
-			for( Int32 i = value.Length - 1; i >= 0; i-- )
-			{
-				if( IsWhiteSpace( value[i] ) ) trimFromEnd++;
-				else break;
-			}
-
-			if( trimFromStart == 0 && trimFromEnd == 0 ) return value;
-
-			Int32 substringLength = ( value.Length - trimFromStart ) - trimFromEnd;
-
-			String substring = value.Substring( trimFromStart, substringLength );
-			return substring;
-		}
-
-		private static Boolean IsWhiteSpace(Char value)
-		{
-			switch( value )
-			{
-			case MongolianVowelSeparator:
-			case ZeroWidthSpace:
-			case ZeroWidthNoBreakSpace:
-				return true;
-			default:
-				return Char.IsWhiteSpace( value );
-			}
-		}
-
 		private static readonly Regex _startsWithDigits = new Regex( @"^\d+", RegexOptions.Compiled | RegexOptions.IgnoreCase );
 
 		private static Boolean ValidateFile( LoadedFile file, Boolean albumArtistRequired, Boolean albumRequired, Boolean trackNumberRequired, Boolean warnIfTrackNumberPresent, Boolean warnMissingAlbumArt, List<Message> messages )
@@ -305,15 +157,8 @@ namespace TeslaTags
 						String newArtist      = albumArtist;
 						String newTitle       = oldArtist + " - " + oldTitle;
 
-						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Performers), oldArtist, newArtist );
-						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Title)     , oldTitle , newTitle  );
-
-						// 1:
-						file.Tag.Title = newTitle;
-						// 2:
-						file.Tag.Performers = new String[] { albumArtist };
-
-						file.IsModified = true;
+						TagWriter.SetArtist( file, messages, newArtist );
+						TagWriter.SetTitle ( file, messages, newTitle );
 					}
 				}
 			}
@@ -337,15 +182,8 @@ namespace TeslaTags
 						String newArtist = Values.VariousArtistsConst;
 						String newTitle  = oldArtist + " - " + oldTitle;
 
-						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Performers), oldArtist, newArtist );
-						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Title)     , oldTitle , newTitle  );
-
-						// 1:
-						file.Tag.Title = newTitle;
-						// 2:
-						file.Tag.Performers = new String[] { newArtist };
-
-						file.IsModified = true;
+						TagWriter.SetArtist( file, messages, newArtist );
+						TagWriter.SetTitle ( file, messages, newTitle );
 					}
 				}
 			}
@@ -356,9 +194,6 @@ namespace TeslaTags
 			// Artist and Title tags are correct as-is.
 			// Clear the Album and TrackNumber tags.
 
-			// TODO: Add "Genre" as the name of the folder or playlist?
-			// Will they show-up at all as they lack albums?
-
 			foreach( LoadedFile file in files )
 			{
 				Boolean isValid = ValidateFile( file, albumArtistRequired: false, albumRequired: false, trackNumberRequired: false, warnIfTrackNumberPresent: true, warnMissingAlbumArt: false, messages );
@@ -368,15 +203,8 @@ namespace TeslaTags
 
 					if( !String.IsNullOrWhiteSpace( oldAlbum ) )
 					{
-						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Album), oldAlbum, null );
-
-						// 1:
-						file.Tag.Album = null;
-						//file.Id3v2Tag.Track = 0; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
-
-						file.IsModified = true;
-
-						//file.AudioFile.Tag. // https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
+						TagWriter.SetAlbum( file, messages, null );
+						TagWriter.SetTrackNumber( file, messages, null );
 					}
 				}
 			}
@@ -396,14 +224,88 @@ namespace TeslaTags
 
 					if( oldAlbum != newAlbum )
 					{
-						messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Album), oldAlbum, newAlbum );
-
-						// 1:
-						file.Tag.Album = newAlbum;
-						//file.Id3v2Tag.Track = 0; // uugghhh, but the user gets warned anyway.
-
-						file.IsModified = true;
+						TagWriter.SetAlbum( file, messages, newAlbum );
+						TagWriter.SetTrackNumber( file, messages, null );
 					}
+				}
+			}
+		}
+
+		public static void RetagForGenre(FolderType folderType, List<LoadedFile> files, GenreRules genreRules, List<Message> messages)
+		{
+			if( genreRules.AlwaysNoop ) return;
+
+			String folderName = files.FirstOrDefault()?.FileInfo.Directory.Name;
+
+			foreach( LoadedFile file in files )
+			{
+				switch( folderType )
+				{
+				case FolderType.ArtistAlbumWithGuestArtists:
+
+					if( genreRules.GuestArtistUseDefault )
+					{
+						goto default;
+					}
+					else if( genreRules.GuestArtistUseArtistName )
+					{
+						String originalArtist = file.RecoveryTag.Artist;
+						if( !String.IsNullOrWhiteSpace( originalArtist ) )
+						{
+							TagWriter.SetGenre( file, messages, originalArtist );
+						}
+					}
+
+					break;
+
+				case FolderType.AssortedFiles:
+
+					if( genreRules.AssortedFiles == GenreAssortedFiles.UseDefault )
+					{
+						goto default;
+					}
+					else if( genreRules.AssortedFiles == GenreAssortedFiles.UseArtistName )
+					{
+						String artistName = file.Tag.FirstPerformer;
+						if( !String.IsNullOrWhiteSpace( artistName ) )
+						{
+							TagWriter.SetGenre( file, messages, artistName );
+						}
+					}
+					else if( genreRules.AssortedFiles == GenreAssortedFiles.UseFolderName )
+					{
+						TagWriter.SetGenre( file, messages, folderName );
+					}
+
+					break;
+				case FolderType.CompilationAlbum:
+
+					if( genreRules.CompilationUseDefault )
+					{
+						goto default;
+					}
+					else if( genreRules.CompilationUseArtistName )
+					{
+						String originalArtist = file.RecoveryTag.Artist;
+						if( !String.IsNullOrWhiteSpace( originalArtist ) )
+						{
+							TagWriter.SetGenre( file, messages, originalArtist );
+						}
+					}
+
+					break;
+				default:
+
+					if( genreRules.DefaultClear )
+					{
+						TagWriter.SetGenre( file, messages, null );
+					}
+					else if( genreRules.DefaultPreserve )
+					{
+						// NOOP
+					}
+
+					break;
 				}
 			}
 		}
@@ -411,13 +313,12 @@ namespace TeslaTags
 
 	public enum FolderType
 	{
-		// TODO: How to consider Disc folders?
 		Empty,
-		ArtistAlbum,
+		ArtistAlbum, // Includes disc folders.
 		ArtistAlbumNoTrackNumbers,
 		ArtistAlbumWithGuestArtists,
-		ArtistAssorted,
-		CompilationAlbum,
+		ArtistAssorted, // Sets album to "No Album"
+		CompilationAlbum, // Sets artist to "Various Artists"
 		AssortedFiles,
 		Skipped,
 		UnableToDetermine

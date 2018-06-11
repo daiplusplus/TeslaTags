@@ -33,7 +33,7 @@ namespace TeslaTags
 					Console.Write( directoryPath );
 					Console.Write( "..." );
 
-					DirectoryResult result = tp.ProcessDirectory( directoryPath, readOnly );
+					DirectoryResult result = tp.ProcessDirectory( directoryPath, readOnly, new GenreRules() );
 
 
 					Console.Write( result.FolderType );
@@ -170,7 +170,7 @@ namespace TeslaTags
 		}
 
 		/// <param name="readOnly">If true, then warnings and errors will be generated, but files will not be modified.</param>
-		public DirectoryResult ProcessDirectory(String directory, Boolean readOnly)
+		public DirectoryResult ProcessDirectory(String directory, Boolean readOnly, GenreRules genreRules)
 		{
 			List<Message> messages = new List<Message>();
 
@@ -181,7 +181,7 @@ namespace TeslaTags
 				return new DirectoryResult( FolderType.Skipped, 0, 0, messages );
 			}
 
-			(FolderType folderType, Int32 modifiedCount, Int32 totalCount) = Folder.Process( directory, readOnly, messages );
+			(FolderType folderType, Int32 modifiedCount, Int32 totalCount) = Folder.Process( directory, readOnly, genreRules, messages );
 
 			File.AppendAllLines( this.generalLog, messages.Select( msg => msg.ToString() ) ); // AppendAllLines writes a terminal `\r\n`
 

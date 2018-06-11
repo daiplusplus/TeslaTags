@@ -16,9 +16,8 @@ using CommonServiceLocator;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
 
-namespace TeslaTags.Gui.ViewModel
+namespace TeslaTags.Gui
 {
-
 	public class ViewModelLocator
 	{
 		public ViewModelLocator()
@@ -27,16 +26,23 @@ namespace TeslaTags.Gui.ViewModel
 
 			if( ViewModelBase.IsInDesignModeStatic || App.IsTestMode )
 			{
-				// Create design time view services and models
-				SimpleIoc.Default.Register<ITeslaTagsService, DesignTeslaTagService>();
+				// https://olitee.com/2015/01/mvvmlight-simpleioc-design-time-error/
+				if( !SimpleIoc.Default.IsRegistered<ITeslaTagsService>() )
+				{
+					SimpleIoc.Default.Register<ITeslaTagsService, DesignTeslaTagService>();
+				}
+
+				if( !SimpleIoc.Default.IsRegistered<ITeslaTagUtilityService>() )
+				{
+					SimpleIoc.Default.Register<ITeslaTagUtilityService, DesignTeslaTagUtilityService>();
+				}
 			}
 			else
 			{
 				// Create run time view services and models
 				SimpleIoc.Default.Register<ITeslaTagsService,RealTeslaTagService>();
+				SimpleIoc.Default.Register<ITeslaTagUtilityService,RealTeslaTagUtilityService>();
 			}
-
-			SimpleIoc.Default.Register<ITeslaTagUtilityService,RealTeslaTagUtilityService>();
 
 			SimpleIoc.Default.Register<MainViewModel>();
 		}

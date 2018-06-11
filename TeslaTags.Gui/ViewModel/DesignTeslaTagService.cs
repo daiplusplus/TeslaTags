@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Threading;
 
 namespace TeslaTags.Gui
@@ -12,7 +13,7 @@ namespace TeslaTags.Gui
 
 		private readonly DispatcherTimer timer;
 
-		private static readonly List<String> _directories = new List<string>()
+		private static readonly List<String> _directories = new List<String>()
 		{
 			@"Foobar",
 			@"Foobar\Artist1",
@@ -98,7 +99,7 @@ namespace TeslaTags.Gui
 
 		public ITeslaTagEventsListener EventsListener { get; set; }
 
-		public void Start(String directory, Boolean readOnly)
+		public void Start(String directory, Boolean readOnly, GenreRules genreRules)
 		{
 			this.rootDirectory = directory;
 			this.directories = _directories
@@ -114,6 +115,33 @@ namespace TeslaTags.Gui
 			this.timer.Stop();
 			this.IsBusy = false;
 			this.EventsListener?.Complete( true );
+		}
+	}
+
+	public class DesignTeslaTagUtilityService : ITeslaTagUtilityService
+	{
+		public Task<List<Message>> RemoveApeTagsAsync(String directoryPath)
+		{
+			List<Message> messages = new List<Message>();
+			messages.Add( new Message( MessageSeverity.Warning, @"C:\Music", @"C:\Music\Foo.mp3", "Nothing happened. This is a design-mode class." ) );
+
+			return Task.FromResult( messages );
+		}
+
+		public Task<List<Message>> SetAlbumArtAsync(String directoryPath, String imageFileName, AlbumArtSetMode mode)
+		{
+			List<Message> messages = new List<Message>();
+			messages.Add( new Message( MessageSeverity.Warning, @"C:\Music", @"C:\Music\Foo.mp3", "Nothing happened. This is a design-mode class." ) );
+
+			return Task.FromResult( messages );
+		}
+
+		public Task<List<Message>> SetTrackNumbersFromFileNamesAsync(String directoryPath, Int32 offset, Int32? discNumber)
+		{
+			List<Message> messages = new List<Message>();
+			messages.Add( new Message( MessageSeverity.Warning, @"C:\Music", @"C:\Music\Foo.mp3", "Nothing happened. This is a design-mode class." ) );
+
+			return Task.FromResult( messages );
 		}
 	}
 }

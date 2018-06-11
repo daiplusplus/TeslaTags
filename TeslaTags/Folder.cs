@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -10,7 +9,7 @@ namespace TeslaTags
 {
 	public static class Folder
 	{
-		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String directoryPath, Boolean readOnly, List<Message> messages)
+		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String directoryPath, Boolean readOnly, GenreRules genreRules, List<Message> messages)
 		{
 			List<LoadedFile> files = LoadFiles( directoryPath, messages );
 			try
@@ -40,6 +39,8 @@ namespace TeslaTags
 					default:
 						break;
 				}
+
+				Retagger.RetagForGenre( folderType, files, genreRules, messages );
 
 				Int32 modifiedCount = 0;
 				foreach( LoadedFile file in files )
@@ -141,7 +142,7 @@ namespace TeslaTags
 						// If none of the files have track-numbers in their filenames and they're all lacking track number tags, then it's something like a video-game soundtrack dump where track-numbers don't apply:
 						Boolean noneHaveTrackNumberTags  = files.All( ft => ft.Tag.Track == 0 );
 
-						var folderDiscTrackInfo = Values.GetDiscTrackNumberForAllFiles( directoryPath );
+						var folderDiscTrackInfo = DiscAndTrackNumberHelper.GetDiscTrackNumberForAllFiles( directoryPath );
 						Boolean noneHaveTrackNumberNames = folderDiscTrackInfo.hasBest && folderDiscTrackInfo.files.Values.Any( t => t.track != null );
 
 						if( noneHaveTrackNumberTags && noneHaveTrackNumberNames ) return FolderType.ArtistAlbumNoTrackNumbers;
@@ -192,67 +193,5 @@ namespace TeslaTags
 		}
 	}
 
-	public static class Extensions
-	{
-		public static Boolean EqualsCI( this String x, String y )
-		{
-			return String.Equals( x, y, StringComparison.OrdinalIgnoreCase );
-		}
-
-		public static void AddInfo( this List<Message> messages, String filePath, String text )
-		{
-			messages.Add( new Message( MessageSeverity.Info, Path.GetDirectoryName( filePath ), filePath, text ) );
-		}
-
-		/// <summary>Returns false if there were no reasons.</summary>
-		public static Boolean AddFileCorruptionErrors( this List<Message> messages, String filePath, IEnumerable<String> corruptionReasons )
-		{
-			if( corruptionReasons == null ) return false;
-			
-			Boolean any = false;
-
-			foreach( String reason in corruptionReasons )
-			{
-				messages.AddFileError( filePath, "File corrupted: " + reason );
-				any = true;
-			}
-
-			return any;
-		}
-
-		public static void AddFileWarning( this List<Message> messages, String filePath, String text )
-		{
-			messages.Add( new Message( MessageSeverity.Warning, Path.GetDirectoryName( filePath ), filePath, text ) );
-		}
-
-		public static void AddFileWarning( this List<Message> messages, String filePath, String format, params Object[] args )
-		{
-			Extensions.AddFileWarning( messages, filePath, text: String.Format( CultureInfo.InvariantCulture, format, args ) );
-		}
-
-		public static void AddFileError( this List<Message> messages, String filePath, String text )
-		{
-			messages.Add( new Message( MessageSeverity.Error, Path.GetDirectoryName( filePath ), filePath, text ) );
-		}
-
-		public static void AddFileError( this List<Message> messages, String filePath, String format, params Object[] args )
-		{
-			Extensions.AddFileError( messages, filePath, text: String.Format( CultureInfo.InvariantCulture, format, args ) );
-		}
-
-		public static void AddFileChange( this List<Message> messages, String filePath, String messageText )
-		{
-			messages.Add( new Message( MessageSeverity.FileModification, Path.GetDirectoryName( filePath ), filePath, messageText ) );
-		}
-
-		public static void AddFileChange( this List<Message> messages, String filePath, String field, String oldValue, String newValue )
-		{
-			oldValue = ( oldValue == null ) ? "null" : ("\"" + oldValue + "\"");
-			newValue = ( newValue == null ) ? "null" : ("\"" + newValue + "\"");
-
-			String messageText = String.Concat( field, ": ", oldValue, " -> ", newValue );
-
-			messages.Add( new Message( MessageSeverity.FileModification, Path.GetDirectoryName( filePath ), filePath, messageText ) );
-		}
-	}
+	
 }
