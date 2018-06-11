@@ -46,7 +46,13 @@ namespace TeslaTags
 			this.RecoveryTag = recoveryTag ?? new RecoveryTag();
 		}
 
-		public abstract void Dispose();
+		public void Dispose()
+		{
+			this.Dispose( disposing: true );
+			GC.SuppressFinalize( this );
+		}
+
+		protected abstract void Dispose(Boolean disposing);
 
 		public abstract void Save();
 
@@ -101,9 +107,12 @@ namespace TeslaTags
 			this.MpegAudioFile = mpegFile;
 		}
 
-		public override void Dispose()
+		protected sealed override void Dispose(Boolean disposing)
 		{
-			this.MpegAudioFile.Dispose();
+			if( disposing )
+			{
+				this.MpegAudioFile.Dispose();
+			}
 		}
 
 		public override void Save()
@@ -159,9 +168,12 @@ namespace TeslaTags
 			this.FlacAudioFile = flacFile;
 		}
 
-		public override void Dispose()
+		protected sealed override void Dispose(Boolean disposing)
 		{
-			this.FlacAudioFile.Dispose();
+			if( disposing )
+			{
+				this.FlacAudioFile.Dispose();
+			}
 		}
 
 		public override void Save()

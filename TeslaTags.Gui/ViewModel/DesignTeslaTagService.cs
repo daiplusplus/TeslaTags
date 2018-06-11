@@ -55,10 +55,9 @@ namespace TeslaTags.Gui
 			}
 			else if( this.processState == 2 )
 			{
-				TimeSpan time = DateTime.UtcNow - this.stateStart;
 				if( this.directoryIdx < this.directories.Count )
 				{
-					String directory = this.directories[this.directoryIdx];
+					String directory = Path.Combine( this.rootDirectory, this.directories[this.directoryIdx] );
 
 					Random rng = new Random();
 

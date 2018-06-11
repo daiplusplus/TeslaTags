@@ -58,10 +58,10 @@ namespace TeslaTags
 			imageFileName = Path.IsPathRooted( imageFileName ) ? imageFileName : Path.Combine( directoryPath, imageFileName );
 			if( !System.IO.File.Exists( imageFileName ) ) throw new ArgumentException( "Value must be a file that exists.", nameof(imageFileName ) );
 
-			return Task.Run( () => Wrap( directoryPath, (dp, files, messages) => SetAlbumArtInner( dp, files, messages, imageFileName, mode ) ) );
+			return Task.Run( () => Wrap( directoryPath, (dp, files, messages) => SetAlbumArtInner( files, messages, imageFileName, mode ) ) );
 		}
 
-		private static void SetAlbumArtInner(String directoryPath, List<LoadedFile> files, List<Message> messages, String imageFileName, AlbumArtSetMode mode)
+		private static void SetAlbumArtInner(List<LoadedFile> files, List<Message> messages, String imageFileName, AlbumArtSetMode mode)
 		{
 			// imageFileName will be resolved by now.
 
@@ -154,6 +154,8 @@ namespace TeslaTags
 					continue;
 				}
 
+				if( discNumber != null ) disc = discNumber.Value;
+
 				if( disc  != null )
 				{
 					String oldDisc  = file.Tag.Disc.ToString(CultureInfo.InvariantCulture);
@@ -167,10 +169,11 @@ namespace TeslaTags
 
 				if( track != null )
 				{
+					Int32 newTrack = Math.Max( 0, track.Value + offset );
+					
 					String oldTrack  = file.Tag.Track.ToString(CultureInfo.InvariantCulture);
-					UInt32 newTrack  = (UInt32)track.Value;
 
-					file.Tag.Track = newTrack;
+					file.Tag.Track = (UInt32)newTrack;
 					file.IsModified = true;
 
 					messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Track), oldTrack, newTrack.ToString(CultureInfo.InvariantCulture) );
