@@ -11,9 +11,9 @@ namespace TeslaTags.Gui
 
 		public ITeslaTagEventsListener EventsListener { get; set; }
 
-		public void Start(String directory, Boolean readOnly, GenreRules genreRules)
+		public void Start(String directory, Boolean readOnly, Boolean undo, GenreRules genreRules)
 		{
-			ThreadPool.QueueUserWorkItem( new WaitCallback( ( state ) => this.StartThread( directory, readOnly, genreRules ) ) );
+			ThreadPool.QueueUserWorkItem( new WaitCallback( ( state ) => this.StartThread( directory, readOnly, undo, genreRules ) ) );
 			this.IsBusy = true;
 		}
 
@@ -24,7 +24,7 @@ namespace TeslaTags.Gui
 
 		private Boolean stopRequested = false;
 
-		private void StartThread(String directory, Boolean readOnly, GenreRules genreRules)
+		private void StartThread(String directory, Boolean readOnly, Boolean undo, GenreRules genreRules)
 		{
 			this.EventsListener?.Started();
 
@@ -42,7 +42,13 @@ namespace TeslaTags.Gui
 
 					if( directoryPath != null )
 					{
-						DirectoryResult result = tp.ProcessDirectory( directoryPath, readOnly, genreRules );
+						DirectoryResult result = tp.ProcessDirectory(
+							directoryPath,
+							readOnly  : readOnly,
+							undo      : undo,
+							genreRules: genreRules
+						);
+
 						this.EventsListener?.DirectoryUpdate( directoryPath, result.FolderType, result.ModifiedFiles, result.TotalFiles, ++count / total, result.Messages );
 					}
 				}

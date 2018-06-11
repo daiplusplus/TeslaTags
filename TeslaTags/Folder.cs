@@ -9,38 +9,49 @@ namespace TeslaTags
 {
 	public static class Folder
 	{
-		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String directoryPath, Boolean readOnly, GenreRules genreRules, List<Message> messages)
+		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String directoryPath, Boolean readOnly, Boolean undo, GenreRules genreRules, List<Message> messages)
 		{
 			List<LoadedFile> files = LoadFiles( directoryPath, messages );
 			try
 			{
-				FolderType folderType = DetermineFolderType( directoryPath, files, messages );
-				switch( folderType )
+				FolderType folderType;
+				if( undo )
 				{
-					case FolderType.ArtistAlbum:
-					case FolderType.ArtistAlbumNoTrackNumbers:
-						Retagger.RetagForArtistAlbum( files, messages, trackNumbersExpected: ( folderType != FolderType.ArtistAlbumNoTrackNumbers ) );
-						break;
-					case FolderType.ArtistAlbumWithGuestArtists:
-						Retagger.RetagForArtistAlbumWithGuestArtists( files, messages );
-						break;
-					case FolderType.ArtistAssorted:
-						Retagger.RetagForArtistAssortedFiles( files, messages );
-						break;
-					case FolderType.AssortedFiles:
-						Retagger.RetagForAssortedFiles( files, messages );
-						break;
-					case FolderType.CompilationAlbum:
-						Retagger.RetagForCompilationAlbum( files, messages );
-						break;
-					case FolderType.Empty:
-					case FolderType.UnableToDetermine:
-					case FolderType.Skipped:
-					default:
-						break;
+					Boolean anyReverted = Retagger.RetagForUndo( files, messages );
+					
+					if( anyReverted ) folderType = FolderType.Reverted;
+					else              folderType = FolderType.Skipped;
 				}
+				else
+				{
+					folderType = DetermineFolderType( directoryPath, files, messages );
+					switch( folderType )
+					{
+						case FolderType.ArtistAlbum:
+						case FolderType.ArtistAlbumNoTrackNumbers:
+							Retagger.RetagForArtistAlbum( files, messages, trackNumbersExpected: ( folderType != FolderType.ArtistAlbumNoTrackNumbers ) );
+							break;
+						case FolderType.ArtistAlbumWithGuestArtists:
+							Retagger.RetagForArtistAlbumWithGuestArtists( files, messages );
+							break;
+						case FolderType.ArtistAssorted:
+							Retagger.RetagForArtistAssortedFiles( files, messages );
+							break;
+						case FolderType.AssortedFiles:
+							Retagger.RetagForAssortedFiles( files, messages );
+							break;
+						case FolderType.CompilationAlbum:
+							Retagger.RetagForCompilationAlbum( files, messages );
+							break;
+						case FolderType.Empty:
+						case FolderType.UnableToDetermine:
+						case FolderType.Skipped:
+						default:
+							break;
+					}
 
-				Retagger.RetagForGenre( folderType, files, genreRules, messages );
+					Retagger.RetagForGenre( folderType, files, genreRules, messages );
+				}
 
 				Int32 modifiedCount = 0;
 				foreach( LoadedFile file in files )

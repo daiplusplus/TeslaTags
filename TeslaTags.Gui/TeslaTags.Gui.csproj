@@ -81,6 +81,7 @@
     <Compile Include="ViewModel\DesignTeslaTagService.cs" />
     <Compile Include="ViewModel\DirectoryViewModel.cs" />
     <Compile Include="ViewModel\DispatchTeslaTagEventsListener.cs" />
+    <Compile Include="ViewModel\GenreRulesViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
     <Page Include="MainWindow.xaml">

@@ -309,6 +309,20 @@ namespace TeslaTags
 				}
 			}
 		}
+
+		/// <summary>Returns true if any files were reverted.</summary>
+		public static Boolean RetagForUndo(List<LoadedFile> files, List<Message> messages)
+		{
+			Boolean any = false;
+
+			foreach( LoadedFile file in files )
+			{
+				TagWriter.Revert( file, messages );
+				if( file.IsModified ) any = true;
+			}
+
+			return any;
+		}
 	}
 
 	public enum FolderType
@@ -321,6 +335,7 @@ namespace TeslaTags
 		CompilationAlbum, // Sets artist to "Various Artists"
 		AssortedFiles,
 		Skipped,
-		UnableToDetermine
+		UnableToDetermine,
+		Reverted
 	}
 }

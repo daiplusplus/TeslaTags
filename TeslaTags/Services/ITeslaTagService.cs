@@ -8,7 +8,7 @@ namespace TeslaTags
 {
 	public interface ITeslaTagsService
 	{
-		void Start(String directory, Boolean readOnly, GenreRules genreRules);
+		void Start(String directory, Boolean readOnly, Boolean undo, GenreRules genreRules);
 		
 		void Stop();
 

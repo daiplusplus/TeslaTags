@@ -99,7 +99,7 @@ namespace TeslaTags.Gui
 
 		public ITeslaTagEventsListener EventsListener { get; set; }
 
-		public void Start(String directory, Boolean readOnly, GenreRules genreRules)
+		public void Start(String directory, Boolean readOnly, Boolean undo, GenreRules genreRules)
 		{
 			this.rootDirectory = directory;
 			this.directories = _directories

@@ -116,11 +116,9 @@
 
 				<StackPanel Grid.Column="1" Orientation="Horizontal">
 
-					<CheckBox VerticalAlignment="Center" IsChecked="{Binding OnlyValidate}" VerticalContentAlignment="Center">
-						<Label Content="Validate only" VerticalAlignment="Center" />
-					</CheckBox>
+					<CheckBox IsChecked="{Binding OnlyValidate}" Content="Validate only" VerticalAlignment="Center" Margin="3" />
 
-					<Separator />
+					<CheckBox IsChecked="{Binding RestoreFiles}" Content="Restore files" VerticalAlignment="Center" Margin="3" />
 
 					<ToggleButton Content="Genre handling..." Name="genreButton" />
 
