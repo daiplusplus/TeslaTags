@@ -123,13 +123,13 @@ namespace TeslaTags
 			Boolean allAlbumArtistsAreVariousArtists = files.All( f => f.Tag.FirstAlbumArtist.EqualsCI( Values.VariousArtistsConst ) ); //files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
 
 			String  firstAlbumArtist   = files.First().Tag.FirstAlbumArtist; //files.First().Id3v2Tag.AlbumArtists.FirstOrDefault();
-			Boolean allSameAlbumArtist = files.All( f => f.Tag.FirstAlbumArtist.EqualsCI( firstAlbumArtist ) ); //files.All( f => String.Equals( firstAlbumArtist, f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
+			Boolean allSameAlbumArtist = !String.IsNullOrWhiteSpace( firstAlbumArtist ) && files.All( f => f.Tag.FirstAlbumArtist.EqualsCI( firstAlbumArtist ) ); //files.All( f => String.Equals( firstAlbumArtist, f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
 
 			String  firstArtist        = files.First().Tag.FirstPerformer; //files.First().Id3v2Tag.Performers.FirstOrDefault();
-			Boolean allSameArtist      = files.All( ft => ft.Tag.FirstPerformer.EqualsCI( firstArtist ) ); //files.All( f => String.Equals( firstArtist, f.Id3v2Tag.Performers.SingleOrDefault(), StringComparison.Ordinal ) );
+			Boolean allSameArtist      = !String.IsNullOrWhiteSpace( firstArtist ) && files.All( ft => ft.Tag.FirstPerformer.EqualsCI( firstArtist ) ); //files.All( f => String.Equals( firstArtist, f.Id3v2Tag.Performers.SingleOrDefault(), StringComparison.Ordinal ) );
 
 			String  firstAlbum         = files.First().Tag.Album; //files.First().Id3v2Tag.Album;
-			Boolean sameAlbum          = files.All( ft => ft.Tag.Album.EqualsCI( firstAlbum ) ); //files.All( f => String.Equals( firstAlbum, f.Id3v2Tag.Album, StringComparison.Ordinal ) );
+			Boolean sameAlbum          = !String.IsNullOrWhiteSpace( firstAlbum ) && files.All( ft => ft.Tag.Album.EqualsCI( firstAlbum ) ); //files.All( f => String.Equals( firstAlbum, f.Id3v2Tag.Album, StringComparison.Ordinal ) );
 			Boolean noAlbum            = files.All( ft => String.IsNullOrWhiteSpace( ft.Tag.Album ) ); //files.All( f => String.IsNullOrWhiteSpace( f.Id3v2Tag.Album ) );
 
 			if( allAlbumArtistsAreVariousArtists )

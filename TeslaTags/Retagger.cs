@@ -142,7 +142,12 @@ namespace TeslaTags
 			// 1. Copy Artist to Title.
 			// 2. Use AlbumArtist as Artist (note that all tracks will have the same AlbumArtist value, so copy it from the first track).
 			
-			String albumArtist = files.First().Tag.AlbumArtists.Single();
+			String albumArtist = files.First().Tag.AlbumArtists.SingleOrDefault();
+			if( String.IsNullOrWhiteSpace( albumArtist ) )
+			{
+				messages.AddFileError( files.First().FileInfo.FullName, "File does not have an album-artist." );
+				return;
+			}
 
 			foreach( LoadedFile file in files )
 			{
