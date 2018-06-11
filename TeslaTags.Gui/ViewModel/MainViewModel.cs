@@ -27,6 +27,10 @@ namespace TeslaTags.Gui
 			this.DirectoryPath     = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
 			this.OnlyValidate      = true;
 
+			this.ExcludeITunesFolder = App.ExcludeITunes;
+
+			this.Version = typeof(MainViewModel).Assembly.GetName().Version.ToString();
+
 			//////////
 
 			if( this.IsInDesignMode )
@@ -59,6 +63,13 @@ namespace TeslaTags.Gui
 		{
 			get { return this.onlyValidate; }
 			set { this.Set( nameof(this.OnlyValidate), ref this.onlyValidate, value ); }
+		}
+
+		private Boolean excludeITunesFolder;
+		public Boolean ExcludeITunesFolder
+		{
+			get { return this.excludeITunesFolder; }
+			set { this.Set( nameof(this.ExcludeITunesFolder), ref this.excludeITunesFolder, value ); }
 		}
 
 		private Boolean restoreFiles;
@@ -116,6 +127,8 @@ namespace TeslaTags.Gui
 		}
 		public Boolean ProgressIndeterminate { get; private set; }
 
+		public String Version { get; }
+
 		#endregion
 
 		#region Commands
@@ -157,7 +170,7 @@ namespace TeslaTags.Gui
 
 		void ITeslaTagEventsListener.GotDirectories(List<String> directories)
 		{
-			if( App.ExcludeITunes )
+			if( this.ExcludeITunesFolder )
 			{
 				for( Int32 i = 0; i < directories.Count; i++ )
 				{

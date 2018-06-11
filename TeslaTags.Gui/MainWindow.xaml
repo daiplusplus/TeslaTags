@@ -9,7 +9,7 @@
 	x:Class="TeslaTags.Gui.MainWindow"
 	DataContext="{Binding Source={StaticResource Locator}, Path=MainWindow}"
 	
-	Title="TeslaTags - Because the music library on a $100,000 car SHOULD WORK PROPERLY!"
+	Title="TeslaTags"
 	Height="450"
 	Width="800"
 	
@@ -68,6 +68,11 @@
 
 		<Style TargetType="{x:Type Separator}" BasedOn="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}">
 		</Style>
+
+		<Style TargetType="{x:Type Hyperlink}">
+			<EventSetter Event="RequestNavigate" Handler="Hyperlink_RequestNavigate" />
+			<Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Mode=Self}, Path=NavigateUri}" />
+		</Style>
 		
 	</Window.Resources>
 	
@@ -99,7 +104,45 @@
 
 				</Grid>
 
-				<Button Grid.Row="1" Grid.Column="2" Name="browseButton" VerticalAlignment="Center" Content="Browse..." />
+				<StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal">
+
+					<Button Name="browseButton" VerticalAlignment="Center" Content="Browse..." />
+
+					<ToggleButton Content="Help" Name="helpButton" />
+					<Popup
+						Name="helpPopup"
+						PlacementTarget="{Binding ElementName=helpButton}"
+						
+						IsOpen="{Binding IsChecked, ElementName=helpButton}"
+						StaysOpen="False"
+					>
+
+						<Border
+							BorderThickness="1"
+							Background="{x:Static SystemColors.WindowBrush}"
+							BorderBrush="{x:Static SystemColors.ActiveBorderBrush}"
+							Padding="4"
+						>
+							<Border.Effect>
+								<DropShadowEffect Opacity="0.2" />
+							</Border.Effect>
+
+							<TextBlock LineHeight="18" LineStackingStrategy="BlockLineHeight">
+								TeslaTags <TextBlock Text="{Binding Version}" /> (Release 3)
+								<LineBreak />
+								By <Hyperlink NavigateUri="mailto:dai@dai.me?subject=TeslaTags">Dai Rees</Hyperlink> in 2018 (Are you at Tesla, can I have a job? :D)
+								<LineBreak />
+								<Hyperlink NavigateUri="https://thenounproject.com/term/tags/464493">Icon by Guilhem</Hyperlink> from Noun Project, CC license
+								<LineBreak />
+								Project homepage: <Hyperlink NavigateUri="https://www.github.com/Jehoel/TeslaTags">github.com/Jehoel/TeslaTags</Hyperlink>
+								<LineBreak />
+								Documentation/help: <Hyperlink NavigateUri="https://github.com/Jehoel/TeslaTags/blob/release-3/README.md">README.md</Hyperlink>
+							</TextBlock>
+
+						</Border>
+					</Popup>
+
+				</StackPanel>
 
 			</Grid>
 
@@ -119,6 +162,8 @@
 					<CheckBox IsChecked="{Binding OnlyValidate}" Content="Validate only" VerticalAlignment="Center" Margin="3" />
 
 					<CheckBox IsChecked="{Binding RestoreFiles}" Content="Restore files" VerticalAlignment="Center" Margin="3" />
+
+					<CheckBox IsChecked="{Binding ExcludeITunesFolder}" Content="Exclude iTunes folders" VerticalAlignment="Center" Margin="3" />
 
 					<ToggleButton Content="Genre handling..." Name="genreButton" />
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -54,7 +55,20 @@ namespace TeslaTags.Gui
 
 		private MainViewModel ViewModel => (MainViewModel)this.DataContext;
 
-
+		private void Hyperlink_RequestNavigate(Object sender, RequestNavigateEventArgs e)
+		{
+			if( e.Uri != null )
+			{
+				try
+				{
+					Process p = System.Diagnostics.Process.Start( e.Uri.ToString() );
+					if( p != null ) p.Dispose();
+				}
+				catch
+				{
+				}
+			}
+		}
 	}
 
 	public class FullPathToRelativePathConverter : IValueConverter
