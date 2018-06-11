@@ -142,21 +142,22 @@
 							<StackPanel Margin="1">
 
 								<Label Content="Default:" />
-								<RadioButton Margin="10,3,0,3"  Content="Preserve"         GroupName="a" IsChecked="{Binding GenreRules.DefaultPreserve, Mode=TwoWay}" />
-								<RadioButton Margin="10,3,0,3"  Content="Clear"            GroupName="b" IsChecked="{Binding GenreRules.DefaultClear, Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3"  Content="Preserve"         GroupName="g_d1" IsChecked="{Binding GenreRules.DefaultPreserve         , Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3"  Content="Clear"            GroupName="g_d2" IsChecked="{Binding GenreRules.DefaultClear            , Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3"  Content="Use artist name"  GroupName="g_d3" IsChecked="{Binding GenreRules.DefaultUseArtist        , Mode=TwoWay}" />
 
 								<Label Content="Assorted files folders:" />
-								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="c" IsChecked="{Binding GenreRules.AssortedUseDefault, Mode=TwoWay}" />
-								<RadioButton Margin="10,3,0,3" Content="Use folder name"   GroupName="d" IsChecked="{Binding GenreRules.AssortedUseFolderName, Mode=TwoWay}" />
-								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="e" IsChecked="{Binding GenreRules.AssortedUseArtistName, Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="g_a1" IsChecked="{Binding GenreRules.AssortedUseDefault      , Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3" Content="Use folder name"   GroupName="g_a2" IsChecked="{Binding GenreRules.AssortedUseFolderName   , Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="g_a3" IsChecked="{Binding GenreRules.AssortedUseArtistName   , Mode=TwoWay}" />
 
 								<Label Content="Compilation folders:" />
-								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="f" IsChecked="{Binding GenreRules.CompilationUseDefault, Mode=TwoWay}" />
-								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="g" IsChecked="{Binding GenreRules.CompilationUseArtistName, Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="g_c1" IsChecked="{Binding GenreRules.CompilationUseDefault   , Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="g_c2" IsChecked="{Binding GenreRules.CompilationUseArtistName, Mode=TwoWay}" />
 
 								<Label Content="Albums' guest artists:" />
-								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="h" IsChecked="{Binding GenreRules.GuestArtistUseDefault, Mode=TwoWay}" />
-								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="i" IsChecked="{Binding GenreRules.GuestArtistUseArtistName, Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="g_g1" IsChecked="{Binding GenreRules.GuestArtistUseDefault   , Mode=TwoWay}" />
+								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="g_g2" IsChecked="{Binding GenreRules.GuestArtistUseArtistName, Mode=TwoWay}" />
 
 							</StackPanel>
 

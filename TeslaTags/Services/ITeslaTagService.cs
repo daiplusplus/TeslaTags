@@ -42,8 +42,7 @@ namespace TeslaTags
 
 	public class GenreRules
 	{
-		public Boolean DefaultClear { get; set; }
-		public Boolean DefaultPreserve => !this.DefaultClear;
+		public GenereDefault Default { get; set; }
 
 		public GenreAssortedFiles AssortedFiles { get; set; }
 
@@ -54,10 +53,17 @@ namespace TeslaTags
 		public Boolean GuestArtistUseArtistName { get; set; }
 
 		public Boolean AlwaysNoop =>
-			this.DefaultPreserve &&
+			this.Default == GenereDefault.Preserve &&
 			this.AssortedFiles == GenreAssortedFiles.UseDefault &&
 			this.CompilationUseDefault &&
 			this.GuestArtistUseDefault;
+	}
+
+	public enum GenereDefault
+	{
+		Preserve,
+		Clear,
+		UseArtist
 	}
 
 	public enum GenreAssortedFiles

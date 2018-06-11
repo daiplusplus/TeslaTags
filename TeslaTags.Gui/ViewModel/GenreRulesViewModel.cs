@@ -11,7 +11,7 @@ namespace TeslaTags.Gui
 		{
 			return new GenreRules()
 			{
-				DefaultClear             = this.rules.DefaultClear,
+				Default                  = this.rules.Default,
 				AssortedFiles            = this.rules.AssortedFiles,
 				CompilationUseArtistName = this.rules.CompilationUseArtistName,
 				GuestArtistUseArtistName = this.rules.GuestArtistUseArtistName
@@ -20,31 +20,78 @@ namespace TeslaTags.Gui
 
 		public Boolean DefaultPreserve
 		{
-			get { return this.rules.DefaultPreserve; }
+			get { return this.rules.Default == GenereDefault.Preserve; }
 			set
 			{
-				Boolean defaultClear = !value;
-				if( defaultClear != this.rules.DefaultClear )
+				Boolean defaultPreserveNew = value;
+				Boolean defaultPreserveOld = this.DefaultPreserve;
+
+				if( defaultPreserveNew != defaultPreserveOld )
 				{
-					this.rules.DefaultClear = defaultClear;
+					if( defaultPreserveNew )
+					{
+						this.rules.Default = GenereDefault.Preserve;
+					}
+					else
+					{
+						this.rules.Default = GenereDefault.Clear;
+					}
 					
 					this.RaisePropertyChanged(nameof(this.DefaultPreserve));
 					this.RaisePropertyChanged(nameof(this.DefaultClear));
+					this.RaisePropertyChanged(nameof(this.DefaultUseArtist));
 				}
 			}
 		}
 
 		public Boolean DefaultClear
 		{
-			get { return this.rules.DefaultClear; }
+			get { return this.rules.Default == GenereDefault.Clear; }
 			set
 			{
-				if( value != this.rules.DefaultClear )
+				Boolean defaultClearNew = value;
+				Boolean defaultClearOld = this.DefaultClear;
+
+				if( defaultClearNew != defaultClearOld )
 				{
-					this.rules.DefaultClear = value;
+					if( defaultClearNew )
+					{
+						this.rules.Default = GenereDefault.Clear;
+					}
+					else
+					{
+						this.rules.Default = GenereDefault.Preserve;
+					}
 					
 					this.RaisePropertyChanged(nameof(this.DefaultPreserve));
 					this.RaisePropertyChanged(nameof(this.DefaultClear));
+					this.RaisePropertyChanged(nameof(this.DefaultUseArtist));
+				}
+			}
+		}
+
+		public Boolean DefaultUseArtist
+		{
+			get { return this.rules.Default == GenereDefault.UseArtist; }
+			set
+			{
+				Boolean defaultUseArtistNew = value;
+				Boolean defaultUseArtistOld = this.DefaultUseArtist;
+
+				if( defaultUseArtistNew != defaultUseArtistOld )
+				{
+					if( defaultUseArtistNew )
+					{
+						this.rules.Default = GenereDefault.UseArtist;
+					}
+					else
+					{
+						this.rules.Default = GenereDefault.Preserve;
+					}
+					
+					this.RaisePropertyChanged(nameof(this.DefaultPreserve));
+					this.RaisePropertyChanged(nameof(this.DefaultClear));
+					this.RaisePropertyChanged(nameof(this.DefaultUseArtist));
 				}
 			}
 		}

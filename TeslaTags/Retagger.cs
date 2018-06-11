@@ -296,13 +296,25 @@ namespace TeslaTags
 					break;
 				default:
 
-					if( genreRules.DefaultClear )
+					if( genreRules.Default == GenereDefault.Clear )
 					{
 						TagWriter.SetGenre( file, messages, null );
 					}
-					else if( genreRules.DefaultPreserve )
+					else if( genreRules.Default == GenereDefault.Preserve )
 					{
 						// NOOP
+					}
+					else if( genreRules.Default == GenereDefault.UseArtist )
+					{
+						String originalArtist = file.RecoveryTag.Artist;
+						if( !String.IsNullOrWhiteSpace( originalArtist ) )
+						{
+							TagWriter.SetGenre( file, messages, originalArtist );
+						}
+						else
+						{
+							TagWriter.SetGenre( file, messages, file.Tag.FirstPerformer );
+						}
 					}
 
 					break;
