@@ -53,12 +53,14 @@ namespace TeslaTags
 
 			if( oldTrack == newTrack ) return; // NOOP
 
-			file.Tag.Track = newTrack ?? 0; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
+			UInt32 newTrackValue = newTrack ?? 0;
+
+			file.Tag.Track = newTrackValue; // it's kinda messy to clear tags using TagLib, it's a poorly-designed API (I noticed!): https://stackoverflow.com/questions/21343938/delete-all-pictures-of-an-id3-tag-with-taglib-sharp
 
 			messages.AddFileChange( file.FileInfo.FullName, nameof(TagLib.Tag.Track), oldTrack.ToString(), newTrack.ToString() );
 			file.IsModified = true;
 
-			file.RecoveryTag.TrackNumber = (Int32)newTrack;
+			file.RecoveryTag.TrackNumber = (Int32)newTrackValue;
 		}
 
 		public static void SetTitle( LoadedFile file, List<Message> messages, String newTitle )
