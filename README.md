@@ -9,25 +9,27 @@
 <img src="https://user-images.githubusercontent.com/1693078/41264291-c961e97a-6da0-11e8-894e-f330bef6083f.png" width="300" />
 
 1. Copy your MP3 and FLAC music from your computer onto your USB stick.
-2. Run `TeslaTags.Gui.exe`
-3. Change the "Music root" directory to your USB stick.
-4. Set the options:
-4.1. **Validate only**:
-    Leave the "Validate-only" checkbox checked if you want to see what changes will be made to your files. **Your files will not be modified if you leave the "Validate-only" checkbox checked!**. Uncheck the box if you're comfortable having your files re-tagged. (This feature is a safety device to prevent people accidentally re-tagging their music files)
-4.2. **Restore files**:
-    This option will undo a previous retagging operation, but only to MP3 files (not FLAC) and is experimental. Use at your own risk. The program stores original tag data in a new ID3v2 frame.
-4.3. **Exclude iTunes folders**:
-    This excludes the "iTunes Media" folder, and other folders with "iTunes" in their name from being processed by this tool, it helps save time if you don't have any music files in your iTunes folders.
-4.4. **Genre handling**:
-    This repurposes the `Genre` tag in your files so you can use it to jump to Artists (that don't have any albums) or to assorted-files folders as neither show-up in the normal Tesla music library.
-	* **Preserve**: This keeps all your `Genre` tag values the way they are and doesn't change them, unless overridden for "Assorted files folders", "Compilation folders", and "Albums' guest artists" below.
-	* **Clear**: This clears the `Genre` tag in all your files.
-	* **Use artist name**: This always stores the artist name in the `Genre` field, so the Tesla Genres menu then becomes a "All songs by this artist" menu. This menu can fill up if you have lots of assorted files or compilations.
-	* **Assorted files folders**: Only applies to folders classified as `AssortedFiles` in the main table.
-	* **Compilation folders**: Only applies to folders classified as `CompilationAlbum` in the main table.
-	* **Albums' guest artists**: Only applies to tracks by Guest Artists in folders classified as `ArtistAlbumWithGuestArtists` in the main table.
+1. I strongly recommend validating your MP3 files first, see the [Recommended MP3 Tools section below](#recommended-mp3-tools) 
+1. Run `TeslaTags.Gui.exe`
+1. Change the "Music root" directory to your USB stick.
+1. Set the options:
 
-5. A progress bar appears at the top. It disappears when the program is complete. Provided that "Validate only" is unchecked then your USB stick is ready to be put back into your Tesla car.
+    1. **Validate only**:
+    Leave the "Validate-only" checkbox checked if you want to see what changes will be made to your files. **Your files will not be modified if you leave the "Validate-only" checkbox checked!**. Uncheck the box if you're comfortable having your files re-tagged. (This feature is a safety device to prevent people accidentally re-tagging their music files)
+    1. **Restore files**:
+    This option will undo a previous retagging operation, but only to MP3 files (not FLAC) and is experimental. Use at your own risk. The program stores original tag data in a new ID3v2 frame.
+    1. **Exclude iTunes folders**:
+    This excludes the "iTunes Media" folder, and other folders with "iTunes" in their name from being processed by this tool, it helps save time if you don't have any music files in your iTunes folders.
+    1. **Genre handling**:
+    This repurposes the `Genre` tag in your files so you can use it to jump to Artists (that don't have any albums) or to assorted-files folders as neither show-up in the normal Tesla music library.
+	      * **Preserve**: This keeps all your `Genre` tag values the way they are and doesn't change them, unless overridden for "Assorted files folders", "Compilation folders", and "Albums' guest artists" below.
+	      * **Clear**: This clears the `Genre` tag in all your files.
+	      * **Use artist name**: This always stores the artist name in the `Genre` field, so the Tesla Genres menu then becomes a "All songs by this artist" menu. This menu can fill up if you have lots of assorted files or compilations.
+	      * **Assorted files folders**: Only applies to folders classified as `AssortedFiles` in the main table.
+	      * **Compilation folders**: Only applies to folders classified as `CompilationAlbum` in the main table.
+	      * **Albums' guest artists**: Only applies to tracks by Guest Artists in folders classified as `ArtistAlbumWithGuestArtists` in the main table.
+
+1. A progress bar appears at the top. It disappears when the program is complete. Provided that "Validate only" is unchecked then your USB stick is ready to be put back into your Tesla car.
 
 ## Background Problem statement:
 
@@ -130,7 +132,6 @@ Solution:
 
 ## References:
 
-
 * TeslaTunes, for macOS.
 	See the `twiddleTags` function in https://github.com/tattwamasi/TeslaTunes/blob/bb56bca7c86750b1b9b5f88f13297d8cc7678dcb/TeslaTunes/CopyConvertDirs.mm
 
@@ -142,3 +143,15 @@ Solution:
 * Q: ID3v1 does not define text encoding, should try ASCII, UTF-8, UTF-16LE, UTF-16BE and see what happens. (Would UTF-16BE be different on ARM vs x86 MCUs?)
 * Q: How does it handle leading invisible Unicode whitespace? Does it do a Trim()?
   * Leading whitespace (including zero-width whitespace) is not rendered and does not affect track collation order (i.e. the Tesla software performs Unicode collation, not "dump" binary sorting). Certain zero-width whitespace characters are rendered with a "missing character" glypth and rendered as an overlay on top of other characters.
+  
+## Recommended MP3 tools
+
+I personally strongly recommend these tools for automatically validating and repairing with MP3 files. They pick up validation issues and other problems with MP3 files and can repair most of them. This has fixed many files that refused to play in my Tesla's music player.
+
+* MP3Val: http://mp3val.sourceforge.net/
+* MP3Diags: http://mp3val.sourceforge.net/
+
+You should run both MP3Val and MP3Diags on your MP3 collection because sometimes one tool will identify issues the other tool didn't.
+
+I also recommend MP3DirectCut for editing, slicing and cutting MP3 files because it edits MP3 block data directly without any transcoding and saves files without reencoding, preserving quality: http://mpesch3.de1.cc/mp3dc.html
+
