@@ -29,7 +29,8 @@ namespace TeslaTags.Gui
 
 			this.ExcludeITunesFolder = App.ExcludeITunes;
 
-			this.Version = typeof(MainViewModel).Assembly.GetName().Version.ToString();
+			this.Version = typeof(MainViewModel).Assembly.GetName().Version.ToString() + " (Release 4)";
+			this.ReadmeLink = @"https://github.com/Jehoel/TeslaTags/blob/release-4/README.md";
 
 			//////////
 
@@ -128,6 +129,7 @@ namespace TeslaTags.Gui
 		public Boolean ProgressIndeterminate { get; private set; }
 
 		public String Version { get; }
+		public String ReadmeLink { get; }
 
 		#endregion
 

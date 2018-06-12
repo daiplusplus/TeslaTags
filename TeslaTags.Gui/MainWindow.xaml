@@ -133,7 +133,7 @@
 							</Border.Effect>
 
 							<TextBlock LineHeight="18" LineStackingStrategy="BlockLineHeight">
-								TeslaTags <TextBlock Text="{Binding Version}" /> (Release 3)
+								TeslaTags <TextBlock Text="{Binding Version}" />
 								<LineBreak />
 								By <Hyperlink NavigateUri="mailto:dai@dai.me?subject=TeslaTags">Dai Rees</Hyperlink> in 2018 (Are you at Tesla, can I have a job? :D)
 								<LineBreak />
@@ -141,7 +141,7 @@
 								<LineBreak />
 								Project homepage: <Hyperlink NavigateUri="https://www.github.com/Jehoel/TeslaTags">github.com/Jehoel/TeslaTags</Hyperlink>
 								<LineBreak />
-								Documentation/help: <Hyperlink NavigateUri="https://github.com/Jehoel/TeslaTags/blob/release-3/README.md">README.md</Hyperlink>
+								Documentation/help: <Hyperlink NavigateUri="{Binding ReadmeLink}">README.md</Hyperlink>
 							</TextBlock>
 
 						</Border>
@@ -227,6 +227,8 @@
 
 			</Grid>
 
+			<Separator />
+			
 		</StackPanel>
 
 		<DataGrid
