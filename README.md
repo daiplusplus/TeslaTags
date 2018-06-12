@@ -8,7 +8,9 @@
 
 <img src="https://user-images.githubusercontent.com/1693078/41264291-c961e97a-6da0-11e8-894e-f330bef6083f.png" width="300" />
 
-1. Copy your MP3 and FLAC music from your computer onto your USB stick.
+1. Copy your MP3 and FLAC music from your computer onto your USB stick
+    * Don't forget to use FAT32 or ext4 because (as of early 2018) NTFS and exFAT are still not supported.
+    * To format large (32GB+) USB sticks as FAT32 on Windows use a tool like Rufus ( https://rufus.akeo.ie/ ) as Windows' own disk format tools will not let you.
 1. I strongly recommend validating your MP3 files first, see the [Recommended MP3 Tools section below](#recommended-mp3-tools) 
 1. Run `TeslaTags.Gui.exe`
 1. Change the "Music root" directory to your USB stick.
