@@ -93,12 +93,22 @@ namespace TeslaTags
 			List<LoadedFile> loadedFiles = new List<LoadedFile>();
 			foreach( FileInfo fi in audioFiles )
 			{
-				LoadedFile loadedFile;
-				if( fi.Extension.ToUpperInvariant() == ".MP3" ) loadedFile = MpegLoadedFile.Create( fi, messages );
-				else if( fi.Extension.ToUpperInvariant() == ".FLAC" ) loadedFile = FlacLoadedFile.Create( fi, messages );
-				else continue;
-
-				loadedFiles.Add( loadedFile );
+				if( String.Equals( ".mp3", fi.Extension, StringComparison.OrdinalIgnoreCase ) )
+				{
+					LoadedFile loadedMpegFile = MpegLoadedFile.Create( fi, messages );
+					if( loadedMpegFile != null )
+					{
+						loadedFiles.Add( loadedMpegFile );
+					}
+				}
+				else if( String.Equals( ".flac", fi.Extension, StringComparison.OrdinalIgnoreCase ) )
+				{
+					LoadedFile loadedFlacFile = FlacLoadedFile.Create( fi, messages );
+					if( loadedFlacFile != null )
+					{
+						loadedFiles.Add( loadedFlacFile );
+					}
+				}
 			}
 
 			return loadedFiles;
@@ -120,16 +130,16 @@ namespace TeslaTags
 		{
 			if( files.Count == 0 ) return FolderType.Empty;
 
-			Boolean allAlbumArtistsAreVariousArtists = files.All( f => f.Tag?.FirstAlbumArtist?.EqualsCI( Values.VariousArtistsConst ) ?? false );
+			Boolean allAlbumArtistsAreVariousArtists = files.All( f => f.Tag.FirstAlbumArtist.EqualsCI( Values.VariousArtistsConst ) );
 
 			String  firstAlbumArtist   = files.First().Tag.FirstAlbumArtist;
-			Boolean allSameAlbumArtist = !String.IsNullOrWhiteSpace( firstAlbumArtist ) && files.All( f => f.Tag?.FirstAlbumArtist?.EqualsCI( firstAlbumArtist ) ?? false );
+			Boolean allSameAlbumArtist = !String.IsNullOrWhiteSpace( firstAlbumArtist ) && files.All( f => f.Tag.FirstAlbumArtist.EqualsCI( firstAlbumArtist ) );
 
 			String  firstArtist        = files.First().Tag.FirstPerformer;
-			Boolean allSameArtist      = !String.IsNullOrWhiteSpace( firstArtist ) && files.All( ft => ft.Tag?.FirstPerformer?.EqualsCI( firstArtist ) ?? false );
+			Boolean allSameArtist      = !String.IsNullOrWhiteSpace( firstArtist ) && files.All( ft => ft.Tag.FirstPerformer.EqualsCI( firstArtist ) );
 
 			String  firstAlbum         = files.First().Tag.Album;
-			Boolean sameAlbum          = !String.IsNullOrWhiteSpace( firstAlbum ) && files.All( ft => ft.Tag?.Album?.EqualsCI( firstAlbum ) ?? false );
+			Boolean sameAlbum          = !String.IsNullOrWhiteSpace( firstAlbum ) && files.All( ft => ft.Tag.Album.EqualsCI( firstAlbum ) );
 			Boolean noAlbum            = files.All( ft => String.IsNullOrWhiteSpace( ft.Tag.Album ) );
 
 			if( allAlbumArtistsAreVariousArtists )
