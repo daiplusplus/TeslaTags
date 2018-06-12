@@ -120,17 +120,17 @@ namespace TeslaTags
 		{
 			if( files.Count == 0 ) return FolderType.Empty;
 
-			Boolean allAlbumArtistsAreVariousArtists = files.All( f => f.Tag.FirstAlbumArtist.EqualsCI( Values.VariousArtistsConst ) ); //files.All( f => String.Equals( "Various Artists", f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
+			Boolean allAlbumArtistsAreVariousArtists = files.All( f => f.Tag?.FirstAlbumArtist?.EqualsCI( Values.VariousArtistsConst ) ?? false );
 
-			String  firstAlbumArtist   = files.First().Tag.FirstAlbumArtist; //files.First().Id3v2Tag.AlbumArtists.FirstOrDefault();
-			Boolean allSameAlbumArtist = !String.IsNullOrWhiteSpace( firstAlbumArtist ) && files.All( f => f.Tag.FirstAlbumArtist.EqualsCI( firstAlbumArtist ) ); //files.All( f => String.Equals( firstAlbumArtist, f.Id3v2Tag.AlbumArtists.SingleOrDefault(), StringComparison.Ordinal ) );
+			String  firstAlbumArtist   = files.First().Tag.FirstAlbumArtist;
+			Boolean allSameAlbumArtist = !String.IsNullOrWhiteSpace( firstAlbumArtist ) && files.All( f => f.Tag?.FirstAlbumArtist?.EqualsCI( firstAlbumArtist ) ?? false );
 
-			String  firstArtist        = files.First().Tag.FirstPerformer; //files.First().Id3v2Tag.Performers.FirstOrDefault();
-			Boolean allSameArtist      = !String.IsNullOrWhiteSpace( firstArtist ) && files.All( ft => ft.Tag.FirstPerformer.EqualsCI( firstArtist ) ); //files.All( f => String.Equals( firstArtist, f.Id3v2Tag.Performers.SingleOrDefault(), StringComparison.Ordinal ) );
+			String  firstArtist        = files.First().Tag.FirstPerformer;
+			Boolean allSameArtist      = !String.IsNullOrWhiteSpace( firstArtist ) && files.All( ft => ft.Tag?.FirstPerformer?.EqualsCI( firstArtist ) ?? false );
 
-			String  firstAlbum         = files.First().Tag.Album; //files.First().Id3v2Tag.Album;
-			Boolean sameAlbum          = !String.IsNullOrWhiteSpace( firstAlbum ) && files.All( ft => ft.Tag.Album.EqualsCI( firstAlbum ) ); //files.All( f => String.Equals( firstAlbum, f.Id3v2Tag.Album, StringComparison.Ordinal ) );
-			Boolean noAlbum            = files.All( ft => String.IsNullOrWhiteSpace( ft.Tag.Album ) ); //files.All( f => String.IsNullOrWhiteSpace( f.Id3v2Tag.Album ) );
+			String  firstAlbum         = files.First().Tag.Album;
+			Boolean sameAlbum          = !String.IsNullOrWhiteSpace( firstAlbum ) && files.All( ft => ft.Tag?.Album?.EqualsCI( firstAlbum ) ?? false );
+			Boolean noAlbum            = files.All( ft => String.IsNullOrWhiteSpace( ft.Tag.Album ) );
 
 			if( allAlbumArtistsAreVariousArtists )
 			{
@@ -190,8 +190,6 @@ namespace TeslaTags
 				else
 				{
 					// Different Artists and/or Album Artists and/or Albums, i.e. a mess. Inform the user to tidy it up.
-
-					
 					String differentArtists      = GetList( files, ft => ft.FirstPerformer );
 					String differentAlbums       = GetList( files, ft => ft.Album );
 					String differentAlbumArtists = GetList( files, ft => ft.FirstAlbumArtist );
