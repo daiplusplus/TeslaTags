@@ -73,7 +73,11 @@
 			<EventSetter Event="RequestNavigate" Handler="Hyperlink_RequestNavigate" />
 			<Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Mode=Self}, Path=NavigateUri}" />
 		</Style>
-		
+
+		<Style TargetType="{x:Type StatusBar}">
+			<Setter Property="Height" Value="23" />
+		</Style>
+
 	</Window.Resources>
 	
 	<Grid>
@@ -83,6 +87,7 @@
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
 
 		<StackPanel Grid.Row="0" Grid.IsSharedSizeScope="True">
@@ -225,13 +230,14 @@
 		</StackPanel>
 
 		<DataGrid
-			Grid.Row="2"
+			Grid.Row="1"
 			ItemsSource="{Binding DirectoriesProgress}"
 			HorizontalGridLinesBrush="{StaticResource gl}"
 			VerticalGridLinesBrush="{StaticResource gl}"
 			AutoGenerateColumns="False"
 			SelectedItem="{Binding SelectedDirectory}"
 			HeadersVisibility="Column"
+			BorderThickness="0"
 		>
 			<DataGrid.Columns>
 				<DataGridTextColumn Header="Directory"      Binding="{Binding DisplayDirectoryPath}"  ElementStyle="{StaticResource txtCol}" IsReadOnly="True" />
@@ -302,6 +308,16 @@
 			</DataGrid.RowDetailsTemplate>
 			
 		</DataGrid>
+
+		<StatusBar Grid.Row="2">
+
+			<Label Padding="0">
+				<TextBlock>
+					 <TextBlock Text="{Binding DirectoriesProgress.Count}" /> directories loaded
+				</TextBlock>
+			</Label>
+			
+		</StatusBar>
 		
 	</Grid>
 	
