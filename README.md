@@ -1,7 +1,8 @@
 # <img src="https://raw.githubusercontent.com/Jehoel/TeslaTags/master/TeslaTags.Gui/Icons/Artboard%20164.png" alt="Logo" /> TeslaTags
 
-By Dai Rees - https://github.com/Jehoel/TeslaTags
-DaiPlusPlus on TeslaMotorsClub Forums
+* By Dai Rees - https://github.com/Jehoel/TeslaTags  
+* <a href="https://teslamotorsclub.com/tmc/threads/teslatags-mp3-flac-retagger-for-windows.117430/">DaiPlusPlus on TeslaMotorsClub Forums</a>
+* On <a href="https://www.reddit.com/r/teslamotors/comments/8q0fpe/hi_rteslamotors_i_wrote_an_mp3flac_retagging_tool/">reddit.com/r/teslamotors</a> too
 
 ## Instructions for use
 
