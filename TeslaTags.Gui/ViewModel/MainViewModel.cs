@@ -80,6 +80,13 @@ namespace TeslaTags.Gui
 			set { this.Set( nameof(this.RestoreFiles), ref this.restoreFiles, value ); }
 		}
 
+		private Boolean hideEmptyDirectories;
+		public Boolean HideEmptyDirectories
+		{
+			get { return this.hideEmptyDirectories; }
+			set { this.Set( nameof(this.HideEmptyDirectories), ref this.hideEmptyDirectories, value ); }
+		}
+
 		public GenreRulesViewModel GenreRules { get; } = new GenreRulesViewModel();
 
 		private readonly Dictionary<String,DirectoryViewModel> viewModelDict = new Dictionary<String,DirectoryViewModel>( StringComparer.OrdinalIgnoreCase );

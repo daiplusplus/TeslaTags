@@ -4,6 +4,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:local="clr-namespace:TeslaTags.Gui"
+	xmlns:tt="clr-namespace:TeslaTags;assembly=TeslaTags"
 	
 	mc:Ignorable="d"
 	x:Class="TeslaTags.Gui.MainWindow"
@@ -215,6 +216,8 @@
 
 					</Popup>
 
+					<CheckBox IsChecked="{Binding HideEmptyDirectories}" Content="Hide empty directories" VerticalAlignment="Center" Margin="3" />
+
 				</StackPanel>
 
 				<StackPanel Grid.Column="2" Orientation="Horizontal">
@@ -250,6 +253,20 @@
 				<DataGridTextColumn Header="Warnings"       Binding="{Binding WarnCount}"             ElementStyle="{StaticResource numCol}" IsReadOnly="True" CellStyle="{StaticResource warnCellStyle}" />
 				<DataGridTextColumn Header="Errors"         Binding="{Binding ErrorCount}"            ElementStyle="{StaticResource numCol}" IsReadOnly="True" CellStyle="{StaticResource errorCellStyle}" />
 			</DataGrid.Columns>
+
+			<DataGrid.RowStyle>
+				<Style TargetType="DataGridRow">
+					<Style.Triggers>
+						<MultiDataTrigger>
+							<MultiDataTrigger.Conditions>
+								<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.HideEmptyDirectories}" Value="True" />
+								<Condition Binding="{Binding FolderType}" Value="{x:Static tt:FolderType.Empty}" />
+							</MultiDataTrigger.Conditions>
+							<Setter Property="Visibility" Value="Collapsed" />
+						</MultiDataTrigger>
+					</Style.Triggers>
+				</Style>
+			</DataGrid.RowStyle>
 
 			<DataGrid.RowDetailsTemplate>
 				<DataTemplate>
