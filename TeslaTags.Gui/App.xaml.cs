@@ -21,6 +21,8 @@ namespace TeslaTags.Gui
 		{
 			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
+			// https://stackoverflow.com/questions/50901586/how-do-i-resume-on-the-entry-thread-in-an-async-main?noredirect=1#comment88808169_50901586
+
 			#region Attempts at running async code before WPF:
 			#if NEVER
 
