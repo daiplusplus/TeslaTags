@@ -11,6 +11,22 @@ namespace TeslaTags.Gui
 {
 	public abstract class BaseViewModel : ViewModelBase
 	{
+		/* TODO: I don't understand why this doesn't work.
+		protected RelayCommand CreateBusyCommand( Action action, Func<Boolean> additionalCanExecute, Boolean enabledWhenBusy = false )
+		{
+			RelayCommand cmd;
+			if( enabledWhenBusy )
+			{
+				cmd = new RelayCommand( action, canExecute: () => this.CanExecuteWhenBusy() && additionalCanExecute() );
+			}
+			else
+			{
+				cmd = new RelayCommand( action, canExecute: () => this.CanExecuteWhenNotBusy() && additionalCanExecute() );
+			}
+			this.busyCommands.Add( cmd );
+			return cmd;
+		}*/
+
 		protected RelayCommand CreateBusyCommand( Action action, Boolean enabledWhenBusy = false )
 		{
 			RelayCommand cmd;

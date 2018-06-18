@@ -18,15 +18,16 @@ namespace TeslaTags.Gui
 
 		public MainViewModel(ITeslaTagsService teslaTagsService, ITeslaTagUtilityService utilityService, IConfigurationService configurationService, IWindowService windowService)
 		{
-			this.teslaTagsService = teslaTagsService;
+			this.teslaTagsService     = teslaTagsService;
 			this.teslaTagsService.EventsListener = new DispatchTeslaTagEventsListener( this );
-			this.utilityService = utilityService;
+			this.utilityService       = utilityService;
 			this.configurationService = configurationService;
-			this.windowService = windowService;
+			this.windowService        = windowService;
 
-			this.WindowLoadedCommand = new RelayCommand( this.WindowLoaded );
-			this.StartCommand = this.CreateBusyCommand( this.Start );
-			this.StopCommand  = this.CreateBusyCommand( this.Stop, enabledWhenBusy: true );
+			this.WindowLoadedCommand  = new RelayCommand( this.WindowLoaded );
+			this.WindowClosingCommand = new RelayCommand( this.WindowClosing );
+			this.StartCommand         = this.CreateBusyCommand( this.Start ); // , additionalCanExecute: this.DirectoryPathIsValid ); // weird, why doesn't this work? my `DirectoryPathIsValid` function isn't invoked after editing the textbox.
+			this.StopCommand          = this.CreateBusyCommand( this.Stop, enabledWhenBusy: true );
 
 			///////////
 			
@@ -60,7 +61,16 @@ namespace TeslaTags.Gui
 		public String DirectoryPath
 		{
 			get { return this.directoryPath; }
-			set { this.Set( nameof(this.DirectoryPath), ref this.directoryPath, value ); }
+			set
+			{
+				Boolean diff = this.Set( nameof(this.DirectoryPath), ref this.directoryPath, value );
+				//if( diff ) this.StartCommand.RaiseCanExecuteChanged();
+			}
+		}
+
+		private Boolean DirectoryPathIsValid()
+		{
+			return !String.IsNullOrWhiteSpace( this.DirectoryPath ) && Directory.Exists( this.DirectoryPath );
 		}
 
 		private Boolean onlyValidate;
@@ -164,22 +174,34 @@ namespace TeslaTags.Gui
 		{
 			Config config = this.configurationService.Config;
 
-			this.DirectoryPath        = config.RootDirectory;
-			this.HideEmptyDirectories = config.HideEmptyDirectories;
-			this.ExcludeLines         = String.Join( "\r\n", config.ExcludeList );
-			this.GenreRules.LoadFrom( config.GenreRules );
-
-			var pos = config.RestoredWindowPosition;
-			var window = this.windowService.GetWindowByDataContext( this );
-			if( pos.Width > 0 && pos.Height > 0 )
+			if( !String.IsNullOrWhiteSpace( config.RootDirectory ) && Directory.Exists( config.RootDirectory ) )
 			{
-				window.Top    = pos.Y;
-				window.Left   = pos.X;
-				window.Width  = pos.Width;
-				window.Height = pos.Height;
+				this.DirectoryPath        = config.RootDirectory;
+			}
+			
+			this.HideEmptyDirectories = config.HideEmptyDirectories;
+			this.ExcludeLines         = String.Join( "\r\n", config.ExcludeList ?? new String[0] );
+			
+			if( config.GenreRules != null )
+			{
+				this.GenreRules.LoadFrom( config.GenreRules );
 			}
 
-			if( config.IsMaximized ) window.WindowState = System.Windows.WindowState.Maximized;
+			var window = this.windowService.GetWindowByDataContext( this );
+			if( window != null )
+			{
+				var pos = config.RestoredWindowPosition;
+
+				if( pos.Width > 0 && pos.Height > 0 )
+				{
+					window.Top    = pos.Y;
+					window.Left   = pos.X;
+					window.Width  = pos.Width;
+					window.Height = pos.Height;
+				}
+
+				if( config.IsMaximized ) window.WindowState = System.Windows.WindowState.Maximized;
+			}
 		}
 
 		private void SaveConfig()
@@ -208,6 +230,12 @@ namespace TeslaTags.Gui
 
 		private void Start()
 		{
+			if( !this.DirectoryPathIsValid() )
+			{
+				// TODO: Show error message?
+				return;
+			}
+
 			this.IsBusy = this.teslaTagsService.IsBusy;
 			this.ProgressPerc = -1;
 

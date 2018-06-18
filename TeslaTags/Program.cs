@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace TeslaTags
 {
@@ -183,9 +182,25 @@ namespace TeslaTags
 
 			(FolderType folderType, Int32 modifiedCount, Int32 totalCount) = Folder.Process( directory, readOnly, undo, genreRules, messages );
 
-			File.AppendAllLines( this.generalLog, messages.Select( msg => msg.ToString() ) ); // AppendAllLines writes a terminal `\r\n`
-
-			File.AppendAllText( this.directoryLog, directory + "\r\n" );
+			try
+			{
+				File.AppendAllLines( this.generalLog, messages.Select( msg => msg.ToString() ) ); // AppendAllLines writes a terminal `\r\n`
+			}
+			catch( Exception ex )
+			{
+				String text = String.Format( CultureInfo.InvariantCulture, @"Couldn't write to log file ""{0}"". Exception: {1}, Message: ""{2}"".", this.generalLog, ex.GetType().Name, ex.Message );
+				messages.Add( new Message( MessageSeverity.Error, directory, directory, text ) );
+			}
+			
+			try
+			{
+				File.AppendAllText( this.directoryLog, directory + "\r\n" );
+			}
+			catch( Exception ex )
+			{
+				String text = String.Format( CultureInfo.InvariantCulture, @"Couldn't write to log file ""{0}"". Exception: {1}, Message: ""{2}"".", this.directoryLog, ex.GetType().Name, ex.Message );
+				messages.Add( new Message( MessageSeverity.Error, directory, directory, text ) );
+			}
 
 			return new DirectoryResult( folderType, totalCount, modifiedCount, messages );
 		}
