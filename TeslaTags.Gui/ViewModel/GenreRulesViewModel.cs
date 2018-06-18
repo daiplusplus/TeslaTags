@@ -42,6 +42,16 @@ namespace TeslaTags.Gui
 			this.RaisePropertyChanged(nameof(this.GuestArtistUseArtistName));
 		}
 
+		public void SaveTo(GenreRules target)
+		{
+			if( target == null ) throw new ArgumentNullException(nameof(target));
+
+			target.Default                  = this.rules.Default;
+			target.AssortedFiles            = this.rules.AssortedFiles;
+			target.CompilationUseArtistName = this.rules.CompilationUseArtistName;
+			target.GuestArtistUseArtistName = this.rules.GuestArtistUseArtistName;
+		}
+
 		public Boolean DefaultPreserve
 		{
 			get { return this.rules.Default == GenreDefault.Preserve; }

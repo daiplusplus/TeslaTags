@@ -14,14 +14,15 @@ namespace TeslaTags.Gui
 		private readonly ITeslaTagsService teslaTagsService;
 		private readonly ITeslaTagUtilityService utilityService;
 		private readonly IConfigurationService configurationService;
+		private readonly IWindowService windowService;
 
 		public MainViewModel(ITeslaTagsService teslaTagsService, ITeslaTagUtilityService utilityService, IConfigurationService configurationService, IWindowService windowService)
 		{
 			this.teslaTagsService = teslaTagsService;
 			this.teslaTagsService.EventsListener = new DispatchTeslaTagEventsListener( this );
-
 			this.utilityService = utilityService;
 			this.configurationService = configurationService;
+			this.windowService = windowService;
 
 			this.WindowLoadedCommand = new RelayCommand( this.WindowLoaded );
 			this.StartCommand = this.CreateBusyCommand( this.Start );
@@ -147,17 +148,58 @@ namespace TeslaTags.Gui
 
 		public RelayCommand WindowLoadedCommand { get; }
 
-		public void WindowLoaded()
+		public RelayCommand WindowClosingCommand { get; }
+
+		private void WindowLoaded()
 		{
-			this.LoadConfig( this.configurationService.Config );
+			this.LoadConfig();
 		}
 
-		private void LoadConfig( Config config )
+		private void WindowClosing()
 		{
+			this.SaveConfig();
+		}
+
+		private void LoadConfig()
+		{
+			Config config = this.configurationService.Config;
+
 			this.DirectoryPath        = config.RootDirectory;
 			this.HideEmptyDirectories = config.HideEmptyDirectories;
 			this.ExcludeLines         = String.Join( "\r\n", config.ExcludeList );
 			this.GenreRules.LoadFrom( config.GenreRules );
+
+			var pos = config.RestoredWindowPosition;
+			var window = this.windowService.GetWindowByDataContext( this );
+			if( pos.Width > 0 && pos.Height > 0 )
+			{
+				window.Top    = pos.Y;
+				window.Left   = pos.X;
+				window.Width  = pos.Width;
+				window.Height = pos.Height;
+			}
+
+			if( config.IsMaximized ) window.WindowState = System.Windows.WindowState.Maximized;
+		}
+
+		private void SaveConfig()
+		{
+			Config config = this.configurationService.Config;
+
+			config.RootDirectory        = this.DirectoryPath;
+			config.HideEmptyDirectories = this.HideEmptyDirectories;
+			config.ExcludeList          = this.ExcludeLines?.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries ) ?? new String[0];
+			this.GenreRules.SaveTo( config.GenreRules );
+
+			var window = this.windowService.GetWindowByDataContext( this );
+			var rb = window.RestoreBounds;
+
+			config.RestoredWindowPosition = ( X: (Int32)rb.Left, Y: (Int32)rb.Top, Width: (Int32)rb.Width, Height: (Int32)rb.Height );
+			config.IsMaximized = window.WindowState == System.Windows.WindowState.Maximized;
+
+			/////
+
+			this.configurationService.SaveConfig( config );
 		}
 
 		public RelayCommand StartCommand { get; }
@@ -168,6 +210,11 @@ namespace TeslaTags.Gui
 		{
 			this.IsBusy = this.teslaTagsService.IsBusy;
 			this.ProgressPerc = -1;
+
+			// Save config:
+			this.SaveConfig();
+
+			// Start for real:
 
 			this.teslaTagsService.Start( this.DirectoryPath, this.OnlyValidate, this.RestoreFiles, this.GenreRules.GetRules() );
 		}
