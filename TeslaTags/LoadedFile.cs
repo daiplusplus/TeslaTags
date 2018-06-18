@@ -5,6 +5,9 @@ using TagLib;
 using mpeg  = TagLib.Mpeg;
 using flac  = TagLib.Flac;
 using id3v2 = TagLib.Id3v2;
+using aac   = TagLib.Aac;
+using ogg   = TagLib.Ogg;
+using riff  = TagLib.Riff;
 
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +18,36 @@ namespace TeslaTags
 {
 	public abstract class LoadedFile : IDisposable
 	{
+		public static LoadedFile LoadFromFile(FileInfo fi, List<Message> messages)
+		{
+			String extension = fi.Extension.ToUpperInvariant();
+			switch( extension )
+			{
+			case ".MP3":
+				{
+					LoadedFile loadedMpegFile = MpegLoadedFile.Create( fi, messages );
+					return loadedMpegFile;
+				}
+			case ".FLAC":
+				{
+					LoadedFile loadedFlacFile = FlacLoadedFile.Create( fi, messages );
+					return loadedFlacFile;
+				}
+			case ".WAV":
+				{
+					LoadedFile loadedRiffFile = RiffLoadedFile.Create( fi, messages );
+					return loadedRiffFile;
+				}
+			case ".OGG":
+				{
+					LoadedFile loadedOggFile = OggLoadedFile.Create( fi, messages );
+					return loadedOggFile;
+				}
+			default:
+				return null;
+			}
+		}
+
 		protected static T Load<T>( FileInfo fileInfo, List<Message> messages )
 			where T : TagLib.File
 		{
@@ -182,5 +215,85 @@ namespace TeslaTags
 		}
 
 		public flac.File FlacAudioFile { get; }
+	}
+
+	public sealed class OggLoadedFile : LoadedFile
+	{
+		public static OggLoadedFile Create( FileInfo fileInfo, List<Message> messages )
+		{
+			ogg.File oggFile = Load<ogg.File>( fileInfo, messages );
+			if( oggFile == null ) return null;
+
+			ogg.XiphComment oggTag = (ogg.XiphComment)oggFile.GetTag(TagTypes.Xiph);
+			if( oggTag == null )
+			{
+				messages.AddFileError( fileInfo.FullName, "Does not contain XIPH comment data." );
+				oggFile.Dispose();
+				return null;
+			}
+
+			return new OggLoadedFile( fileInfo, oggFile, oggTag );
+		}
+
+		private OggLoadedFile( FileInfo fileInfo, ogg.File oggFile, Tag tag )
+			: base( fileInfo, tag, null )
+		{
+			this.OggAudioFile = oggFile;
+		}
+
+		protected sealed override void Dispose(Boolean disposing)
+		{
+			if( disposing )
+			{
+				this.OggAudioFile.Dispose();
+			}
+		}
+
+		public override void Save()
+		{
+			this.OggAudioFile.Save();
+		}
+
+		public ogg.File OggAudioFile { get; }
+	}
+
+	public sealed class RiffLoadedFile : LoadedFile
+	{
+		public static RiffLoadedFile Create( FileInfo fileInfo, List<Message> messages )
+		{
+			riff.File riffFile = Load<riff.File>( fileInfo, messages );
+			if( riffFile == null ) return null;
+
+			riff.InfoTag riffTag = (riff.InfoTag)riffFile.GetTag(TagTypes.RiffInfo);
+			if( riffTag == null )
+			{
+				messages.AddFileError( fileInfo.FullName, "Does not contain RIFF info data." );
+				riffFile.Dispose();
+				return null;
+			}
+
+			return new RiffLoadedFile( fileInfo, riffFile, riffTag );
+		}
+
+		private RiffLoadedFile( FileInfo fileInfo, riff.File riffFile, Tag tag )
+			: base( fileInfo, tag, null )
+		{
+			this.RiffAudioFile = riffFile;
+		}
+
+		protected sealed override void Dispose(Boolean disposing)
+		{
+			if( disposing )
+			{
+				this.RiffAudioFile.Dispose();
+			}
+		}
+
+		public override void Save()
+		{
+			this.RiffAudioFile.Save();
+		}
+
+		public riff.File RiffAudioFile { get; }
 	}
 }

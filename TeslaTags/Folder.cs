@@ -93,21 +93,10 @@ namespace TeslaTags
 			List<LoadedFile> loadedFiles = new List<LoadedFile>();
 			foreach( FileInfo fi in audioFiles )
 			{
-				if( String.Equals( ".mp3", fi.Extension, StringComparison.OrdinalIgnoreCase ) )
+				LoadedFile loadedFile = LoadedFile.LoadFromFile( fi, messages );
+				if( loadedFile != null )
 				{
-					LoadedFile loadedMpegFile = MpegLoadedFile.Create( fi, messages );
-					if( loadedMpegFile != null )
-					{
-						loadedFiles.Add( loadedMpegFile );
-					}
-				}
-				else if( String.Equals( ".flac", fi.Extension, StringComparison.OrdinalIgnoreCase ) )
-				{
-					LoadedFile loadedFlacFile = FlacLoadedFile.Create( fi, messages );
-					if( loadedFlacFile != null )
-					{
-						loadedFiles.Add( loadedFlacFile );
-					}
+					loadedFiles.Add( loadedFile );
 				}
 			}
 
