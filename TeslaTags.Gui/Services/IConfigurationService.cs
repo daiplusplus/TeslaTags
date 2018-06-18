@@ -69,11 +69,13 @@ namespace TeslaTags.Gui
 
 		private static void PopulateConfig(Config config, XDocument doc)
 		{
+			Boolean E(String key, String name) => String.Equals( key, name, StringComparison.OrdinalIgnoreCase );
+
 			var appSettings = doc
 				.Elements( "configuration" ) // `Elements(XName)` is immediate children, unlike `Descendants(XName)` which does a deep search.
 				.Elements( "appSettings" )
 				.Elements( "add" )
-				.Select( el => ToTuple( el.Attribute("key"), el.Attribute("value") ) )
+				.Select( el => (key: el.Attribute("key")?.Value, value: el.Attribute("value")?.Value ) )
 				.Where( t => !String.IsNullOrWhiteSpace( t.key ) );
 
 			
@@ -82,18 +84,16 @@ namespace TeslaTags.Gui
 
 			foreach( (String key, String value) in appSettings )
 			{
-				switch( key )
+				if( E( key, nameof(TeslaTags.Gui.Config.DesignMode) ) )
 				{
-				// UI:
-				case "DESIGNMODE":
 					if( Boolean.TryParse( value, out Boolean designModeValue ) ) config.DesignMode = designModeValue;
-					break;
-				
-				case "HIDEEMPTYDIRECTORIES":
+				}
+				else if( E( key, nameof(TeslaTags.Gui.Config.HideEmptyDirectories) ) )
+				{
 					if( Boolean.TryParse( value, out Boolean hideEmptyDirectoriesValue ) ) config.HideEmptyDirectories = hideEmptyDirectoriesValue;
-					break;
-
-				case "RESTOREDWINDOWPOSITION":
+				}
+				else if( E( key, nameof(TeslaTags.Gui.Config.RestoredWindowPosition) ) )
+				{
 					IList<Int32> values = value
 						.Split( _directoryListSeparators, StringSplitOptions.RemoveEmptyEntries )
 						.Select( s => Int32.TryParse( s, NumberStyles.Integer, CultureInfo.InvariantCulture, out Int32 v ) ? (Int32?)v : null )
@@ -102,43 +102,37 @@ namespace TeslaTags.Gui
 						.ToList();
 
 					if( values.Count == 4 ) config.RestoredWindowPosition = ( X: values[0], Y: values[1], Width: values[2], Height: values[3] );
-					break;
-				
-				case "ISMAXIMIZED":
+				}
+				else if( E( key, nameof(TeslaTags.Gui.Config.IsMaximized) ) )
+				{
 					if( Boolean.TryParse( value, out Boolean isMaximizedValue ) ) config.IsMaximized = isMaximizedValue;
-					break;
-
-				// Processing settings:
-				case "EXCLUDE":
+				}
+				else if( E( key, nameof(TeslaTags.Gui.Config.ExcludeList) ) )
+				{
 					String[] excludeList = value?.Split( _directoryListSeparators, StringSplitOptions.RemoveEmptyEntries ) ?? null;
 					if( excludeList != null ) config.ExcludeList = excludeList;
-					break;
-				case "ROOTDIRECTORY":
+				}
+				else if( E( key, nameof(TeslaTags.Gui.Config.RootDirectory) ) )
+				{
 					config.RootDirectory = value;
-					break;
-
-				// Genre settings:	
-				case "GENREDEFAULT":
+				}
+				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.Default) ) )
+				{
 					if( Enum.TryParse( value, out GenreDefault genreDefaultValue ) ) config.GenreRules.Default = genreDefaultValue;
-					break;
-				case "GENREASSORTEDFILES":
+				}
+				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.AssortedFiles) ) )
+				{
 					if( Enum.TryParse( value, out GenreAssortedFiles genreAssortedFilesValue ) ) config.GenreRules.AssortedFiles = genreAssortedFilesValue;
-					break;
-				case "GENRECOMPILATION-USEARTISTNAME":
+				}
+				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.CompilationUseArtistName) ) )
+				{
 					if( Boolean.TryParse( value, out Boolean genreCompilationUseArtistNameValue ) ) config.GenreRules.CompilationUseArtistName = genreCompilationUseArtistNameValue;
-					break;
-				case "GENREGUESTARTIST-USEARTISTNAME":
+				}
+				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.GuestArtistUseArtistName) ) )
+				{
 					if( Boolean.TryParse( value, out Boolean genreGuestArtistUseArtistNameValue ) ) config.GenreRules.GuestArtistUseArtistName = genreGuestArtistUseArtistNameValue;
-					break;
 				}
 			}
-		}
-
-		private static (String key, String value) ToTuple( XAttribute keyAttrib, XAttribute valueAttrib )
-		{
-			String   key       = keyAttrib  ?.Value?.ToUpperInvariant();
-			String   value     = valueAttrib?.Value;
-			return (key, value);
 		}
 
 		private static String AppConfigFileName => AppDomain.CurrentDomain.SetupInformation.ConfigurationFile;
@@ -191,31 +185,41 @@ namespace TeslaTags.Gui
 				config.RestoredWindowPosition.Height
 			);
 
-			SetAppSetting( appSettingsDict, nameof(Config.DesignMode)            , config.DesignMode.ToString() );
-			SetAppSetting( appSettingsDict, nameof(Config.HideEmptyDirectories)  , config.HideEmptyDirectories.ToString() );
-			SetAppSetting( appSettingsDict, nameof(Config.RestoredWindowPosition), restoredWindowPositionValue );
-			SetAppSetting( appSettingsDict, nameof(Config.IsMaximized)           , config.IsMaximized.ToString() );
-			SetAppSetting( appSettingsDict, nameof(Config.ExcludeList)           , String.Join( ";",  config.ExcludeList.Where( s => !String.IsNullOrWhiteSpace(s) ) ) );
-			SetAppSetting( appSettingsDict, nameof(Config.RootDirectory)         , config.RootDirectory );
-			SetAppSetting( appSettingsDict, "GenreDefault"                       , config.GenreRules.Default.ToString() );
-			SetAppSetting( appSettingsDict, "GenreAssortedFiles"                 , config.GenreRules.AssortedFiles.ToString() );
-			SetAppSetting( appSettingsDict, "GenreCompilation-UseArtistName"     , config.GenreRules.CompilationUseArtistName.ToString() );
-			SetAppSetting( appSettingsDict, "GenreGuestArtist-UseArtistName"     , config.GenreRules.GuestArtistUseArtistName.ToString() );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.DesignMode)            , config.DesignMode.ToString() );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.HideEmptyDirectories)  , config.HideEmptyDirectories.ToString() );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.RestoredWindowPosition), restoredWindowPositionValue );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.IsMaximized)           , config.IsMaximized.ToString() );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.ExcludeList)           , String.Join( ";",  config.ExcludeList.Where( s => !String.IsNullOrWhiteSpace(s) ) ) );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.RootDirectory)         , config.RootDirectory );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.Default)                 , config.GenreRules.Default.ToString() );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.AssortedFiles)           , config.GenreRules.AssortedFiles.ToString() );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.CompilationUseArtistName), config.GenreRules.CompilationUseArtistName.ToString() );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.GuestArtistUseArtistName), config.GenreRules.GuestArtistUseArtistName.ToString() );
 
 			////////////////////////
 
 			doc.Save( AppConfigFileName );
+			
+			// https://stackoverflow.com/questions/18500419/how-to-change-number-of-characters-used-for-indentation-when-writing-xml-with-xd
+			// - this doesn't seem to work well?
+			/*XmlWriterSettings settings = new XmlWriterSettings();
+			settings.Indent = true;
+			settings.IndentChars = "\t";
+
+			using( XmlWriter writer = XmlWriter.Create( AppConfigFileName + ".xml", settings ) )
+			{
+				doc.Save( writer );
+			}*/
 		}
 
-		private static void SetAppSetting(Dictionary<String,XElement> appSettingsDict, String key, String value)
+		private static void SetAppSetting(XElement appSettingsElement, Dictionary<String,XElement> appSettingsDict, String key, String value)
 		{
-			appSettingsDict.GetAppConfigElement( key ).SetAttributeValue( "value", value );
-		}
-	}
+			XElement appConfigElement = GetAppConfigKeyValueElement( appSettingsDict, key, appSettingsElement );
 
-	internal static partial class Extensions
-	{
-		public static XElement GetAppConfigElement(this Dictionary<String,XElement> dict, String key)
+			appConfigElement.SetAttributeValue( "value", value );
+		}
+
+		private static XElement GetAppConfigKeyValueElement(Dictionary<String,XElement> dict, String key, XElement appSettingsElement)
 		{
 			if( dict.TryGetValue( key, out XElement value ) )
 			{
@@ -226,6 +230,10 @@ namespace TeslaTags.Gui
 				value = new XElement("add");
 				value.SetAttributeValue( "key", key );
 				dict.Add( key, value );
+
+				appSettingsElement.Add( new XText( "\r\n\t\t" ) );
+				appSettingsElement.Add( value );
+
 				return value;
 			}
 		}
