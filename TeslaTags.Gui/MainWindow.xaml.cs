@@ -26,6 +26,14 @@ namespace TeslaTags.Gui
 			this.InitializeComponent();
 
 			this.browseButton.Click += this.BrowseButton_Click;
+
+			this.Loaded += this.MainWindow_Loaded;
+		}
+
+		private void MainWindow_Loaded(Object sender, RoutedEventArgs e)
+		{
+			// HACK: Using events to avoid taking a dependency on the Blend SDK, as it's a simple application:
+
 		}
 
 		private void BrowseButton_Click(Object sender, RoutedEventArgs e)
@@ -69,6 +77,8 @@ namespace TeslaTags.Gui
 				}
 			}
 		}
+
+		
 	}
 
 	public class FullPathToRelativePathConverter : IValueConverter
