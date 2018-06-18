@@ -80,7 +80,7 @@
 		</Style>
 
 	</Window.Resources>
-	
+
 	<Grid>
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="*" />
@@ -169,8 +169,35 @@
 
 					<CheckBox IsChecked="{Binding RestoreFiles}" Content="Restore files" VerticalAlignment="Center" Margin="3" />
 
-					<CheckBox IsChecked="{Binding ExcludeITunesFolder}" Content="Exclude iTunes folders" VerticalAlignment="Center" Margin="3" />
+					<ToggleButton Content="Exclude..." Name="excludeButton" />
 
+					<Popup
+						Name="excludePopup"
+						PlacementTarget="{Binding ElementName=excludeButton}"
+						IsOpen="{Binding IsChecked, ElementName=excludeButton}"
+						StaysOpen="True"
+					>
+						<Border
+							BorderThickness="1"
+							Background="{x:Static SystemColors.WindowBrush}"
+							BorderBrush="{x:Static SystemColors.ActiveBorderBrush}"
+							Padding="4"
+						>
+							<Border.Effect>
+								<DropShadowEffect Opacity="0.2" />
+							</Border.Effect>
+
+							<StackPanel>
+
+								<Label Content="Excluded directories (partial matches):" />
+
+								<TextBox AcceptsReturn="True" Text="{Binding ExcludeLines}" Width="400" SpellCheck.IsEnabled="False" Height="400" />
+
+							</StackPanel>
+
+						</Border>
+					</Popup>
+					
 					<ToggleButton Content="Genre handling..." Name="genreButton" />
 
 					<Popup

@@ -79,6 +79,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Services\IConfigurationService.cs" />
+    <Compile Include="Services\WindowService.cs" />
     <Compile Include="ViewModel\BaseViewModel.cs" />
     <Compile Include="ViewModel\DesignTeslaTagService.cs" />
     <Compile Include="ViewModel\DirectoryViewModel.cs" />
@@ -117,5 +119,6 @@
   <ItemGroup>
     <Resource Include="Icons\AllSizes.ico" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

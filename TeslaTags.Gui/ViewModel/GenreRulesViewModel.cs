@@ -18,6 +18,30 @@ namespace TeslaTags.Gui
 			};
 		}
 
+		public void LoadFrom(GenreRules newRules)
+		{
+			if( newRules == null ) throw new ArgumentNullException(nameof(newRules));
+
+			this.rules.Default                  = newRules.Default;
+			this.rules.AssortedFiles            = newRules.AssortedFiles;
+			this.rules.CompilationUseArtistName = newRules.CompilationUseArtistName;
+			this.rules.GuestArtistUseArtistName = newRules.GuestArtistUseArtistName;
+
+			this.RaisePropertyChanged(nameof(this.DefaultPreserve));
+			this.RaisePropertyChanged(nameof(this.DefaultClear));
+			this.RaisePropertyChanged(nameof(this.DefaultUseArtist));
+
+			this.RaisePropertyChanged(nameof(this.AssortedUseDefault));
+			this.RaisePropertyChanged(nameof(this.AssortedUseFolderName));
+			this.RaisePropertyChanged(nameof(this.AssortedUseArtistName));
+
+			this.RaisePropertyChanged(nameof(this.CompilationUseDefault));
+			this.RaisePropertyChanged(nameof(this.CompilationUseArtistName));
+
+			this.RaisePropertyChanged(nameof(this.GuestArtistUseDefault));
+			this.RaisePropertyChanged(nameof(this.GuestArtistUseArtistName));
+		}
+
 		public Boolean DefaultPreserve
 		{
 			get { return this.rules.Default == GenreDefault.Preserve; }

@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 
+using System.Threading.Tasks;
 using GalaSoft.MvvmLight.CommandWpf;
 
 namespace TeslaTags.Gui
@@ -11,14 +13,17 @@ namespace TeslaTags.Gui
 	{
 		private readonly ITeslaTagsService teslaTagsService;
 		private readonly ITeslaTagUtilityService utilityService;
+		private readonly IConfigurationService configurationService;
 
-		public MainViewModel(ITeslaTagsService teslaTagsService, ITeslaTagUtilityService utilityService)
+		public MainViewModel(ITeslaTagsService teslaTagsService, ITeslaTagUtilityService utilityService, IConfigurationService configurationService, IWindowService windowService)
 		{
 			this.teslaTagsService = teslaTagsService;
 			this.teslaTagsService.EventsListener = new DispatchTeslaTagEventsListener( this );
 
 			this.utilityService = utilityService;
+			this.configurationService = configurationService;
 
+			this.WindowLoadedCommand = new RelayCommand( this.WindowLoaded );
 			this.StartCommand = this.CreateBusyCommand( this.Start );
 			this.StopCommand  = this.CreateBusyCommand( this.Stop, enabledWhenBusy: true );
 
@@ -26,8 +31,6 @@ namespace TeslaTags.Gui
 			
 			this.DirectoryPath     = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
 			this.OnlyValidate      = true;
-
-			this.ExcludeITunesFolder = App.ExcludeITunes;
 
 			this.Version = typeof(MainViewModel).Assembly.GetName().Version.ToString() + " (Release 4)";
 			this.ReadmeLink = @"https://github.com/Jehoel/TeslaTags/blob/release-4/README.md";
@@ -66,11 +69,11 @@ namespace TeslaTags.Gui
 			set { this.Set( nameof(this.OnlyValidate), ref this.onlyValidate, value ); }
 		}
 
-		private Boolean excludeITunesFolder;
-		public Boolean ExcludeITunesFolder
+		private String excludeLines;
+		public String ExcludeLines
 		{
-			get { return this.excludeITunesFolder; }
-			set { this.Set( nameof(this.ExcludeITunesFolder), ref this.excludeITunesFolder, value ); }
+			get { return this.excludeLines; }
+			set { this.Set( nameof(this.ExcludeLines), ref this.excludeLines, value ); }
 		}
 
 		private Boolean restoreFiles;
@@ -142,6 +145,21 @@ namespace TeslaTags.Gui
 
 		#region Commands
 
+		public RelayCommand WindowLoadedCommand { get; }
+
+		public void WindowLoaded()
+		{
+			this.LoadConfig( this.configurationService.Config );
+		}
+
+		private void LoadConfig( Config config )
+		{
+			this.DirectoryPath        = config.RootDirectory;
+			this.HideEmptyDirectories = config.HideEmptyDirectories;
+			this.ExcludeLines         = String.Join( "\r\n", config.ExcludeList );
+			this.GenreRules.LoadFrom( config.GenreRules );
+		}
+
 		public RelayCommand StartCommand { get; }
 
 		public RelayCommand StopCommand { get; }
@@ -179,12 +197,14 @@ namespace TeslaTags.Gui
 
 		void ITeslaTagEventsListener.GotDirectories(List<String> directories)
 		{
-			if( this.ExcludeITunesFolder )
+			if( !String.IsNullOrWhiteSpace( this.ExcludeLines ) )
 			{
+				String[] excl = this.ExcludeLines.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries );
+
 				for( Int32 i = 0; i < directories.Count; i++ )
 				{
 					String d = directories[i];
-					if( d.IndexOf( "iTunes", StringComparison.OrdinalIgnoreCase ) > -1 )
+					if( excl.Any( e => d.IndexOf( e, StringComparison.OrdinalIgnoreCase ) > -1 ) )
 					{
 						directories[i] = null;
 					}
@@ -224,7 +244,7 @@ namespace TeslaTags.Gui
 		#endregion
 	}
 
-	internal static class Extensions
+	internal static partial class Extensions
 	{
 		public static void AddRange<T>(this ObservableCollection<T> collection, IEnumerable<T> items)
 		{
@@ -234,6 +254,4 @@ namespace TeslaTags.Gui
 			}
 		}
 	}
-
-	
 }
