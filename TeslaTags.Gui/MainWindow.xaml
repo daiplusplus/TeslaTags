@@ -270,7 +270,9 @@
 			SelectedItem="{Binding SelectedDirectory}"
 			HeadersVisibility="Column"
 			BorderThickness="0"
+			SelectionMode="Single"
 		>
+			<!-- Single-mode selection so MainViewModel.SelectedDirectory works -->
 			<DataGrid.Columns>
 				<DataGridTextColumn Header="Directory"      Binding="{Binding DisplayDirectoryPath}"  ElementStyle="{StaticResource txtCol}" IsReadOnly="True" />
 				<DataGridTextColumn Header="Total files"    Binding="{Binding TotalFiles}"            ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
@@ -324,7 +326,7 @@
 						<StackPanel Orientation="Horizontal">
 							<Label Content="Set album art image" VerticalAlignment="Center" />
 							<ComboBox IsEditable="True" ItemsSource="{Binding ImagesInFolder}" IsSynchronizedWithCurrentItem="True" Width="250" VerticalAlignment="Center" Margin="4" Text="{Binding SelectedImageFileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-							<Button Content="Browse..." VerticalAlignment="Center"  />
+							<Button Content="Browse..." VerticalAlignment="Center" Click="AlbumArtBrowseButton_Click" />
 							<CheckBox Content="Replace all existing art" IsChecked="{Binding ReplaceAllAlbumArt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" />
 							<Button Content="Apply"  VerticalAlignment="Center" Command="{Binding ApplyAlbumArtCommand}" />
 							<Label Content="{Binding AlbumArtMessage}" />

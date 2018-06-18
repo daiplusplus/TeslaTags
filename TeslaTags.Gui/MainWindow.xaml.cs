@@ -33,7 +33,7 @@ namespace TeslaTags.Gui
 			WindowInteropHelper helper = new WindowInteropHelper( this );
 			IntPtr hWnd = helper.Handle;
 
-			String path = SimpleIoc.Default.GetInstance<IFileDialogService>().PromptForDirectoryPath( hWnd );
+			String path = SimpleIoc.Default.GetInstance<IFileDialogService>().ShowFolderBrowseDialog( hWnd, "Browse for root of Tesla music collection directory structure." );
 
 			if( Directory.Exists( path ) )
 			{
@@ -58,24 +58,25 @@ namespace TeslaTags.Gui
 			}
 		}
 
+		private void AlbumArtBrowseButton_Click(Object sender, RoutedEventArgs e)
+		{
+			DirectoryViewModel dvm = this.ViewModel.SelectedDirectory;
 		
+			WindowInteropHelper helper = new WindowInteropHelper( this );
+			IntPtr hWnd = helper.Handle;
+
+			String path = SimpleIoc.Default.GetInstance<IFileDialogService>().ShowFileOpenDialogForImages( hWnd, "Browse for new album art image.", dvm.FullDirectoryPath );
+
+			if( Directory.Exists( path ) )
+	{
+				if( path.StartsWith( dvm.FullDirectoryPath, StringComparison.OrdinalIgnoreCase ) )
+		{
+					path = path.Substring( dvm.FullDirectoryPath.Length );
+		}
+
+				this.ViewModel.SelectedDirectory.SelectedImageFileName = path;
+		}
 	}
 
-	public class FullPathToRelativePathConverter : IValueConverter
-	{
-		public Object Convert(Object value, Type targetType, Object parameter, CultureInfo culture)
-		{
-			String fullPath = (String)value;
-			String prefix = (String)parameter;
-
-			if( fullPath.StartsWith( prefix, StringComparison.OrdinalIgnoreCase ) ) return fullPath.Substring( prefix.Length );
-
-			return fullPath;
-		}
-
-		public Object ConvertBack(Object value, Type targetType, Object parameter, CultureInfo culture)
-		{
-			throw new NotImplementedException();
-		}
 	}
 }
