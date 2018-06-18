@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
 
 using CommonServiceLocator;
 
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
-
-//using Nito.AsyncEx;
 
 namespace TeslaTags.Gui
 {
@@ -125,6 +120,8 @@ namespace TeslaTags.Gui
 			}
 
 			ioc.Register<IWindowService,WindowService>();
+
+			ioc.Register<IFileDialogService,ComFileDialogService>();
 
 			ioc.Register<MainViewModel>();
 		}
