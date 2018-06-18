@@ -7,7 +7,7 @@
 	
 	d1p1:Ignorable="d"
 	
-	x:Class="TeslaTags.Gui.App"
+	x:Class="TeslaTags.Gui.TeslaTagsApplication"
 	StartupUri="MainWindow.xaml"
 >
 	<Application.Resources>
