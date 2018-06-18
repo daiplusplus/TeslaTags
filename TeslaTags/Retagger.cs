@@ -301,15 +301,15 @@ namespace TeslaTags
 					break;
 				default:
 
-					if( genreRules.Default == GenereDefault.Clear )
+					if( genreRules.Default == GenreDefault.Clear )
 					{
 						TagWriter.SetGenre( file, messages, null );
 					}
-					else if( genreRules.Default == GenereDefault.Preserve )
+					else if( genreRules.Default == GenreDefault.Preserve )
 					{
 						// NOOP
 					}
-					else if( genreRules.Default == GenereDefault.UseArtist )
+					else if( genreRules.Default == GenreDefault.UseArtist )
 					{
 						String originalArtist = file.RecoveryTag.Artist;
 						if( !String.IsNullOrWhiteSpace( originalArtist ) )

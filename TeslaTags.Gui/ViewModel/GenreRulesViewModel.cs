@@ -20,7 +20,7 @@ namespace TeslaTags.Gui
 
 		public Boolean DefaultPreserve
 		{
-			get { return this.rules.Default == GenereDefault.Preserve; }
+			get { return this.rules.Default == GenreDefault.Preserve; }
 			set
 			{
 				Boolean defaultPreserveNew = value;
@@ -30,11 +30,11 @@ namespace TeslaTags.Gui
 				{
 					if( defaultPreserveNew )
 					{
-						this.rules.Default = GenereDefault.Preserve;
+						this.rules.Default = GenreDefault.Preserve;
 					}
 					else
 					{
-						this.rules.Default = GenereDefault.Clear;
+						this.rules.Default = GenreDefault.Clear;
 					}
 					
 					this.RaisePropertyChanged(nameof(this.DefaultPreserve));
@@ -46,7 +46,7 @@ namespace TeslaTags.Gui
 
 		public Boolean DefaultClear
 		{
-			get { return this.rules.Default == GenereDefault.Clear; }
+			get { return this.rules.Default == GenreDefault.Clear; }
 			set
 			{
 				Boolean defaultClearNew = value;
@@ -56,11 +56,11 @@ namespace TeslaTags.Gui
 				{
 					if( defaultClearNew )
 					{
-						this.rules.Default = GenereDefault.Clear;
+						this.rules.Default = GenreDefault.Clear;
 					}
 					else
 					{
-						this.rules.Default = GenereDefault.Preserve;
+						this.rules.Default = GenreDefault.Preserve;
 					}
 					
 					this.RaisePropertyChanged(nameof(this.DefaultPreserve));
@@ -72,7 +72,7 @@ namespace TeslaTags.Gui
 
 		public Boolean DefaultUseArtist
 		{
-			get { return this.rules.Default == GenereDefault.UseArtist; }
+			get { return this.rules.Default == GenreDefault.UseArtist; }
 			set
 			{
 				Boolean defaultUseArtistNew = value;
@@ -82,11 +82,11 @@ namespace TeslaTags.Gui
 				{
 					if( defaultUseArtistNew )
 					{
-						this.rules.Default = GenereDefault.UseArtist;
+						this.rules.Default = GenreDefault.UseArtist;
 					}
 					else
 					{
-						this.rules.Default = GenereDefault.Preserve;
+						this.rules.Default = GenreDefault.Preserve;
 					}
 					
 					this.RaisePropertyChanged(nameof(this.DefaultPreserve));

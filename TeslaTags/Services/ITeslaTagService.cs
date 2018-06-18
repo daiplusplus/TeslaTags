@@ -42,7 +42,7 @@ namespace TeslaTags
 
 	public class GenreRules
 	{
-		public GenereDefault Default { get; set; }
+		public GenreDefault Default { get; set; }
 
 		public GenreAssortedFiles AssortedFiles { get; set; }
 
@@ -53,13 +53,13 @@ namespace TeslaTags
 		public Boolean GuestArtistUseArtistName { get; set; }
 
 		public Boolean AlwaysNoop =>
-			this.Default == GenereDefault.Preserve &&
+			this.Default == GenreDefault.Preserve &&
 			this.AssortedFiles == GenreAssortedFiles.UseDefault &&
 			this.CompilationUseDefault &&
 			this.GuestArtistUseDefault;
 	}
 
-	public enum GenereDefault
+	public enum GenreDefault
 	{
 		Preserve,
 		Clear,
