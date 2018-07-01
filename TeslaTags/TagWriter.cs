@@ -35,7 +35,11 @@ namespace TeslaTags
 
 		public static void SetGenre( LoadedFile file, List<Message> messages, String newGenre )
 		{
+			if( String.IsNullOrWhiteSpace( newGenre ) ) newGenre = null;
+
 			String oldGenre = file.Tag.JoinedGenres;
+
+			if( newGenre == null && String.IsNullOrWhiteSpace( oldGenre ) ) return; // NOOP
 
 			if( String.Equals( oldGenre, newGenre, StringComparison.Ordinal ) ) return; // NOOP, includes null
 
