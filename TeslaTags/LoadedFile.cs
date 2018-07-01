@@ -152,7 +152,7 @@ namespace TeslaTags
 		{
 			if( this.RecoveryTag.IsSet )
 			{
-				id3v2.Tag id3v2Tag = (id3v2.Tag)this.MpegAudioFile.Tag;
+				id3v2.Tag id3v2Tag = (id3v2.Tag)this.MpegAudioFile.GetTag(TagTypes.Id3v2);
 
 				id3v2.PrivateFrame recoveryTagFrame = id3v2Tag
 					.GetFrames<id3v2.PrivateFrame>()
