@@ -1,37 +1,59 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using GalaSoft.MvvmLight;
 
 namespace TeslaTags.Gui
 {
 	public interface IWindowService
 	{
 		Window GetWindowByDataContext(Object dataContext);
+
+		void ShowMessageBoxWarningDialog(Object dataContext, String title, String message);
+
+		void ShowMessageBoxErrorDialog(Object dataContext, String title, String message);
 	}
 
 	public class WindowService : IWindowService
 	{
 		public Window GetWindowByDataContext(Object dataContext)
 		{
-			foreach( Window window in Application.Current.Windows )
-			{
-				if( window.DataContext == dataContext )
-				{
-					return window;
-				}
-			}
-
-			return null;
+			return Application.Current.Windows
+				.Cast<Window>()
+				.SingleOrDefault( w => w.DataContext == dataContext );
 		}
 
+		public void ShowMessageBoxWarningDialog(Object dataContext, String title, String message)
+		{
+			Window window = this.GetWindowByDataContext( dataContext );
+
+			MessageBox.Show(
+				owner         : window,
+				messageBoxText: message,
+				caption       : title,
+				button        : MessageBoxButton.OK,
+				icon          : MessageBoxImage.Warning,
+				defaultResult : MessageBoxResult.OK,
+				options       : MessageBoxOptions.None
+			);
+		}
+
+		public void ShowMessageBoxErrorDialog(Object dataContext, String title, String message)
+		{
+			Window window = this.GetWindowByDataContext( dataContext );
+
+			MessageBox.Show(
+				owner         : window,
+				messageBoxText: message,
+				caption       : title,
+				button        : MessageBoxButton.OK,
+				icon          : MessageBoxImage.Error,
+				defaultResult : MessageBoxResult.OK,
+				options       : MessageBoxOptions.None
+			);
+		}
+
+		// This function was intended for binding to the WPF Window size+position+state, but it's easier to do it directly without binding.
+		/*
 		private static void CreateBinding( INotifyPropertyChanged source, String sourcePropertyPath, DependencyObject target, DependencyProperty targetProperty, BindingMode mode = BindingMode.TwoWay )
 		{
 			Binding binding = new Binding();
@@ -41,6 +63,6 @@ namespace TeslaTags.Gui
 			binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
 
 			BindingOperations.SetBinding( target, targetProperty, binding );
-		}
+		}*/
 	}
 }

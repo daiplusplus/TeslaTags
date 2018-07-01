@@ -104,7 +104,35 @@
 
 				<Grid Grid.Column="1">
 
-					<ProgressBar Minimum="0" Maximum="1" Value="{Binding ProgressPerc}" IsIndeterminate="{Binding ProgressIndeterminate}" Background="{x:Static SystemColors.WindowBrush}" Height="{Binding ActualHeight, ElementName=directoryPathTextBox}" />
+					<ProgressBar Minimum="0" Maximum="1" Value="{Binding ProgressPerc}" Background="{x:Static SystemColors.WindowBrush}" Height="{Binding ActualHeight, ElementName=directoryPathTextBox}">
+						<ProgressBar.Style>
+							<Style TargetType="{x:Type ProgressBar}">
+								<Style.Triggers>
+									<DataTrigger Binding="{Binding ProgressStatus}" Value="{x:Static local:ProgressState.NotStarted}">
+									</DataTrigger>
+									<DataTrigger Binding="{Binding ProgressStatus}" Value="{x:Static local:ProgressState.StartingIndeterminate}">
+										<Setter Property="IsIndeterminate" Value="True" />
+									</DataTrigger>
+									<DataTrigger Binding="{Binding ProgressStatus}" Value="{x:Static local:ProgressState.Running}">
+										<Setter Property="IsIndeterminate" Value="False" />
+									</DataTrigger>
+									<DataTrigger Binding="{Binding ProgressStatus}" Value="{x:Static local:ProgressState.Completed}">
+										<Setter Property="IsIndeterminate" Value="False" />
+									</DataTrigger>
+									<DataTrigger Binding="{Binding ProgressStatus}" Value="{x:Static local:ProgressState.Canceled}">
+										<Setter Property="Foreground" Value="Yellow" />
+										<Setter Property="Opacity" Value="0.5" />
+										<Setter Property="IsIndeterminate" Value="False" />
+									</DataTrigger>
+									<DataTrigger Binding="{Binding ProgressStatus}" Value="{x:Static local:ProgressState.Error}">
+										<Setter Property="Foreground" Value="Red" />
+										<Setter Property="Opacity" Value="0.5" />
+										<Setter Property="IsIndeterminate" Value="False" />
+									</DataTrigger>
+								</Style.Triggers>
+							</Style>
+						</ProgressBar.Style>
+					</ProgressBar>
 
 					<TextBox VerticalAlignment="Center" IsEnabled="{Binding IsNotBusy}" Text="{Binding DirectoryPath}" Background="#00ffffff" Name="directoryPathTextBox" />
 
@@ -243,7 +271,7 @@
 
 					</Popup>
 
-					<CheckBox IsChecked="{Binding HideEmptyDirectories}" Content="Hide empty directories" VerticalAlignment="Center" Margin="3" />
+					<CheckBox IsChecked="{Binding HideBoringDirectories}" Content="Hide uninteresting directories" VerticalAlignment="Center" Margin="3" ToolTip="(The vertical scrollbar will behave erratically when enabled)" ToolTipService.InitialShowDelay="0" />
 
 				</StackPanel>
 
@@ -288,8 +316,18 @@
 					<Style.Triggers>
 						<MultiDataTrigger>
 							<MultiDataTrigger.Conditions>
-								<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.HideEmptyDirectories}" Value="True" />
+								<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.HideBoringDirectories}" Value="True" />
 								<Condition Binding="{Binding FolderType}" Value="{x:Static tt:FolderType.Empty}" />
+							</MultiDataTrigger.Conditions>
+							<Setter Property="Visibility" Value="Collapsed" />
+						</MultiDataTrigger>
+						<MultiDataTrigger>
+							<MultiDataTrigger.Conditions>
+								<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.HideBoringDirectories}" Value="True" />
+								<Condition Binding="{Binding FilesModified}" Value="0" />
+								<Condition Binding="{Binding InfoCount}"     Value="0" />
+								<Condition Binding="{Binding WarnCount}"     Value="0" />
+								<Condition Binding="{Binding ErrorCount}"    Value="0" />
 							</MultiDataTrigger.Conditions>
 							<Setter Property="Visibility" Value="Collapsed" />
 						</MultiDataTrigger>

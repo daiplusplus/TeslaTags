@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 
@@ -35,14 +36,50 @@ namespace TeslaTags.Gui
 		private DateTime stateStart = DateTime.MinValue;
 		private Int32 directoryIdx = 0;
 
+		private TaskCompletionSource<Object> tcs;
+		//private ITeslaTagEventsListener listener;
+		private CancellationToken ct;
+
+		private IProgress<IReadOnlyList<String>> directoriesProgress;
+		private IProgress<DirectoryResult>       directoryProgress;
+
+		public Task StartRetaggingAsync(RetaggingOptions options, IProgress<IReadOnlyList<String>> directoriesProgress, IProgress<DirectoryResult> directoryProgress, CancellationToken ct)
+		{
+			if( this.tcs != null ) throw new InvalidOperationException("Already processing."); // This is fine for a DesignMode class.
+
+			this.directoriesProgress = directoriesProgress;
+			this.directoryProgress   = directoryProgress;
+
+			this.tcs = new TaskCompletionSource<Object>();
+			this.ct = ct;
+
+			this.rootDirectory = options.MusicRootDirectory;
+			this.directories = _directories
+				.Select( p => Path.Combine( this.rootDirectory, p ) )
+				.ToList();
+
+			this.timer.Start();
+
+			return this.tcs.Task;
+		}
+
 		private void Timer_Tick(Object sender, EventArgs e)
 		{
+			if( this.ct.IsCancellationRequested )
+			{
+				//this.ct.ThrowIfCancellationRequested();
+
+				this.processState = 3;
+				this.timer.Stop();
+
+				this.tcs.SetCanceled();
+				return;
+			}
+
 			if( this.processState == 0 )
 			{
 				this.processState = 1;
 				this.stateStart = DateTime.UtcNow;
-
-				this.EventsListener?.Started();
 			}
 			else if( this.processState == 1 )
 			{
@@ -50,7 +87,7 @@ namespace TeslaTags.Gui
 				if( time.TotalSeconds > 2 )
 				{
 					this.processState = 2;
-					this.EventsListener?.GotDirectories( this.directories );
+					this.directoriesProgress.Report( this.directories );
 				}
 			}
 			else if( this.processState == 2 )
@@ -74,7 +111,7 @@ namespace TeslaTags.Gui
 						if( rng.Next(0, 8) == 3 ) messages.Add( new Message( MessageSeverity.Warning, directory, fileName, "Some file error" ) );
 					}
 
-					this.EventsListener?.DirectoryUpdate( directory, randomType, modifiedCount, totalCount, ((Single)this.directoryIdx + 1f) / (Single)this.directories.Count, messages );
+					this.directoryProgress.Report( new DirectoryResult( directory, randomType, totalCount, modifiedCount, messages ) );
 
 					this.directoryIdx++;
 				}
@@ -85,40 +122,12 @@ namespace TeslaTags.Gui
 			}
 			else if( this.processState == 3 )
 			{
+				// Completed successfully:
 				this.timer.Stop();
-				this.IsBusy = false;
-				this.EventsListener?.Complete( false );
+				this.tcs.SetResult( null );
 			}
 		}
 
-		public Boolean IsBusy
-		{
-			get; private set;
-		}
-
-		public ITeslaTagEventsListener EventsListener { get; set; }
-
-		public void Start(String directory, Boolean readOnly, Boolean undo, GenreRules genreRules)
-		{
-			this.rootDirectory = directory;
-			this.directories = _directories
-				.Select( p => Path.Combine( directory, p ) )
-				.ToList();
-
-			this.IsBusy = true;
-			this.timer.Start();
-		}
-
-		public void Stop()
-		{
-			this.timer.Stop();
-			this.IsBusy = false;
-			this.EventsListener?.Complete( true );
-		}
-	}
-
-	public class DesignTeslaTagUtilityService : ITeslaTagUtilityService
-	{
 		public Task<List<Message>> RemoveApeTagsAsync(String directoryPath)
 		{
 			List<Message> messages = new List<Message>();

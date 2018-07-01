@@ -108,17 +108,11 @@ namespace TeslaTags.Gui
 				{
 					ioc.Register<ITeslaTagsService, DesignTeslaTagService>();
 				}
-
-				if( !ioc.IsRegistered<ITeslaTagUtilityService>() )
-				{
-					ioc.Register<ITeslaTagUtilityService, DesignTeslaTagUtilityService>();
-				}
 			}
 			else
 			{
 				// Create run time view services and models
 				ioc.Register<ITeslaTagsService,RealTeslaTagService>();
-				ioc.Register<ITeslaTagUtilityService,RealTeslaTagUtilityService>();
 			}
 
 			ioc.Register<IWindowService,WindowService>();
