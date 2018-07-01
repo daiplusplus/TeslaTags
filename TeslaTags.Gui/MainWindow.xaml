@@ -271,7 +271,7 @@
 
 					</Popup>
 
-					<CheckBox IsChecked="{Binding HideEmptyDirectories}" Content="Hide empty directories" VerticalAlignment="Center" Margin="3" />
+					<CheckBox IsChecked="{Binding HideBoringDirectories}" Content="Hide uninteresting directories" VerticalAlignment="Center" Margin="3" ToolTip="(The vertical scrollbar will behave erratically when enabled)" ToolTipService.InitialShowDelay="0" />
 
 				</StackPanel>
 
@@ -316,8 +316,18 @@
 					<Style.Triggers>
 						<MultiDataTrigger>
 							<MultiDataTrigger.Conditions>
-								<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.HideEmptyDirectories}" Value="True" />
+								<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.HideBoringDirectories}" Value="True" />
 								<Condition Binding="{Binding FolderType}" Value="{x:Static tt:FolderType.Empty}" />
+							</MultiDataTrigger.Conditions>
+							<Setter Property="Visibility" Value="Collapsed" />
+						</MultiDataTrigger>
+						<MultiDataTrigger>
+							<MultiDataTrigger.Conditions>
+								<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.HideBoringDirectories}" Value="True" />
+								<Condition Binding="{Binding FilesModified}" Value="0" />
+								<Condition Binding="{Binding InfoCount}"     Value="0" />
+								<Condition Binding="{Binding WarnCount}"     Value="0" />
+								<Condition Binding="{Binding ErrorCount}"    Value="0" />
 							</MultiDataTrigger.Conditions>
 							<Setter Property="Visibility" Value="Collapsed" />
 						</MultiDataTrigger>

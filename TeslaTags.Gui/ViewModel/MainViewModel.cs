@@ -97,11 +97,11 @@ namespace TeslaTags.Gui
 			set { this.Set( nameof(this.RestoreFiles), ref this.restoreFiles, value ); }
 		}
 
-		private Boolean hideEmptyDirectories;
-		public Boolean HideEmptyDirectories
+		private Boolean hideBoringDirectories;
+		public Boolean HideBoringDirectories
 		{
-			get { return this.hideEmptyDirectories; }
-			set { this.Set( nameof(this.HideEmptyDirectories), ref this.hideEmptyDirectories, value ); }
+			get { return this.hideBoringDirectories; }
+			set { this.Set( nameof(this.HideBoringDirectories), ref this.hideBoringDirectories, value ); }
 		}
 
 		public GenreRulesViewModel GenreRules { get; } = new GenreRulesViewModel();
@@ -165,8 +165,8 @@ namespace TeslaTags.Gui
 				this.DirectoryPath = config.RootDirectory;
 			}
 			
-			this.HideEmptyDirectories = config.HideEmptyDirectories;
-			this.ExcludeLines         = String.Join( "\r\n", config.ExcludeList ?? new String[0] );
+			this.HideBoringDirectories = config.HideEmptyDirectories;
+			this.ExcludeLines          = String.Join( "\r\n", config.ExcludeList ?? new String[0] );
 			
 			if( config.GenreRules != null )
 			{
@@ -195,7 +195,7 @@ namespace TeslaTags.Gui
 			Config config = this.configurationService.Config;
 
 			config.RootDirectory        = this.DirectoryPath;
-			config.HideEmptyDirectories = this.HideEmptyDirectories;
+			config.HideEmptyDirectories = this.HideBoringDirectories;
 			config.ExcludeList          = this.ExcludeLines?.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries ) ?? new String[0];
 			this.GenreRules.SaveTo( config.GenreRules );
 
@@ -293,6 +293,10 @@ namespace TeslaTags.Gui
 				{
 					this.ProgressStatus = ProgressState.Completed;
 				}
+			}
+			catch( OperationCanceledException ) // includes TaskCanceledException
+			{
+				this.ProgressStatus = ProgressState.Canceled;
 			}
 			catch
 			{
