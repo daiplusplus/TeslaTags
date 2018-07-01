@@ -325,7 +325,7 @@
 						<MultiDataTrigger>
 							<MultiDataTrigger.Conditions>
 								<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.HideBoringDirectories}" Value="True" />
-								<Condition Binding="{Binding FilesModified}" Value="0" />
+								<Condition Binding="{Binding FilesModifiedProposed}" Value="0" />
 								<Condition Binding="{Binding InfoCount}"     Value="0" />
 								<Condition Binding="{Binding WarnCount}"     Value="0" />
 								<Condition Binding="{Binding ErrorCount}"    Value="0" />
@@ -383,7 +383,22 @@
 							HeadersVisibility="Column"
 						>
 							<DataGrid.Columns>
-								<DataGridTextColumn Header="Severity" Binding="{Binding Severity}"     ElementStyle="{StaticResource txtCol}" IsReadOnly="True" />
+								<DataGridTextColumn Header="Severity" Binding="{Binding Severity}"     ElementStyle="{StaticResource txtCol}" IsReadOnly="True">
+
+									<DataGridTextColumn.CellStyle>
+										<Style TargetType="DataGridCell">
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding Severity}" Value="{x:Static tt:MessageSeverity.Warning}">
+													<Setter Property="Background" Value="#FFFFC846" />
+												</DataTrigger>
+												<DataTrigger Binding="{Binding Severity}" Value="{x:Static tt:MessageSeverity.Error}">
+													<Setter Property="Background" Value="#FFFF8080" />
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</DataGridTextColumn.CellStyle>
+									
+								</DataGridTextColumn>
 								<DataGridTextColumn Header="Path"     Binding="{Binding RelativePath}" ElementStyle="{StaticResource txtCol}" IsReadOnly="True" />
 								<DataGridTextColumn Header="Message"  Binding="{Binding Text}"         ElementStyle="{StaticResource txtCol}" IsReadOnly="True" MaxWidth="500" />
 							</DataGrid.Columns>
