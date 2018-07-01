@@ -6,6 +6,7 @@ using GalaSoft.MvvmLight.Threading;
 
 namespace TeslaTags.Gui
 {
+	/*
 	class DispatchTeslaTagEventsListener : ITeslaTagEventsListener
 	{
 		private readonly ITeslaTagEventsListener sink;
@@ -49,5 +50,5 @@ namespace TeslaTags.Gui
 		{
 			Invoke( false, this.sink.Started );
 		}
-	}
+	}*/
 }

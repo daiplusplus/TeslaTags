@@ -66,7 +66,7 @@ namespace TeslaTags.QuickFix
 		private static void MainInner( String directoryPath, String operation, String value, Mode mode )
 		{
 			List<Message> messages = new List<Message>();
-			List<LoadedFile> files = Folder.LoadFiles( directoryPath, messages );
+			List<LoadedFile> files = TeslaTagFolderProcessor.LoadFiles( directoryPath, messages );
 			try
 			{
 				foreach( Message msg in messages )

@@ -12,11 +12,11 @@ namespace TeslaTags.Gui
 {
 	public class DirectoryViewModel : BaseViewModel
 	{
-		private readonly ITeslaTagUtilityService utilityService;
+		private readonly ITeslaTagsService teslaTagService;
 
-		public DirectoryViewModel(ITeslaTagUtilityService utilityService, String directoryPath, String prefix)
+		public DirectoryViewModel(ITeslaTagsService teslaTagService, String directoryPath, String prefix)
 		{
-			this.utilityService = utilityService;
+			this.teslaTagService = teslaTagService;
 
 			this.FullDirectoryPath    = directoryPath;
 			this.DisplayDirectoryPath = directoryPath.StartsWith( prefix, StringComparison.OrdinalIgnoreCase ) ? directoryPath.Substring( prefix.Length ) : directoryPath;
@@ -138,7 +138,7 @@ namespace TeslaTags.Gui
 
 			this.IsBusy = true;
 
-			List<Message> messages = await this.utilityService.SetAlbumArtAsync( this.FullDirectoryPath, this.SelectedImageFileName, this.ReplaceAllAlbumArt ? AlbumArtSetMode.Replace : AlbumArtSetMode.AddIfMissing );
+			List<Message> messages = await this.teslaTagService.SetAlbumArtAsync( this.FullDirectoryPath, this.SelectedImageFileName, this.ReplaceAllAlbumArt ? AlbumArtSetMode.Replace : AlbumArtSetMode.AddIfMissing );
 			this.Messages.AddRange( messages );
 
 			this.IsBusy = false;
@@ -150,7 +150,7 @@ namespace TeslaTags.Gui
 		{
 			this.IsBusy = true;
 
-			List<Message> messages = await this.utilityService.RemoveApeTagsAsync( this.FullDirectoryPath );
+			List<Message> messages = await this.teslaTagService.RemoveApeTagsAsync( this.FullDirectoryPath );
 			this.Messages.AddRange( messages );
 
 			this.IsBusy = false;
@@ -176,7 +176,7 @@ namespace TeslaTags.Gui
 		{
 			this.IsBusy = true;
 
-			List<Message> messages = await this.utilityService.SetTrackNumbersFromFileNamesAsync( this.FullDirectoryPath, this.TrackNumberOffset, this.DiscNumber );
+			List<Message> messages = await this.teslaTagService.SetTrackNumbersFromFileNamesAsync( this.FullDirectoryPath, this.TrackNumberOffset, this.DiscNumber );
 			this.Messages.AddRange( messages );
 
 			this.IsBusy = false;

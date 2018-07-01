@@ -3,26 +3,29 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-
+using System.Threading;
 using System.Threading.Tasks;
 using GalaSoft.MvvmLight.CommandWpf;
 
 namespace TeslaTags.Gui
 {
-	public class MainViewModel : BaseViewModel, ITeslaTagEventsListener
+	public class MainViewModel : BaseViewModel
 	{
-		private readonly ITeslaTagsService teslaTagsService;
-		private readonly ITeslaTagUtilityService utilityService;
+		private readonly ITeslaTagsService     teslaTagsService;
 		private readonly IConfigurationService configurationService;
-		private readonly IWindowService windowService;
+		private readonly IWindowService        windowService;
 
-		public MainViewModel(ITeslaTagsService teslaTagsService, ITeslaTagUtilityService utilityService, IConfigurationService configurationService, IWindowService windowService)
+		//private readonly DispatchTeslaTagEventsListener teslaTagsListener;
+
+		private CancellationTokenSource teslaTagsCts;
+
+		public MainViewModel(ITeslaTagsService teslaTagsService, IConfigurationService configurationService, IWindowService windowService)
 		{
 			this.teslaTagsService     = teslaTagsService;
-			this.teslaTagsService.EventsListener = new DispatchTeslaTagEventsListener( this );
-			this.utilityService       = utilityService;
 			this.configurationService = configurationService;
 			this.windowService        = windowService;
+
+			//this.teslaTagsListener    = new DispatchTeslaTagEventsListener( this );
 
 			this.WindowLoadedCommand  = new RelayCommand( this.WindowLoaded );
 			this.WindowClosingCommand = new RelayCommand( this.WindowClosing );
@@ -31,10 +34,10 @@ namespace TeslaTags.Gui
 
 			///////////
 			
-			this.DirectoryPath     = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
-			this.OnlyValidate      = true;
+			this.directoryPath     = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+			this.onlyValidate      = true;
 
-			this.Version = typeof(MainViewModel).Assembly.GetName().Version.ToString() + " (Release 4)";
+			this.Version = typeof(MainViewModel).Assembly.GetName().Version.ToString() + " (Release 6)";
 			this.ReadmeLink = @"https://github.com/Jehoel/TeslaTags/blob/release-4/README.md";
 
 			//////////
@@ -43,7 +46,7 @@ namespace TeslaTags.Gui
 			{
 				for( Int32 i = 0; i < 10; i++ )
 				{
-					this.DirectoriesProgress.Add( new DirectoryViewModel( utilityService, @"C:\TestData\Folder" + i, @"C:\TestData" ) );
+					this.DirectoriesProgress.Add( new DirectoryViewModel( teslaTagsService, @"C:\TestData\Folder" + i, @"C:\TestData" ) );
 				}
 				this.SelectedDirectory = this.DirectoriesProgress[2];
 
@@ -118,36 +121,19 @@ namespace TeslaTags.Gui
 
 		#region One-way from ViewModel
 
-		public Boolean IsValid
-		{
-			get
-			{
-				try
-				{
-					return !String.IsNullOrWhiteSpace( this.DirectoryPath ) && Directory.Exists( this.DirectoryPath );
-				}
-				catch
-				{
-					return false;
-				}
-			}
-		}
-
 		private Single progressPerc;
 		public Single ProgressPerc
 		{
 			get { return this.progressPerc; }
-			set {
-				this.Set( nameof(this.ProgressPerc), ref this.progressPerc, value );
-				Boolean indeterminate = value == -1;
-				if( indeterminate != this.ProgressIndeterminate )
-				{
-					this.ProgressIndeterminate = indeterminate;
-					this.RaisePropertyChanged( nameof(this.ProgressIndeterminate) );
-				}
-			}
+			set { this.Set( nameof(this.ProgressPerc), ref this.progressPerc, value ); }
 		}
-		public Boolean ProgressIndeterminate { get; private set; }
+
+		private ProgressState progressStatus;
+		public ProgressState ProgressStatus
+		{
+			get { return this.progressStatus; }
+			set { this.Set( nameof(this.ProgressStatus), ref this.progressStatus, value ); }
+		}
 
 		public String Version { get; }
 		public String ReadmeLink { get; }
@@ -176,7 +162,7 @@ namespace TeslaTags.Gui
 
 			if( !String.IsNullOrWhiteSpace( config.RootDirectory ) && Directory.Exists( config.RootDirectory ) )
 			{
-				this.DirectoryPath        = config.RootDirectory;
+				this.DirectoryPath = config.RootDirectory;
 			}
 			
 			this.HideEmptyDirectories = config.HideEmptyDirectories;
@@ -228,105 +214,115 @@ namespace TeslaTags.Gui
 
 		public RelayCommand StopCommand { get; }
 
-		private void Start()
+		private async void Start()
 		{
 			if( !this.DirectoryPathIsValid() )
 			{
-				// TODO: Show error message?
+				this.windowService.ShowMessageBoxErrorDialog( this, title: "TeslaTags", message: "The music root directory is not specified, or does not exist." );
 				return;
 			}
 
-			this.IsBusy = this.teslaTagsService.IsBusy;
-			this.ProgressPerc = -1;
+			this.IsBusy = true;
+			this.ProgressStatus = ProgressState.StartingIndeterminate;
+			try
+			{
+				// Save config (so we can restore, in case it crashes during processing):
+				this.SaveConfig();
 
-			// Save config:
-			this.SaveConfig();
+				String[] directoryExcludes = this.ExcludeLines?.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries ).Select( s => s.Trim() ).ToArray() ?? new String[0];
 
-			// Start for real:
+				Boolean directoryFilter(String dirPath)
+				{
+					if( directoryExcludes.Any( exclSubPath => dirPath.IndexOf( exclSubPath, StringComparison.OrdinalIgnoreCase ) > -1 ) ) return false;
+					return true;
+				}
 
-			this.teslaTagsService.Start( this.DirectoryPath, this.OnlyValidate, this.RestoreFiles, this.GenreRules.GetRules() );
+				RetaggingOptions opts = new RetaggingOptions( this.DirectoryPath, this.OnlyValidate, this.RestoreFiles, directoryFilter, this.GenreRules.GetRules() );
+			
+				Single total = 0;
+				Single progress = 0;
+
+				Progress<IReadOnlyList<String>> directoriesReceiver = new Progress<IReadOnlyList<String>>( directories =>
+				{
+					this.viewModelDict.Clear();
+					this.DirectoriesProgress.Clear();
+					total = directories.Count;
+
+					foreach( String directoryPath in directories )
+					{
+						if( directoryPath == null ) continue;
+
+						DirectoryViewModel dirVM = new DirectoryViewModel( this.teslaTagsService, directoryPath, prefix: this.DirectoryPath );
+						this.viewModelDict.Add( directoryPath, dirVM );
+						this.DirectoriesProgress.Add( dirVM );
+					}
+
+					this.ProgressStatus = ProgressState.Running;
+				} );
+
+				Progress<DirectoryResult> directoryReceiver = new Progress<DirectoryResult>( result =>
+				{
+					DirectoryViewModel dirVM;
+					if( !this.viewModelDict.TryGetValue( result.DirectoryPath, out dirVM ) )
+					{
+						throw new InvalidOperationException( "Event raised in previously unreported directory: " + result.DirectoryPath );
+					}
+
+					dirVM.FilesModified = result.ModifiedFiles;
+					dirVM.FolderType    = result.FolderType;
+					dirVM.TotalFiles    = result.TotalFiles;
+
+					foreach( Message message in result.Messages ) dirVM.Messages.Add( message );
+
+					progress++;
+
+					this.ProgressPerc = progress / total;
+				} );
+
+				// Start for real:
+				CancellationTokenSource cts = this.teslaTagsCts = new CancellationTokenSource();
+
+				Task task = this.teslaTagsService.StartRetaggingAsync( opts, directoriesReceiver, directoryReceiver, cts.Token );
+				await task;
+
+				if( task.IsCanceled )
+				{
+					this.ProgressStatus = ProgressState.Canceled;
+				}
+				else
+				{
+					this.ProgressStatus = ProgressState.Completed;
+				}
+			}
+			catch
+			{
+				this.ProgressStatus = ProgressState.Error;
+				throw;
+			}
+			finally
+			{
+				this.IsBusy = false;
+				this.teslaTagsCts = null;
+			}
 		}
 
 		private void Stop()
 		{
-			this.teslaTagsService.Stop();
-		}
+			if( this.teslaTagsCts == null ) throw new InvalidOperationException( "CancellationTokenSource is null." );
 
-		#endregion
-
-		#region ITeslaTagEvents
-
-		private DirectoryViewModel GetDirectoryProgressViewModel( String directory )
-		{
-			DirectoryViewModel dirVM;
-			if( !this.viewModelDict.TryGetValue( directory, out dirVM ) )
-			{
-				throw new InvalidOperationException( "Event raised in previously unreported directory: " + directory );
-			}
-			return dirVM;
-		}
-
-		void ITeslaTagEventsListener.Started()
-		{
-		}
-
-		void ITeslaTagEventsListener.GotDirectories(List<String> directories)
-		{
-			if( !String.IsNullOrWhiteSpace( this.ExcludeLines ) )
-			{
-				String[] excl = this.ExcludeLines.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries );
-
-				for( Int32 i = 0; i < directories.Count; i++ )
-				{
-					String d = directories[i];
-					if( excl.Any( e => d.IndexOf( e, StringComparison.OrdinalIgnoreCase ) > -1 ) )
-					{
-						directories[i] = null;
-					}
-				}
-			}
-
-			this.viewModelDict.Clear();
-			this.DirectoriesProgress.Clear();
-			foreach( String directoryPath in directories )
-			{
-				if( directoryPath == null ) continue;
-
-				DirectoryViewModel dirVM = new DirectoryViewModel( this.utilityService, directoryPath, prefix: this.DirectoryPath );
-				this.viewModelDict.Add( directoryPath, dirVM );
-				this.DirectoriesProgress.Add( dirVM );
-			}
-		}
-
-		void ITeslaTagEventsListener.DirectoryUpdate(String directory, FolderType folderType, Int32 modifiedCount, Int32 totalCount, Single totalPerc, List<Message> messages)
-		{
-			DirectoryViewModel dirVM = this.GetDirectoryProgressViewModel( directory );
-			dirVM.FilesModified = modifiedCount;
-			dirVM.FolderType    = folderType;
-			dirVM.TotalFiles    = totalCount;
-
-			foreach( Message message in messages ) dirVM.Messages.Add( message );
-
-			this.ProgressPerc = totalPerc;
-		}
-
-		void ITeslaTagEventsListener.Complete(Boolean stoppedEarly)
-		{
-			this.IsBusy = this.teslaTagsService.IsBusy;
-			if( !stoppedEarly ) this.ProgressPerc = 0;
+			this.teslaTagsCts.Cancel();
 		}
 
 		#endregion
 	}
 
-	internal static partial class Extensions
+	public enum ProgressState
 	{
-		public static void AddRange<T>(this ObservableCollection<T> collection, IEnumerable<T> items)
-		{
-			if( items != null )
-			{
-				foreach( T item in items ) collection.Add( item );
-			}
-		}
+		NotStarted,
+		StartingIndeterminate,
+		Running,
+		Completed,
+		Canceled,
+		Error
 	}
 }

@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 using System.Xml.Linq;
 
 namespace TeslaTags.Gui
@@ -58,6 +55,9 @@ namespace TeslaTags.Gui
 		{
 			Config config = new Config();
 
+			// Set defaults:
+			config.ExcludeList = new String[] { "iTunes", "License Backup" };
+
 			XDocument doc = OpenAppConfig();
 			if( doc != null )
 			{
@@ -77,9 +77,7 @@ namespace TeslaTags.Gui
 				.Elements( "add" )
 				.Select( el => (key: el.Attribute("key")?.Value, value: el.Attribute("value")?.Value ) )
 				.Where( t => !String.IsNullOrWhiteSpace( t.key ) );
-
 			
-			config.ExcludeList = new String[0];
 			config.GenreRules = new GenreRules();
 
 			foreach( (String key, String value) in appSettings )
@@ -110,7 +108,7 @@ namespace TeslaTags.Gui
 				else if( E( key, nameof(TeslaTags.Gui.Config.ExcludeList) ) )
 				{
 					String[] excludeList = value?.Split( _directoryListSeparators, StringSplitOptions.RemoveEmptyEntries ) ?? null;
-					if( excludeList != null ) config.ExcludeList = excludeList;
+					if( excludeList != null && excludeList.Length > 0 ) config.ExcludeList = excludeList;
 				}
 				else if( E( key, nameof(TeslaTags.Gui.Config.RootDirectory) ) )
 				{
@@ -133,6 +131,8 @@ namespace TeslaTags.Gui
 					if( Boolean.TryParse( value, out Boolean genreGuestArtistUseArtistNameValue ) ) config.GenreRules.GuestArtistUseArtistName = genreGuestArtistUseArtistNameValue;
 				}
 			}
+
+			if( config.ExcludeList == null ) config.ExcludeList = new String[0];
 		}
 
 		private static String AppConfigFileName => AppDomain.CurrentDomain.SetupInformation.ConfigurationFile;
