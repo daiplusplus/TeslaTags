@@ -11,12 +11,12 @@ using ape = TagLib.Ape;
 
 namespace TeslaTags
 {
-	public class RealTeslaTagUtilityService : ITeslaTagUtilityService
+	public partial class RealTeslaTagService
 	{
 		private static List<Message> Wrap( String directoryPath, Action<String,List<LoadedFile>,List<Message>> action )
 		{
 			List<Message> messages = new List<Message>();
-			List<LoadedFile> files = Folder.LoadFiles( directoryPath, messages );
+			List<LoadedFile> files = TeslaTagFolderProcessor.LoadFiles( directoryPath, messages );
 			try
 			{
 				action( directoryPath, files, messages );
@@ -93,7 +93,7 @@ namespace TeslaTags
 					}
 					else if( existingIdenticalPictures.Count == 1 )
 					{
-						messages.AddInfo( file.FileInfo.FullName, "New picture already exists in file." );
+						messages.AddInfoFile( file.FileInfo.FullName, "New picture already exists in file." );
 					}
 
 					switch( mode )

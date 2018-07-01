@@ -82,7 +82,7 @@ namespace TeslaTags
 			RecoveryTag rt = file.RecoveryTag;
 			if( rt == null )
 			{
-				messages.AddInfo( file.FileInfo.FullName, "No recovery information found in file." );
+				messages.AddInfoFile( file.FileInfo.FullName, "No recovery information found in file." );
 				return;
 			}
 
@@ -95,7 +95,7 @@ namespace TeslaTags
 			file.RecoveryTag.Clear();
 			file.IsModified = true;
 
-			messages.AddInfo( file.FileInfo.FullName, "File recovered." );
+			messages.AddInfoFile( file.FileInfo.FullName, "File recovered." );
 		}
 	}
 

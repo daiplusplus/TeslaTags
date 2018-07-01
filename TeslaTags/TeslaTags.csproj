@@ -50,8 +50,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DirectoryResult.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="Folder.cs" />
+    <Compile Include="Message.cs" />
+    <Compile Include="TeslaTagFolderProcessor.cs" />
     <Compile Include="LoadedFile.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -7,7 +7,7 @@ using TagLib;
 
 namespace TeslaTags
 {
-	public static class Folder
+	public static class TeslaTagFolderProcessor
 	{
 		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String directoryPath, Boolean readOnly, Boolean undo, GenreRules genreRules, List<Message> messages)
 		{
