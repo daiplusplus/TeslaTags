@@ -64,13 +64,13 @@ namespace TeslaTags.Gui
 
 		protected Boolean CanExecuteWhenNotBusy()
 		{
-			System.Diagnostics.Debug.WriteLine( nameof(this.CanExecuteWhenNotBusy) + " == " + ( !this.IsBusy ) );
+			//System.Diagnostics.Debug.WriteLine( nameof(this.CanExecuteWhenNotBusy) + " == " + ( !this.IsBusy ) );
 			return !this.IsBusy;
 		}
 
 		protected Boolean CanExecuteWhenBusy()
 		{
-			System.Diagnostics.Debug.WriteLine( nameof(this.CanExecuteWhenBusy) + " == " + ( this.IsBusy ) );
+			//System.Diagnostics.Debug.WriteLine( nameof(this.CanExecuteWhenBusy) + " == " + ( this.IsBusy ) );
 			return this.IsBusy;
 		}
 

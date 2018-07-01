@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
 using GalaSoft.MvvmLight.CommandWpf;
 
 namespace TeslaTags.Gui
@@ -15,8 +16,6 @@ namespace TeslaTags.Gui
 		private readonly IConfigurationService configurationService;
 		private readonly IWindowService        windowService;
 
-		//private readonly DispatchTeslaTagEventsListener teslaTagsListener;
-
 		private CancellationTokenSource teslaTagsCts;
 
 		public MainViewModel(ITeslaTagsService teslaTagsService, IConfigurationService configurationService, IWindowService windowService)
@@ -24,8 +23,6 @@ namespace TeslaTags.Gui
 			this.teslaTagsService     = teslaTagsService;
 			this.configurationService = configurationService;
 			this.windowService        = windowService;
-
-			//this.teslaTagsListener    = new DispatchTeslaTagEventsListener( this );
 
 			this.WindowLoadedCommand  = new RelayCommand( this.WindowLoaded );
 			this.WindowClosingCommand = new RelayCommand( this.WindowClosing );
@@ -66,8 +63,10 @@ namespace TeslaTags.Gui
 			get { return this.directoryPath; }
 			set
 			{
-				Boolean diff = this.Set( nameof(this.DirectoryPath), ref this.directoryPath, value );
-				//if( diff ) this.StartCommand.RaiseCanExecuteChanged();
+				if( this.Set( nameof(this.DirectoryPath), ref this.directoryPath, value ) )
+				{
+					this.StartCommand.RaiseCanExecuteChanged();
+				}
 			}
 		}
 
@@ -176,7 +175,7 @@ namespace TeslaTags.Gui
 			var window = this.windowService.GetWindowByDataContext( this );
 			if( window != null )
 			{
-				var pos = config.RestoredWindowPosition;
+				var pos = config.RestoredWindowPosition; // `#pragma warning disable 42` does not suppress the IDE0042 message here.
 
 				if( pos.Width > 0 && pos.Height > 0 )
 				{
@@ -270,8 +269,8 @@ namespace TeslaTags.Gui
 
 					dirVM.FilesModifiedActual   = result.ActualModifiedFiles;
 					dirVM.FilesModifiedProposed = result.ProposedModifiedFiles;
-					dirVM.FolderType    = result.FolderType;
-					dirVM.TotalFiles    = result.TotalFiles;
+					dirVM.FolderType            = result.FolderType;
+					dirVM.TotalFiles            = result.TotalFiles;
 
 					foreach( Message message in result.Messages ) dirVM.Messages.Add( message );
 
