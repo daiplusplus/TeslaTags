@@ -48,22 +48,29 @@ namespace TeslaTags.Gui
 		public Boolean IsBusy
 		{
 			get { return this.isBusy; }
-			set {
-				this.Set( nameof(this.IsBusy), ref this.isBusy, value );
-				this.RaisePropertyChanged( nameof(this.IsNotBusy) );
-
-				foreach( RelayCommand cmd in this.busyCommands ) cmd.RaiseCanExecuteChanged();
+			set
+			{
+				if( this.Set( nameof(this.IsBusy), ref this.isBusy, value ) )
+				{
+					this.RaisePropertyChanged( nameof(this.IsNotBusy) );
+					foreach( RelayCommand cmd in this.busyCommands )
+					{
+						cmd.RaiseCanExecuteChanged();
+					}
+				}
 			}
 		}
 		public Boolean IsNotBusy => !this.IsBusy;
 
 		protected Boolean CanExecuteWhenNotBusy()
 		{
+			System.Diagnostics.Debug.WriteLine( nameof(this.CanExecuteWhenNotBusy) + " == " + ( !this.IsBusy ) );
 			return !this.IsBusy;
 		}
 
 		protected Boolean CanExecuteWhenBusy()
 		{
+			System.Diagnostics.Debug.WriteLine( nameof(this.CanExecuteWhenBusy) + " == " + ( this.IsBusy ) );
 			return this.IsBusy;
 		}
 
@@ -75,14 +82,16 @@ namespace TeslaTags.Gui
 			Type type = typeof(TEnum);
 			var options = type
 				.GetFields( BindingFlags.Static | BindingFlags.Public )
-				.Select( fi => new {
-					Description = fi.GetCustomAttribute<DescriptionAttribute>()?.Description,
-					Value       = (TEnum)fi.GetValue( null )
-				}  )
-				.Select( t => new ValueOption<TEnum>( t.Value, t.Description ?? t.Value.ToString() ) );
+				.Select( fi => {
+					String description = fi.GetCustomAttribute<DescriptionAttribute>()?.Description;
+					TEnum  value       = (TEnum)fi.GetValue( null );
+
+					return new ValueOption<TEnum>( value, description ?? value.ToString() );
+				} );
 				
 			ObservableCollection<ValueOption<TEnum>> ret = new ObservableCollection<ValueOption<TEnum>>();
-			ret.AddRange( options );
+			foreach( ValueOption<TEnum> opt in options ) ret.Add( opt );
+
 			return ret;
 		}
 	}
