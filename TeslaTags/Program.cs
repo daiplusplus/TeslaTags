@@ -35,7 +35,7 @@ namespace TeslaTags
 			Progress<DirectoryResult> directoryReceiver = new Progress<DirectoryResult>( result => {
 
 				Console.Write( result.FolderType );
-				Console.Write( "{0} files, {1} modified files, ", result.TotalFiles, result.ModifiedFiles );
+				Console.Write( "{0} files, {1} modified files, ", result.TotalFiles, result.ActualModifiedFiles );
 
 				if( result.Messages.Any( m => m.Severity == MessageSeverity.Error ) ) Console.ForegroundColor = ConsoleColor.Red;
 				Console.Write( "{0} errors", result.Messages.Count( m => m.Severity == MessageSeverity.Error ) );

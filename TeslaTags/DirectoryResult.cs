@@ -11,19 +11,21 @@ namespace TeslaTags
 	{
 		private static readonly List<Message> _empty = new List<Message>();
 
-		public DirectoryResult( String directoryPath, FolderType folderType, Int32 totalFiles, Int32 modifiedFiles, List<Message> messages )
+		public DirectoryResult( String directoryPath, FolderType folderType, Int32 totalFiles, Int32 proposedModifiedFilesCount, Int32 actualModifiedFilesCount, List<Message> messages )
 		{
-			this.DirectoryPath = directoryPath;
-			this.FolderType    = folderType;
-			this.TotalFiles    = totalFiles;
-			this.ModifiedFiles = modifiedFiles;
-			this.Messages      = messages ?? _empty;
+			this.DirectoryPath         = directoryPath;
+			this.FolderType            = folderType;
+			this.TotalFiles            = totalFiles;
+			this.ProposedModifiedFiles = proposedModifiedFilesCount;
+			this.ActualModifiedFiles   = actualModifiedFilesCount;
+			this.Messages              = messages ?? _empty;
 		}
 
-		public String                 DirectoryPath { get; }
-		public FolderType             FolderType    { get; }
-		public Int32                  TotalFiles    { get; }
-		public Int32                  ModifiedFiles { get; }
-		public IReadOnlyList<Message> Messages      { get; }
+		public String                 DirectoryPath         { get; }
+		public FolderType             FolderType            { get; }
+		public Int32                  TotalFiles            { get; }
+		public Int32                  ProposedModifiedFiles { get; }
+		public Int32                  ActualModifiedFiles   { get; }
+		public IReadOnlyList<Message> Messages              { get; }
 	}
 }

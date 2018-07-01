@@ -9,7 +9,7 @@ namespace TeslaTags
 {
 	public static class TeslaTagFolderProcessor
 	{
-		public static (FolderType folderType, Int32 modifiedCount, Int32 totalCount) Process(String directoryPath, Boolean readOnly, Boolean undo, GenreRules genreRules, List<Message> messages)
+		public static (FolderType folderType, Int32 modifiedCountProposed, Int32 modifiedCountActual, Int32 totalCount) Process(String directoryPath, Boolean readOnly, Boolean undo, GenreRules genreRules, List<Message> messages)
 		{
 			List<LoadedFile> files = LoadFiles( directoryPath, messages );
 			try
@@ -53,9 +53,12 @@ namespace TeslaTags
 					Retagger.RetagForGenre( folderType, files, genreRules, messages );
 				}
 
-				Int32 modifiedCount = 0;
+				Int32 proposedModifiedCount = 0;
+				Int32 actualModifiedCount = 0;
 				foreach( LoadedFile file in files )
 				{
+					if( file.IsModified ) proposedModifiedCount++;
+
 					if( !readOnly && file.IsModified )
 					{
 						try
@@ -67,11 +70,11 @@ namespace TeslaTags
 							messages.Add( new Message( MessageSeverity.Error, directoryPath, file.FileInfo.FullName, "Could not save file: " + ex.Message ) );
 						}
 						
-						modifiedCount++;
+						actualModifiedCount++;
 					}
 				}
 
-				return (folderType, modifiedCount, files.Count);
+				return (folderType, proposedModifiedCount, actualModifiedCount, files.Count);
 			}
 			finally
 			{

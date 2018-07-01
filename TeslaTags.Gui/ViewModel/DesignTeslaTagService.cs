@@ -111,7 +111,7 @@ namespace TeslaTags.Gui
 						if( rng.Next(0, 8) == 3 ) messages.Add( new Message( MessageSeverity.Warning, directory, fileName, "Some file error" ) );
 					}
 
-					this.directoryProgress.Report( new DirectoryResult( directory, randomType, totalCount, modifiedCount, messages ) );
+					this.directoryProgress.Report( new DirectoryResult( directory, randomType, totalCount, modifiedCount, modifiedCount, messages ) );
 
 					this.directoryIdx++;
 				}

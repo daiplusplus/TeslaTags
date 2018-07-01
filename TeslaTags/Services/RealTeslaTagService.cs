@@ -203,10 +203,10 @@ namespace TeslaTags
 				String text = "Directory \"" + directoryPath + "\" is listed in already-done log: \"" + logs.directoryLogFileName + "\" so it was skipped. Delete the log file (or remove the directory's entry) to process this directory again.";
 				messages.AddInfoDirectory( directoryPath, text );
 
-				return new DirectoryResult( directoryPath, FolderType.Skipped, 0, 0, messages );
+				return new DirectoryResult( directoryPath, FolderType.Skipped, 0, 0, 0, messages );
 			}
 
-			(FolderType folderType, Int32 modifiedCount, Int32 totalCount) = TeslaTagFolderProcessor.Process( directoryPath, readOnly, undo, genreRules, messages );
+			(FolderType folderType, Int32 modifiedCountProposed, Int32 modifiedCountActual, Int32 totalCount) = TeslaTagFolderProcessor.Process( directoryPath, readOnly, undo, genreRules, messages );
 
 			try
 			{
@@ -228,7 +228,7 @@ namespace TeslaTags
 				messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, text ) );
 			}
 
-			return new DirectoryResult( directoryPath, folderType, totalCount, modifiedCount, messages );
+			return new DirectoryResult( directoryPath, folderType, totalCount, modifiedCountProposed, modifiedCountActual, messages );
 		}
 	}
 }

@@ -304,7 +304,8 @@
 			<DataGrid.Columns>
 				<DataGridTextColumn Header="Directory"      Binding="{Binding DisplayDirectoryPath}"  ElementStyle="{StaticResource txtCol}" IsReadOnly="True" />
 				<DataGridTextColumn Header="Total files"    Binding="{Binding TotalFiles}"            ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
-				<DataGridTextColumn Header="Files modified" Binding="{Binding FilesModified}"         ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
+				<DataGridTextColumn Header="File changes"   Binding="{Binding FilesModifiedProposed}" ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
+				<DataGridTextColumn Header="Files written"  Binding="{Binding FilesModifiedActual}"   ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
 				<DataGridTextColumn Header="Folder type"    Binding="{Binding FolderType}"            ElementStyle="{StaticResource txtCol}" IsReadOnly="True" />
 				<DataGridTextColumn Header="Info"           Binding="{Binding InfoCount}"             ElementStyle="{StaticResource numCol}" IsReadOnly="True" />
 				<DataGridTextColumn Header="Warnings"       Binding="{Binding WarnCount}"             ElementStyle="{StaticResource numCol}" IsReadOnly="True" CellStyle="{StaticResource warnCellStyle}" />

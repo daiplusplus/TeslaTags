@@ -268,7 +268,8 @@ namespace TeslaTags.Gui
 						throw new InvalidOperationException( "Event raised in previously unreported directory: " + result.DirectoryPath );
 					}
 
-					dirVM.FilesModified = result.ModifiedFiles;
+					dirVM.FilesModifiedActual   = result.ActualModifiedFiles;
+					dirVM.FilesModifiedProposed = result.ProposedModifiedFiles;
 					dirVM.FolderType    = result.FolderType;
 					dirVM.TotalFiles    = result.TotalFiles;
 

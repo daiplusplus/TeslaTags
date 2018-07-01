@@ -64,11 +64,18 @@ namespace TeslaTags.Gui
 		public String FullDirectoryPath { get; }
 		public String DisplayDirectoryPath { get; }
 		
-		private Int32? filesModified;
-		public Int32? FilesModified
+		private Int32? filesModifiedProposed;
+		public Int32? FilesModifiedProposed
 		{
-			get { return this.filesModified; }
-			set { this.Set( nameof(this.FilesModified), ref this.filesModified, value ); }
+			get { return this.filesModifiedProposed; }
+			set { this.Set( nameof(this.FilesModifiedProposed), ref this.filesModifiedProposed, value ); }
+		}
+
+		private Int32? filesModifiedActual;
+		public Int32? FilesModifiedActual
+		{
+			get { return this.filesModifiedActual; }
+			set { this.Set( nameof(this.FilesModifiedActual), ref this.filesModifiedActual, value ); }
 		}
 
 		private Int32? totalFiles;
