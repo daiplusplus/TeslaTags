@@ -63,7 +63,7 @@ namespace TeslaTags
 					{
 						try
 						{
-							file.Save();
+							file.Save( messages );
 						}
 						catch(Exception ex)
 						{

@@ -1,7 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
+
+using Newtonsoft.Json;
 
 using TagLib;
+
 using mpeg  = TagLib.Mpeg;
 using flac  = TagLib.Flac;
 using id3v2 = TagLib.Id3v2;
@@ -9,13 +15,10 @@ using aac   = TagLib.Aac;
 using ogg   = TagLib.Ogg;
 using riff  = TagLib.Riff;
 
-using System.Collections.Generic;
-using System.Linq;
-using Newtonsoft.Json;
-using System.Text;
-
 namespace TeslaTags
 {
+	using RecoveryDict = Dictionary<String, RecoveryTag>;
+
 	public abstract class LoadedFile : IDisposable
 	{
 		public static LoadedFile LoadFromFile(FileInfo fi, List<Message> messages)
@@ -72,6 +75,54 @@ namespace TeslaTags
 			return null;
 		}
 
+		private static (String jsonFileName, RecoveryDict dict) GetRecoveryDict( FileInfo fileInfo, List<Message> messages )
+		{
+			// Does the file exist?
+			String directoryPath = fileInfo.DirectoryName;
+			String jsonFileName = Path.Combine( directoryPath, "TeslaTagsRecovery.json" );
+			if( !System.IO.File.Exists( jsonFileName ) ) return ( jsonFileName, null );
+
+			String jsonFile = System.IO.File.ReadAllText( jsonFileName );
+
+			RecoveryDict dict = new RecoveryDict( StringComparer.OrdinalIgnoreCase );
+			try
+			{
+				JsonConvert.PopulateObject( jsonFile, dict );
+
+				return ( jsonFileName, dict );
+			}
+			catch( JsonException je )
+			{
+				messages.AddFileWarning( fileInfo.FullName, "Couldn't load recovery information from \"" + jsonFileName + "\". Message: " + je.Message );
+				return ( jsonFileName, null );
+			}
+		}
+		
+		protected static RecoveryTag LoadRecoveryTagFromJsonFile( FileInfo fileInfo, List<Message> messages )
+		{
+			var (jsonFileName, dict) = GetRecoveryDict( fileInfo, messages );
+
+			if( dict == null ) return null;
+
+			if( dict.TryGetValue( fileInfo.Name, out RecoveryTag tag ) ) return tag;
+
+			return null;
+		}
+
+		protected static void SaveRecoveryTagToJsonFile( FileInfo fileInfo, RecoveryTag tag, List<Message> messages )
+		{
+			if( tag == null || tag.IsEmpty ) return;
+
+			var (jsonFileName, dict) = GetRecoveryDict( fileInfo, messages );
+
+			if( dict == null ) dict = new RecoveryDict();
+
+			dict[ fileInfo.Name ] = tag;
+
+			String jsonFile = JsonConvert.SerializeObject( dict, Formatting.Indented );
+			System.IO.File.WriteAllText( jsonFileName, jsonFile );
+		}
+
 		protected LoadedFile( FileInfo fileInfo, Tag tag, RecoveryTag recoveryTag )
 		{
 			this.FileInfo    = fileInfo;
@@ -87,7 +138,7 @@ namespace TeslaTags
 
 		protected abstract void Dispose(Boolean disposing);
 
-		public abstract void Save();
+		public abstract void Save( List<Message> messages );
 
 		public FileInfo FileInfo { get; }
 		public Tag      Tag      { get; }
@@ -99,6 +150,8 @@ namespace TeslaTags
 
 	public sealed class MpegLoadedFile : LoadedFile
 	{
+		private const Boolean _usePrivateFrameForMp3RecoveryData = true;
+
 		// Private frames' "Owner" tag should be a URI or email address:
 		// http://id3.org/id3v2.3.0#Private_frame
 		private const String teslaTagsPrivateTagOwner = "https://github.com/Jehoel/TeslaTags";
@@ -117,18 +170,26 @@ namespace TeslaTags
 			}
 
 			// Load recovery tag:
-			RecoveryTag recoveryTag = new RecoveryTag();
+			RecoveryTag recoveryTag;
+			if( _usePrivateFrameForMp3RecoveryData )
 			{
-				id3v2.PrivateFrame recoveryTagFrame = id3v2Tag
-					.GetFrames<id3v2.PrivateFrame>()
-					.Where( pf => pf.Owner == teslaTagsPrivateTagOwner )
-					.FirstOrDefault();
-
-				if( recoveryTagFrame != null )
+				recoveryTag = new RecoveryTag();
 				{
-					String recoveryTagJsonStr = recoveryTagFrame.PrivateData.ToString( StringType.UTF8 );
-					recoveryTag = JsonConvert.DeserializeObject<RecoveryTag>( recoveryTagJsonStr );
+					id3v2.PrivateFrame recoveryTagFrame = id3v2Tag
+						.GetFrames<id3v2.PrivateFrame>()
+						.Where( pf => pf.Owner == teslaTagsPrivateTagOwner )
+						.FirstOrDefault();
+
+					if( recoveryTagFrame != null )
+					{
+						String recoveryTagJsonStr = recoveryTagFrame.PrivateData.ToString( StringType.UTF8 );
+						recoveryTag = JsonConvert.DeserializeObject<RecoveryTag>( recoveryTagJsonStr );
+					}
 				}
+			}
+			else
+			{
+				recoveryTag = LoadRecoveryTagFromJsonFile( fileInfo, messages );
 			}
 
 			return new MpegLoadedFile( fileInfo, mpegFile, id3v2Tag, recoveryTag );
@@ -148,27 +209,34 @@ namespace TeslaTags
 			}
 		}
 
-		public override void Save()
+		public override void Save(List<Message> messages)
 		{
 			if( this.RecoveryTag.IsSet )
 			{
-				id3v2.Tag id3v2Tag = (id3v2.Tag)this.MpegAudioFile.GetTag(TagTypes.Id3v2);
-
-				id3v2.PrivateFrame recoveryTagFrame = id3v2Tag
-					.GetFrames<id3v2.PrivateFrame>()
-					.Where( pf => pf.Owner == teslaTagsPrivateTagOwner )
-					.FirstOrDefault();
-
-				if( recoveryTagFrame == null )
+				if( _usePrivateFrameForMp3RecoveryData )
 				{
-					recoveryTagFrame = new id3v2.PrivateFrame( teslaTagsPrivateTagOwner );
-					id3v2Tag.AddFrame( recoveryTagFrame );
-				}
-				
-				String newRecoveryTagJsonStr = JsonConvert.SerializeObject( this.RecoveryTag );
-				Byte[] newRecoveryTagJsonStrBytes = Encoding.UTF8.GetBytes( newRecoveryTagJsonStr );
+					id3v2.Tag id3v2Tag = (id3v2.Tag)this.MpegAudioFile.GetTag(TagTypes.Id3v2);
 
-				recoveryTagFrame.PrivateData = new ByteVector( newRecoveryTagJsonStrBytes );
+					id3v2.PrivateFrame recoveryTagFrame = id3v2Tag
+						.GetFrames<id3v2.PrivateFrame>()
+						.Where( pf => pf.Owner == teslaTagsPrivateTagOwner )
+						.FirstOrDefault();
+
+					if( recoveryTagFrame == null )
+					{
+						recoveryTagFrame = new id3v2.PrivateFrame( teslaTagsPrivateTagOwner );
+						id3v2Tag.AddFrame( recoveryTagFrame );
+					}
+				
+					String newRecoveryTagJsonStr = JsonConvert.SerializeObject( this.RecoveryTag );
+					Byte[] newRecoveryTagJsonStrBytes = Encoding.UTF8.GetBytes( newRecoveryTagJsonStr );
+
+					recoveryTagFrame.PrivateData = new ByteVector( newRecoveryTagJsonStrBytes );
+				}
+				else
+				{ 
+					SaveRecoveryTagToJsonFile( this.FileInfo, this.RecoveryTag, messages );
+				}
 			}
 
 			this.MpegAudioFile.Save();
@@ -192,11 +260,13 @@ namespace TeslaTags
 				return null;
 			}
 
-			return new FlacLoadedFile( fileInfo, flacFile, flacTag );
+			RecoveryTag recoveryTag = LoadRecoveryTagFromJsonFile( fileInfo, messages );
+
+			return new FlacLoadedFile( fileInfo, flacFile, flacTag, recoveryTag );
 		}
 
-		private FlacLoadedFile( FileInfo fileInfo, flac.File flacFile, Tag tag )
-			: base( fileInfo, tag, null )
+		private FlacLoadedFile( FileInfo fileInfo, flac.File flacFile, Tag tag, RecoveryTag recoveryTag )
+			: base( fileInfo, tag, recoveryTag )
 		{
 			this.FlacAudioFile = flacFile;
 		}
@@ -209,9 +279,11 @@ namespace TeslaTags
 			}
 		}
 
-		public override void Save()
+		public override void Save(List<Message> messages)
 		{
 			this.FlacAudioFile.Save();
+
+			SaveRecoveryTagToJsonFile( this.FileInfo, this.RecoveryTag, messages );
 		}
 
 		public flac.File FlacAudioFile { get; }
@@ -232,10 +304,12 @@ namespace TeslaTags
 				return null;
 			}
 
-			return new OggLoadedFile( fileInfo, oggFile, oggTag );
+			RecoveryTag recoveryTag = LoadRecoveryTagFromJsonFile( fileInfo, messages );
+
+			return new OggLoadedFile( fileInfo, oggFile, oggTag, recoveryTag );
 		}
 
-		private OggLoadedFile( FileInfo fileInfo, ogg.File oggFile, Tag tag )
+		private OggLoadedFile( FileInfo fileInfo, ogg.File oggFile, Tag tag, RecoveryTag recoveryTag )
 			: base( fileInfo, tag, null )
 		{
 			this.OggAudioFile = oggFile;
@@ -249,9 +323,10 @@ namespace TeslaTags
 			}
 		}
 
-		public override void Save()
+		public override void Save(List<Message> messages)
 		{
 			this.OggAudioFile.Save();
+			SaveRecoveryTagToJsonFile( this.FileInfo, this.RecoveryTag, messages );
 		}
 
 		public ogg.File OggAudioFile { get; }
@@ -272,11 +347,13 @@ namespace TeslaTags
 				return null;
 			}
 
-			return new RiffLoadedFile( fileInfo, riffFile, riffTag );
+			RecoveryTag recoveryTag = LoadRecoveryTagFromJsonFile( fileInfo, messages );
+
+			return new RiffLoadedFile( fileInfo, riffFile, riffTag, recoveryTag );
 		}
 
-		private RiffLoadedFile( FileInfo fileInfo, riff.File riffFile, Tag tag )
-			: base( fileInfo, tag, null )
+		private RiffLoadedFile( FileInfo fileInfo, riff.File riffFile, Tag tag, RecoveryTag recoveryTag )
+			: base( fileInfo, tag, recoveryTag )
 		{
 			this.RiffAudioFile = riffFile;
 		}
@@ -289,9 +366,10 @@ namespace TeslaTags
 			}
 		}
 
-		public override void Save()
+		public override void Save(List<Message> messages)
 		{
 			this.RiffAudioFile.Save();
+			SaveRecoveryTagToJsonFile( this.FileInfo, this.RecoveryTag, messages );
 		}
 
 		public riff.File RiffAudioFile { get; }

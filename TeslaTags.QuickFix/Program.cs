@@ -98,14 +98,12 @@ namespace TeslaTags.QuickFix
 				{
 					if( file.IsModified )
 					{
-						file.Save();
+						file.Save( messages );
 					}
 					file.Dispose();
 				}
 			}
 		}
-
-		
 
 		private static void AutoTrackNumbers( List<LoadedFile> files, Mode mode )
 		{

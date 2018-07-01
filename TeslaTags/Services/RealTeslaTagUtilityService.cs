@@ -26,7 +26,7 @@ namespace TeslaTags
 			{
 				foreach( LoadedFile file in files )
 				{
-					if( file.IsModified ) file.Save();
+					if( file.IsModified ) file.Save( messages );
 					file.Dispose();
 				}
 			}
