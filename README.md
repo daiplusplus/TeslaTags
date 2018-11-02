@@ -123,8 +123,8 @@ Output:
     1-01 Fed-Net #1, Bug Attack on News.mp3      Basil Poledouris     Basil Poledouris    Starship Troopers    1               Fed-Net #1, Bug Attack on News Reporter
     1-02 Kiss In The Park (Unused).mp3           Basil Poledouris     Basil Poledouris    Starship Troopers    2               Kiss in the Park (Unused)
     ...
-    2-08 Into It.mp3                             Basil Poledouris     Basil Poledouris      Starship Troopers    32              Zoe Poledouris - Into It
-    2-09 I Have Not Been to Oxford Town.mp3      Basil Poledouris     Basil Poledouris      Starship Troopers    33              Zoe Poledouris - I Have Not Been to Oxford Town
+    2-08 Into It.mp3                             Basil Poledouris     Basil Poledouris    Starship Troopers    32              Zoe Poledouris - Into It
+    2-09 I Have Not Been to Oxford Town.mp3      Basil Poledouris     Basil Poledouris    Starship Troopers    33              Zoe Poledouris - I Have Not Been to Oxford Town
     2-10 Klendathu Battle (Version 1).mp3        Basil Poledouris     Basil Poledouris    Starship Troopers    34              Klendathu Battle (Version 1)
     ...
 
