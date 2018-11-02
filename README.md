@@ -55,28 +55,60 @@ Initially proposed solutions:
 
 ### Scenario 1 `ArtistAlbum`:
 
+Single artist albums, which are the most common type of album, such as Pink Floyd's [Dark Side of the Moon](https://en.wikipedia.org/wiki/The_Dark_Side_of_the_Moon). Both the album itself and all songs on the album are attributed to the same single artist.
+
 Scenario:
-* Single-artist albums.
-* Filesystem is arranged like this: "`{AlbumArtist}\{AlbumDate} - {AlbumName}\{DiscNumber}-{TrackNumber} - {TrackTitle}.mp3`"
+* All tracks have the same value in both `AlbumArtist` and `Artist` tags (e.g. "Pink Floyd").
+* All tracks have the same `Album` tag value (e.g. "The Dark Side of the Moon").
+* All track files are in the same filesystem directory or child directories (for multi-disc albums).
 * Tracks are using the `DiscNumber`, `TrackNumber`, `TrackTitle`, `Artist`, `Album`, and `AlbumArtist` tag fields correctly.
 
+Example tags for _The Dark Side of the Moon_:
+
+    File                                AlbumArtist    Artist        Album                        TrackNumber     Title
+    ----------------------------------------------------------------------------------------------------------------------------
+    01 - Speak To Me (Breathe).mp3      Pink Floyd     Pink Floyd    The Dark Side of the Moon    1               Speak To Me (Breathe)
+    02 - On The Run.mp3                 Pink Floyd     Pink Floyd    The Dark Side of the Moon    2               On The Run
+    03 - Time.mp3                       Pink Floyd     Pink Floyd    The Dark Side of the Moon    3               Time
+    04 - The Great Gig In The Sky.mp3   Pink Floyd     Pink Floyd    The Dark Side of the Moon    4               The Great Gig In The Sky
+    05 - Money.mp3                      Pink Floyd     Pink Floyd    The Dark Side of the Moon    5               Money
+    06 - Us and Them.mp3                Pink Floyd     Pink Floyd    The Dark Side of the Moon    6               Us and Them
+    07 - Any Colour You Like.mp3        Pink Floyd     Pink Floyd    The Dark Side of the Moon    7               Any Colour You Like
+    08 - Brain Damage.mp3               Pink Floyd     Pink Floyd    The Dark Side of the Moon    8               Brain Damage
+    09 - Eclipse.mp3                    Pink Floyd     Pink Floyd    The Dark Side of the Moon    9               Eclipse
+
 Result:
-* Tesla media library Artist and Album view: Correct
-* Tesla media library Folder view: Incorrect, files are sorted by TrackTitle, not FileName or DiscNumber/TrackNumber
+* Tesla media library Artist and Album view: **Correct**
+* Tesla media library Folder view: **Incorrect**, files are sorted by TrackTitle, not FileName or DiscNumber/TrackNumber
 
 Solution:
 * No action. The main Artist > Album view is sufficient.
 
 ### Scenario 2 `ArtistAlbumWithGuestArtists`:
 
+Sometimes a band or artist will have guest artists credited for a few tracks on an album. While the album and most of the tracks will be attributed to a single artist, a few songs will have a different `Artist` tag compared to the `AlbumArtist` tag. For example, the Deluxe edition of the Starship Troopers soundtrack is attributed to Basil Poledouris as the `AlbumArtist` on **all tracks** and as the `Artist` on most of the tracks, but two tracks have an `Artist` of "Zoe Poledouris".
+
+Note that this is not the same thing as a featured artist on a track, e.g. "[Eve - Let Me Blow Ya Mind (feat. Gwen Stefani)](https://www.youtube.com/watch?v=Wt88GMJmVk0)".
+
 Scenario:
 * Multiple-artist albums that are not compilations (e.g. guest artists), e.g. Starship Troopers soundtrack (AlbumArtist for all tracks and Artist for some tracks is "Basil Poledouris", but for a few other tracks the Artist is "Zoe Poledouris")
-* Filesystem is arranged like this: "`{AlbumArtist}\{AlbumDate} - {AlbumName}\{DiscNumber}-{TrackNumber} - {TrackTitle}.mp3`"
 * Tracks are using the `DiscNumber`, `TrackNumber`, `TrackTitle`, `Artist`, `Album`, and `AlbumArtist` tag fields correctly.
 
+Example tags for _Starship Troopers Soundtrack Deluxe Edition_:
+
+    File                                         AlbumArtist          Artist              Album                TrackNumber     Title
+    ----------------------------------------------------------------------------------------------------------------------------
+    1-01 Fed-Net #1, Bug Attack on News.mp3      Basil Poledouris     Basil Poledouris    Starship Troopers    1               Fed-Net #1, Bug Attack on News Reporter
+    1-02 Kiss In The Park (Unused).mp3           Basil Poledouris     Basil Poledouris    Starship Troopers    2               Kiss in the Park (Unused)
+    ...
+    2-08 Into It.mp3                             Basil Poledouris     Zoe Poledouris      Starship Troopers    32              Into It
+    2-09 I Have Not Been to Oxford Town.mp3      Basil Poledouris     Zoe Poledouris      Starship Troopers    33              I Have Not Been to Oxford Town
+    2-10 Klendathu Battle (Version 1).mp3        Basil Poledouris     Basil Poledouris    Starship Troopers    34              Klendathu Battle (Version 1)
+    ...
+
 Result:
-* Tesla media library Artist and Album view: Incorrect. "Artist\Zoe Poledouris" is listed.
-* Tesla media library Folder view: Incorrect, files are sorted by TrackTitle, not FileName or DiscNumber/TrackNumber.
+* Tesla media library Artist and Album view: **Incorrect**: "Zoe Poledouris" is listed as a separate artist under the Artists menu.
+* Tesla media library Folder view: **Incorrect**, files are sorted by TrackTitle, not FileName or DiscNumber/TrackNumber.
 * Problem: Cannot play full album from Artist or Albums menus because contributing artists' songs are not listed.
 * Problem: Cannot play full album from Folders view because songs are out-of-order.
 
@@ -84,16 +116,39 @@ Solution:
 * Prepend/copy the `Artist` value into the `TrackTitle` field with a hyphen.
 * Copy the `AlbumArtist` value into the `Artist` field.
 
+Output:
+
+    File                                         AlbumArtist          Artist              Album                TrackNumber     Title
+    ----------------------------------------------------------------------------------------------------------------------------
+    1-01 Fed-Net #1, Bug Attack on News.mp3      Basil Poledouris     Basil Poledouris    Starship Troopers    1               Fed-Net #1, Bug Attack on News Reporter
+    1-02 Kiss In The Park (Unused).mp3           Basil Poledouris     Basil Poledouris    Starship Troopers    2               Kiss in the Park (Unused)
+    ...
+    2-08 Into It.mp3                             Basil Poledouris     Basil Poledouris      Starship Troopers    32              Zoe Poledouris - Into It
+    2-09 I Have Not Been to Oxford Town.mp3      Basil Poledouris     Basil Poledouris      Starship Troopers    33              Zoe Poledouris - I Have Not Been to Oxford Town
+    2-10 Klendathu Battle (Version 1).mp3        Basil Poledouris     Basil Poledouris    Starship Troopers    34              Klendathu Battle (Version 1)
+    ...
+
 ### Scenario 3 `CompilationAlbum`:
 
+Music publishers often release albums that are compilations of the top charting singles from the previous year (e.g. "[Now That's What I Call Music](https://en.wikipedia.org/wiki/Now_That%27s_What_I_Call_Music!)"), or top hits from a particular genre (e.g. "100 Hits - The Best Rock and Power Ballads"). As there is no single artist to which the album is attributed to the `AlbumArtist` tag is set to "Various Artists".
+
 Scenario:
-* "Various Artists" compilation albums with no primary album artist, e.g. "Now That's What I Call Music" etc
-* Filesystem is arranged like this: "`Various Artists\{AlbumDate} - {AlbumName}\{DiscNumber}-{TrackNumber} - {Artist} - {TrackTitle}.mp3`"
+* "Various Artists" compilation albums with no primary album artist, e.g.  etc "Now That's What I Call Music".
+* All tracks have the `AlbumArtist` tag set to "Various Artists" with the actual artist in the `Artist` tag.
 * Tracks are using the `DiscNumber`, `TrackNumber`, `TrackTitle`, `Artist`, `Album`, and `AlbumArtist` tag fields correctly.
 
+Example tags for [_Moods 2 - A Contemporary Soundtrack_](https://www.discogs.com/Various-Moods-2-A-Contemporary-Soundtrack/release/6106123):
+
+    File                            AlbumArtist         Artist           Album      TrackNumber     Title
+    ----------------------------------------------------------------------------------------------------------------------------
+    01 Caribbean Blue.mp3           Various Artists     Enya             Moods 2    1               Caribbean Blue
+    02 Albatross.mp3                Various Artists     Fleetwood Mac    Moods 2    2               Albatross
+    03 Tubular Bells (Part 1).mp3   Various Artists     Mike Oldfield    Moods 2    3               Tubular Bells (Part 1)
+    ...
+
 Result:
-* Tesla media library Artist and Album view: Incorrect. Each artist is displayed separately. And the Album is listed for each artist in the top-level Tesla Albums view.
-* Tesla media library Folder view: Incorrect, files are sorted by TrackTitle, not FileName or DiscNumber/TrackNumber.
+* Tesla media library Artist and Album view: **Incorrect**. Each artist is displayed separately. And the Album is listed for each artist in the top-level Tesla Albums view.
+* Tesla media library Folder view: **Incorrect**, files are sorted by `TrackTitle`, not FileName or DiscNumber/TrackNumber.
 * Cannot play full album from Artist or Albums menus because there is no single root artist in Artists list, and Album is listed for-each-artist in the Tesla Albums view.
 * Cannot play full album from Folders view because songs are out-of-order.
 
@@ -101,17 +156,34 @@ Solution:
 * Prepend/copy the `Artist` value into the `TrackTitle` fields with a hyphen.
 * Set `Artist` to "Various Artists".
 
+Output:
+
+    File                            AlbumArtist         Artist           Album      TrackNumber     Title
+    ----------------------------------------------------------------------------------------------------------------------------
+    01 Caribbean Blue.mp3           Various Artists     Various Artists  Moods 2    1               Enya - Caribbean Blue
+    02 Albatross.mp3                Various Artists     Various Artists  Moods 2    2               Fleetwood Mac - Albatross
+    03 Tubular Bells (Part 1).mp3   Various Artists     Various Artists  Moods 2    3               Mike Oldfield - Tubular Bells (Part 1)
+    ...
+
 ### Scenario 4 `AssortedFiles`:
+
+Just a folder with songs by different artists and not part if any album, e.g. a folder with individually downloaded songs from Amazon's MP3 store. All files will have `AlbumArtist` set to "Various Artists" (this must be done manually by you as typically songs from online music stores have `AlbumArtist` set to `Artist`).
+
+    File                              AlbumArtist         Artist           Album   TrackNumber   Title
+    ----------------------------------------------------------------------------------------------------------------------------
+    Ace of Base - Sign, The.mp3       Various Artists     Ace of Base                            The Sign
+    Adele - Rumour Has It.mp3         Various Artists     Adele                                  Rumour Has It
+    Afroman - Because I Got High.mp3  Various Artists     Afroman                                Because I Got High
+    ...
 
 Scenario:
 * Various loose files, e.g. random downloaded files not part of any album.
-* Filesystem is arranged like this: "`Various Artists\{Genre}\{Artist} - {TrackTitle}.mp3`"
 * `AlbumArtist` is always set to "Various Artists"
 * `Album` and `TrackNumber` are both always cleared. Consequently they don't spam-up the Artists menu.
 
 Result:
-* Tesla media library Artist and Album view: Not listed. Artists and Albums are only listed if tracks have both `Artist` and `Album` tag fields present.
-* Tesla media library Folder view: Working, though tracks are sorted by Title rather than Artist.
+* Tesla media library Artist and Album view: **Not listed**. Artists and Albums are only listed if tracks have both `Artist` and `Album` tag fields present.
+* Tesla media library Folder view: **Working**, though tracks are sorted by Title rather than Artist.
 
 Solution:
 * No main action necessary, tracks will be displayed in Folder view correctly.
@@ -121,13 +193,12 @@ Solution:
 ### Scenario 5 `ArtistAssorted`:
 
 Scenario:
-* Various loose files by the same artist, located under an artist's folder.
-* Filesystem is arranged like this: "`{AlbumArtist}\{Artist} - {TrackTitle}.mp3`"
+* Various loose files all by the same artist in the same folder. All tracks in the folder have the same `Artist` tag value (i.e. there are no songs by other artists in the same folder).
 * Tracks are using the `TrackTitle`, `Artist` and `AlbumArtist` tag fields correctly. The `DiscNumber`, `TrackNumber`, and `Album` tag fields are cleared.
 
 Result:
-* Tesla media library Artist and Album view: Not listed. Artists and Albums are only listed if tracks have both `Artist` and `Album` tag fields present.
-* Tesla media library Folder view: Correct. Tracks are sorted by Title correctly.
+* Tesla media library Artist and Album view: **Not listed**. Artists and Albums are only listed if tracks have both `Artist` and `Album` tag fields present.
+* Tesla media library Folder view: **Correct**. Tracks are sorted by Title correctly.
 
 Solution:
 * Set the `Album` tag value to "No Album" so they're accessible under the Tesla Artists menu without going into Folder view.
