@@ -167,7 +167,7 @@ Output:
 
 ### Scenario 4 `AssortedFiles`:
 
-Just a folder with songs by different artists and not part if any album, e.g. a folder with individually downloaded songs from Amazon's MP3 store. All files will have `AlbumArtist` set to "Various Artists" (this must be done manually by you as typically songs from online music stores have `AlbumArtist` set to `Artist`).
+Just a folder with songs by different artists and not part of any album, e.g. a folder with individually downloaded songs from Amazon's MP3 store. All files will have `AlbumArtist` set to "Various Artists" (this must be done manually by you as typically songs from online music stores have `AlbumArtist` set to `Artist`).
 
     File                              AlbumArtist         Artist           Album   TrackNumber   Title
     ----------------------------------------------------------------------------------------------------------------------------
@@ -215,7 +215,7 @@ Solution:
   * A: UTF-8 seems to work fine.
 * Q: ID3v1 does not define text encoding, should try ASCII, UTF-8, UTF-16LE, UTF-16BE and see what happens. (Would UTF-16BE be different on ARM vs x86 MCUs?)
 * Q: How does it handle leading invisible Unicode whitespace? Does it do a Trim()?
-  * Leading whitespace (including zero-width whitespace) is not rendered and does not affect track collation order (i.e. the Tesla software performs Unicode collation, not "dump" binary sorting). Certain zero-width whitespace characters are rendered with a "missing character" glypth and rendered as an overlay on top of other characters.
+  * Leading whitespace (including zero-width whitespace) is not rendered and does not affect track collation order (i.e. the Tesla software performs Unicode collation, not "dumb" binary sorting). Certain zero-width whitespace characters are rendered with a "missing character" glypth and rendered as an overlay on top of other characters.
   
 ## Recommended MP3 tools
 
