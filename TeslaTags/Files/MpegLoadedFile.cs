@@ -21,17 +21,14 @@ namespace TeslaTags
 		// http://id3.org/id3v2.3.0#Private_frame
 		private const String teslaTagsPrivateTagOwner = "https://github.com/Jehoel/TeslaTags";
 
-		public static MpegLoadedFile Create( FileInfo fileInfo, List<Message> messages )
+		public static Boolean TryCreate( FileInfo fileInfo, mpeg.AudioFile mpegAudioFile, List<Message> messages, out LoadedFile loadedFile )
 		{
-			mpeg.AudioFile mpegFile = Load<mpeg.AudioFile>( fileInfo, messages );
-			if( mpegFile == null ) return null;
-
-			id3v2.Tag id3v2Tag = (id3v2.Tag)mpegFile.GetTag(TagTypes.Id3v2);
+			id3v2.Tag id3v2Tag = (id3v2.Tag)mpegAudioFile.GetTag(TagTypes.Id3v2);
 			if( id3v2Tag == null )
 			{
 				messages.AddFileError( fileInfo.FullName, "Does not contain ID3v2 tag." );
-				mpegFile.Dispose();
-				return null;
+				loadedFile = default;
+				return false;
 			}
 
 			// Load recovery tag:
@@ -59,13 +56,14 @@ namespace TeslaTags
 				recoveryTag = new RecoveryTag();
 			}
 
-			return new MpegLoadedFile( fileInfo, mpegFile, id3v2Tag, recoveryTag );
+			loadedFile = new MpegLoadedFile( fileInfo, mpegAudioFile, id3v2Tag, recoveryTag );
+			return true;
 		}
 
-		private MpegLoadedFile( FileInfo fileInfo, mpeg.AudioFile mpegFile, Tag tag, RecoveryTag recoveryTag )
+		private MpegLoadedFile( FileInfo fileInfo, mpeg.AudioFile mpegAudioFile, Tag tag, RecoveryTag recoveryTag )
 			: base( fileInfo, tag, recoveryTag )
 		{
-			this.MpegAudioFile = mpegFile;
+			this.MpegAudioFile = mpegAudioFile;
 		}
 
 		protected sealed override void Dispose(Boolean disposing)

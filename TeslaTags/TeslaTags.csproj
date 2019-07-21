@@ -50,6 +50,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Files\TagLibLoadedFile.cs" />
+    <Compile Include="Files\GenericId3LoadedFile.cs" />
+    <Compile Include="Files\Mp4LoadedFile.cs" />
     <Compile Include="Services\Pocos\DirectoryResult.cs" />
     <Compile Include="Files\FlacLoadedFile.cs" />
     <Compile Include="Files\MpegLoadedFile.cs" />

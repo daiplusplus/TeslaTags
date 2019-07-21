@@ -6,8 +6,19 @@ using Newtonsoft.Json;
 
 using TagLib;
 
-using mpeg = TagLib.Mpeg;
-using aac = TagLib.Aac;
+using aiff   = TagLib.Aiff;
+using asf    = TagLib.Asf;
+using audi   = TagLib.Audible;
+using matr   = TagLib.Matroska;
+using mpeg   = TagLib.Mpeg;
+using mp4    = TagLib.Mpeg4;
+using aac    = TagLib.Aac;
+using ape    = TagLib.Ape;
+using flac   = TagLib.Flac;
+using muse   = TagLib.MusePack;
+using wavp   = TagLib.WavPack;
+using ogg    = TagLib.Ogg;
+using riff   = TagLib.Riff;
 
 namespace TeslaTags
 {
@@ -17,33 +28,96 @@ namespace TeslaTags
 	{
 		#region Static factory
 
-		public static LoadedFile LoadFromFile(FileInfo fi, List<Message> messages)
+		public static Boolean TryLoadFromFile( FileInfo fileInfo, List<Message> messages, out LoadedFile loadedFile )
 		{
-			String extension = fi.Extension.ToUpperInvariant();
-			switch( extension )
+			if( fileInfo == null ) throw new ArgumentNullException(nameof(fileInfo));
+			if( messages == null ) throw new ArgumentNullException(nameof(messages));
+			
+			//
+
+			TagLib.File tagLibFile;
+			try
 			{
-			case ".MP3":
+				tagLibFile = TagLib.File.Create( fileInfo.FullName ); // Never returns null.
+			}
+			catch( UnsupportedFormatException ufEx )
+			{
+				messages.AddFileError( fileInfo.FullName, "Unsupported format: " + ufEx.Message );
+				loadedFile = null;
+				return false;
+			}
+			catch( CorruptFileException cfEx )
+			{
+				messages.AddFileError( fileInfo.FullName, "Corrupted file: " + cfEx.Message );
+				loadedFile = null;
+				return false;
+			}
+			catch( Exception ex )
+			{
+				messages.AddFileError( fileInfo.FullName, "Could not load file: " + ex.Message );
+				loadedFile = null;
+				return false;
+			}
+
+			//
+
+			Boolean isLoaded = false;
+			try
+			{
+				isLoaded = TryCreateFromTagLibFile( fileInfo, tagLibFile, messages, out loadedFile );
+				return isLoaded;
+			}
+			finally
+			{
+				if( !isLoaded )
 				{
-					LoadedFile loadedMpegFile = MpegLoadedFile.Create( fi, messages );
-					return loadedMpegFile;
+					tagLibFile.Dispose();
 				}
-			case ".FLAC":
-				{
-					LoadedFile loadedFlacFile = FlacLoadedFile.Create( fi, messages );
-					return loadedFlacFile;
-				}
-			case ".WAV":
-				{
-					LoadedFile loadedRiffFile = RiffLoadedFile.Create( fi, messages );
-					return loadedRiffFile;
-				}
-			case ".OGG":
-				{
-					LoadedFile loadedOggFile = OggLoadedFile.Create( fi, messages );
-					return loadedOggFile;
-				}
+			}
+		}
+
+		private static Boolean TryCreateFromTagLibFile( FileInfo fileInfo, TagLib.File tagLibFile, List<Message> messages, out LoadedFile loadedFile )
+		{
+			switch( tagLibFile )
+			{
+			case aiff.File aiffFile:
+				return GenericId3LoadedFile.TryCreate( fileInfo, aiffFile, messages, out loadedFile ); // AIFF uses Id3v2.
+			
+			case mpeg.AudioFile mpegAudioFile:
+				return MpegLoadedFile.TryCreate( fileInfo, mpegAudioFile, messages, out loadedFile );
+
+			case mpeg.File mpegFile: 
+				return GenericId3LoadedFile.TryCreate( fileInfo, mpegFile, messages, out loadedFile ); // MPEG files can optionally use Id3v2, Id3v1, or APE.
+
+			case mp4.File mp4File:
+				return Mp4LoadedFile.TryCreate( fileInfo, mp4File, messages, out loadedFile );
+
+			case aac.File aacFile:
+				return GenericId3LoadedFile.TryCreate( fileInfo, aacFile, messages, out loadedFile ); // AAC uses Id3v2, Id3v1, or APE.
+
+			case flac.File flacFile:
+				return FlacLoadedFile.TryCreate( fileInfo, flacFile, messages, out loadedFile );
+
+			case ape.File apeFile: // Tesla doesn't support the APE file format, and especially not APE-format tags when present in other files like MP3. While APE files can contain Id3v2 tags, it's moot.
+				return GenericId3LoadedFile.TryCreate( fileInfo, apeFile, messages, out loadedFile ); // AIFF optionally uses Id3v2, Id3v1, or APE.
+
+			case muse.File museFile:
+				return GenericId3LoadedFile.TryCreate( fileInfo, museFile, messages, out loadedFile ); // MUSE optionally uses Id3v2, Id3v1, or APE.
+
+			case wavp.File wavpFile:
+				return GenericId3LoadedFile.TryCreate( fileInfo, wavpFile, messages, out loadedFile ); // WavPack optionally uses Id3v2, Id3v1, or APE.
+
+			case ogg.File oggFile:
+				return OggLoadedFile.TryCreate( fileInfo, oggFile, messages, out loadedFile );
+
+			case riff.File riffFile:     // RIFF has its own tag format.
+			case asf.File  asfFile:      // ASF has its own tag format.
+			case audi.File audibleFile:  // Audible has its own tag format.
+			case matr.File matroskaFile: // Matroska has its own tag format.
 			default:
-				return null;
+				messages.AddFileWarning( fileInfo.FullName, "Unsupported TagLib file type ({0}).", tagLibFile.GetType().FullName );
+				loadedFile = default;
+				return false;
 			}
 		}
 
@@ -60,11 +134,25 @@ namespace TeslaTags
 				messages.AddFileError( fileInfo.FullName, "Could not load file: " + ex.Message );
 				return null;
 			}
+
+			if( file == null )
+			{
+				messages.AddFileError( fileInfo.FullName, "Could not load file: TagLib.File.Create() returned null." );
+				return null;
+			}
 			
 			Boolean anyErrors = messages.AddFileCorruptionErrors( fileInfo.FullName, file.CorruptionReasons );
-			if( !anyErrors && file is T typedFile )
+			if( !anyErrors )
 			{
-				return typedFile;
+				if( file is T typedFile )
+				{
+					return typedFile;
+				}
+				else
+				{
+					messages.AddFileError( fileInfo.FullName, "Could not load file. Expected " + typeof(T).FullName + " but TagLib returned " + file.GetType().FullName + "." );
+					return null;
+				}
 			}
 
 			file.Dispose();

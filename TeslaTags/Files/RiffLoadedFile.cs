@@ -7,7 +7,7 @@ using riff = TagLib.Riff;
 
 namespace TeslaTags
 {
-	public sealed class RiffLoadedFile : LoadedFile
+	public sealed class RiffLoadedFile : TagLibLoadedFile<riff.File>
 	{
 		public static RiffLoadedFile Create( FileInfo fileInfo, List<Message> messages )
 		{
@@ -28,25 +28,8 @@ namespace TeslaTags
 		}
 
 		private RiffLoadedFile( FileInfo fileInfo, riff.File riffFile, Tag tag, RecoveryTag recoveryTag )
-			: base( fileInfo, tag, recoveryTag )
+			: base( fileInfo, riffFile, tag, recoveryTag )
 		{
-			this.RiffAudioFile = riffFile;
 		}
-
-		protected sealed override void Dispose(Boolean disposing)
-		{
-			if( disposing )
-			{
-				this.RiffAudioFile.Dispose();
-			}
-		}
-
-		public override void Save(List<Message> messages)
-		{
-			this.RiffAudioFile.Save();
-			SaveRecoveryTagToJsonFile( this.FileInfo, this.RecoveryTag, messages );
-		}
-
-		public riff.File RiffAudioFile { get; }
 	}
 }
