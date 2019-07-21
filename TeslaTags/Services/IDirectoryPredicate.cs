@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -34,6 +34,26 @@ namespace TeslaTags
 			".aiff",
 		};
 
+		public static IReadOnlyList<String> DefaultAlbumartImageFileExtensions { get; } = new List<String>()
+		{
+			".jpeg",
+			".jpg",
+			".png",
+			".bmp", // I don't think anyone should use an uncompressed raster BMP as album art, fwiw.
+			".gif"
+		};
+
+		public static HashSet<String> CreateFileExtensionHashSet( IEnumerable<String> fileNameExtensions )
+		{
+			IEnumerable<String> exts = ( fileNameExtensions ?? Array.Empty<String>() )
+				.Select( ext => ext.Trim() )
+				.Select( ext => ext.Trim( '*' ) )
+				.Where( ext => !String.IsNullOrWhiteSpace( ext ) ) // No need to do .Distinct() as it's a HashSet.
+				.Select( ext => ext.StartsWith( ".", StringComparison.Ordinal ) ? ext : ( "." + ext ) );
+
+			return new HashSet<String>( exts, StringComparer.OrdinalIgnoreCase );
+		}
+
 		public static IReadOnlyList<String> DefaultExcludeFolders { get; } = new List<String>()
 		{
 			"iTunes",
@@ -44,13 +64,7 @@ namespace TeslaTags
 		{
 			this.Directories = directoryPredicate ?? new EmptyDirectoryPredicate();
 
-			IEnumerable<String> exts = ( caseInsensitiveFileExtensions ?? Array.Empty<String>() )
-				.Select( ext => ext.Trim() )
-				.Select( ext => ext.Trim( '*' ) )
-				.Where( ext => !String.IsNullOrWhiteSpace( ext ) )
-				.Select( ext => ext.StartsWith( ".", StringComparison.Ordinal ) ? ext : ( "." + ext ) );
-				
-			this.FileExtensionsToLoad = new HashSet<String>( exts, StringComparer.OrdinalIgnoreCase );
+			this.FileExtensionsToLoad = CreateFileExtensionHashSet( caseInsensitiveFileExtensions );
 		}
 
 		public IDirectoryPredicate Directories { get; }

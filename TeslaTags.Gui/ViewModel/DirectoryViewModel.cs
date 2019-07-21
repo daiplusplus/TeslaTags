@@ -15,10 +15,12 @@ namespace TeslaTags.Gui
 		private readonly ITeslaTagsService         teslaTagService;
 		private readonly ILiveConfigurationService liveConfiguration;
 
-		public DirectoryViewModel( ITeslaTagsService teslaTagService, ILiveConfigurationService liveConfiguration, String directoryPath, String prefix )
+		public DirectoryViewModel( ITeslaTagsService teslaTagService, ILiveConfigurationService liveConfiguration, String directoryPath, String prefix, IEnumerable<FileInfo> imagesInFolder )
 		{
 			this.teslaTagService   = teslaTagService   ?? throw new ArgumentNullException(nameof(teslaTagService)); 
 			this.liveConfiguration = liveConfiguration ?? throw new ArgumentNullException(nameof(liveConfiguration));
+
+			if( imagesInFolder == null ) throw new ArgumentNullException(nameof(imagesInFolder));
 
 			//
 
@@ -32,20 +34,9 @@ namespace TeslaTags.Gui
 			this.RemoveApeTagsCommand   = this.CreateBusyCommand( this.RemoveApeTags );
 			this.SetTrackNumbersCommand = this.CreateBusyCommand( this.SetTrackNumbers );
 
-			IEnumerable<String> imageFiles = Enumerable
-				.Empty<String>()
-				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.jpg" ) ) // TODO: Ewww... fix this.
-				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.jpeg" ) )
-				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.png" ) )
-				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.bmp" ) )
-				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.gif" ) )
-				.Select( fn => Path.GetFileName( fn ) )
-				.OrderBy( fn => fn );
+			//
 
-			foreach( String fn in imageFiles )
-			{
-				this.ImagesInFolder.Add( fn );
-			}
+			this.ImagesInFolder.AddRange( imagesInFolder.Select( fi => fi.Name ) );
 		}
 
 		#region Messages
@@ -80,6 +71,8 @@ namespace TeslaTags.Gui
 		}
 
 		#region Apply Album Art
+
+		internal static HashSet<String> AlbumArtFileExtensions { get; } = FileSystemPredicate.CreateFileExtensionHashSet( FileSystemPredicate.DefaultAlbumartImageFileExtensions );
 
 		public async void ApplyAlbumArt()
 		{

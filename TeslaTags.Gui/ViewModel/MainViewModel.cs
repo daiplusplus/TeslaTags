@@ -42,7 +42,7 @@ namespace TeslaTags.Gui
 			{
 				for( Int32 i = 0; i < 10; i++ )
 				{
-					this.DirectoriesProgress.Add( new DirectoryViewModel( teslaTagsService, liveConfiguration: this, @"C:\TestData\Folder" + i, @"C:\TestData" ) );
+					this.DirectoriesProgress.Add( new DirectoryViewModel( teslaTagsService, liveConfiguration: this, @"C:\TestData\Folder" + i, @"C:\TestData", imagesInFolder: Array.Empty<FileInfo>() ) );
 				}
 				this.SelectedDirectory = this.DirectoriesProgress[2];
 
@@ -173,7 +173,15 @@ namespace TeslaTags.Gui
 					{
 						if( directoryPath == null ) continue;
 
-						DirectoryViewModel dirVM = new DirectoryViewModel( this.teslaTagsService, liveConfiguration: this, directoryPath, prefix: this.DirectoryPath );
+						// HACK: Get it so this list is loaded on-demand instead of eagerly:
+						DirectoryInfo dir = new DirectoryInfo( directoryPath );
+
+						List<FileInfo> imageFiles = dir.GetFiles()
+							.Where( fi => DirectoryViewModel.AlbumArtFileExtensions.Contains( fi.Extension ) )
+							.OrderBy( fi => fi.FullName )
+							.ToList();
+
+						DirectoryViewModel dirVM = new DirectoryViewModel( this.teslaTagsService, liveConfiguration: this, directoryPath, prefix: this.DirectoryPath, imageFiles );
 						this.viewModelDict.Add( directoryPath, dirVM );
 						this.DirectoriesProgress.Add( dirVM );
 					}
