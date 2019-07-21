@@ -9,21 +9,21 @@ namespace TeslaTags
 {
 	public static class DiscAndTrackNumberHelper
 	{
-		public static Regex FileNameDiscNumberRegex { get; } = new Regex( @"\bdisc\D{0,3}(\d{1,3})", RegexOptions.Compiled | RegexOptions.IgnoreCase );
+		private static readonly Regex _fileName_DiscNumberRegex = new Regex( @"\bdisc\D{0,3}(\d{1,3})", RegexOptions.Compiled | RegexOptions.IgnoreCase );
 
 		public static (Boolean hasBest,Dictionary<String,(Int32? disc, Int32? track, String err)> files) GetDiscTrackNumberForAllFiles(String directoryPath)
 		{
 			DirectoryInfo directoryInfo = new DirectoryInfo( directoryPath );
 
-			Match parentDirectoryDiscNumberMatch = FileNameDiscNumberRegex.Match( directoryInfo.Name );
+			Match parentDirectoryDiscNumberMatch = _fileName_DiscNumberRegex.Match( directoryInfo.Name );
 
 			Int32? discNumberFromParentDirectory = null;
-			if( parentDirectoryDiscNumberMatch.Success )
+			if( parentDirectoryDiscNumberMatch.Success && parentDirectoryDiscNumberMatch.Groups.Count >= 1 )
 			{
 				discNumberFromParentDirectory = Int32.Parse( parentDirectoryDiscNumberMatch.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture );
 			}
-			
-			var files = directoryInfo.GetFiles();
+
+			FileInfo[] files = directoryInfo.GetFiles();
 
 			Regex bestRegex = GetBestDiscTrackNumberRegexForDirectory( directoryPath );
 			if( bestRegex == null )
@@ -34,7 +34,7 @@ namespace TeslaTags
 						fi => GetDiscTrackNumberFromFileNameOnly( fi.FullName )
 					);
 
-				return ( false, dict );
+				return ( hasBest: false, dict );
 			}
 			else
 			{
@@ -49,7 +49,7 @@ namespace TeslaTags
 						}
 					);
 
-				return ( true, dict );
+				return ( hasBest: true, dict );
 			}
 		}
 
@@ -58,14 +58,14 @@ namespace TeslaTags
 			// 1. If there's no disc information in the parent folder path (only look at the parent directory, not other ancestors):
 			FileInfo fileInfo = new FileInfo( fileName );
 			
-			Match parentDirectoryDiscNumberMatch = FileNameDiscNumberRegex.Match( fileInfo.Directory.Name );
+			Match parentDirectoryDiscNumberMatch = _fileName_DiscNumberRegex.Match( fileInfo.Directory.Name );
 			if( parentDirectoryDiscNumberMatch.Success )
 			{
 				Int32 discNumberFromParentDirectory = Int32.Parse( parentDirectoryDiscNumberMatch.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture );
 
 				// As disc information is in the directory, we must assert that it is either NOT in the filename itself, or the filename matches:
 
-				Match fileNameDiscNumberMatch = FileNameDiscNumberRegex.Match( fileInfo.Name );
+				Match fileNameDiscNumberMatch = _fileName_DiscNumberRegex.Match( fileInfo.Name );
 				if( fileNameDiscNumberMatch.Success )
 				{
 					Int32 discNumberFromFileName = Int32.Parse( fileNameDiscNumberMatch.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture );

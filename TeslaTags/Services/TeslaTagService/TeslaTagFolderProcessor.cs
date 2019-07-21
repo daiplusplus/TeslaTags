@@ -127,14 +127,14 @@ namespace TeslaTags
 			Boolean allSameArtist      = !String.IsNullOrWhiteSpace( firstArtist ) && files.All( ft => ft.Tag.GetPerformers().EqualsCI( firstArtist ) );
 
 			String  firstAlbum         = files.First().Tag.Album;
-			Boolean sameAlbum          = !String.IsNullOrWhiteSpace( firstAlbum ) && files.All( ft => ft.Tag.Album.EqualsCI( firstAlbum ) );
-			Boolean noAlbum            = files.All( ft => String.IsNullOrWhiteSpace( ft.Tag.Album ) );
+			Boolean allSameAlbum       = !String.IsNullOrWhiteSpace( firstAlbum ) && files.All( ft => ft.Tag.Album.EqualsCI( firstAlbum ) );
+			Boolean allNoAlbum         = files.All( ft => String.IsNullOrWhiteSpace( ft.Tag.Album ) );
 
 			if( allAlbumArtistsAreVariousArtists )
 			{
-				if( noAlbum ) return FolderType.AssortedFiles;
+				if( allNoAlbum ) return FolderType.AssortedFiles;
 
-				if( sameAlbum ) return FolderType.CompilationAlbum;
+				if( allSameAlbum ) return FolderType.CompilationAlbum;
 
 				String differentAlbums = GetList( files, ft => ft.Album );
 				String messageText = "Unexpected folder type: All tracks have AlbumArtist = \"Various Artists\", but they have different Album values: " + differentAlbums;
@@ -145,18 +145,31 @@ namespace TeslaTags
 			{
 				if( allSameArtist )
 				{
-					if     ( noAlbum   ) return FolderType.ArtistAssorted;
-					else if( sameAlbum )
+					if( allNoAlbum )
+					{
+						return FolderType.ArtistAssorted;
+					}
+					else if( allSameAlbum )
 					{
 						// If none of the files have track-numbers in their filenames and they're all lacking track number tags, then it's something like a video-game soundtrack dump where track-numbers don't apply:
-						Boolean noneHaveTrackNumberTags  = files.All( ft => ft.Tag.Track == 0 );
+						Boolean anyHaveTrackNumberTags = files.Any( ft => ft.Tag.Track > 0 );
 
 						var folderDiscTrackInfo = DiscAndTrackNumberHelper.GetDiscTrackNumberForAllFiles( directoryPath );
-						Boolean noneHaveTrackNumberNames = folderDiscTrackInfo.hasBest && folderDiscTrackInfo.files.Values.Any( t => t.track != null );
 
-						if( noneHaveTrackNumberTags && noneHaveTrackNumberNames ) return FolderType.ArtistAlbumNoTrackNumbers;
+						Boolean anyHaveTrackNumberNames = false;
+						if( folderDiscTrackInfo.hasBest )
+						{
+							anyHaveTrackNumberNames = folderDiscTrackInfo.files.Values.Any( t => t.track != null );
+						}
 
-						return FolderType.ArtistAlbum;
+						if( anyHaveTrackNumberTags || anyHaveTrackNumberNames )
+						{
+							return FolderType.ArtistAlbum;
+						}
+						else
+						{
+							return FolderType.ArtistAlbumNoTrackNumbers; // I note that the "No track numbers" thing is orthogonal to a folder's type, e.g. an `ArtistAlbumWithGuestArtists` could have no track numbers too! TODO: Fix this! Consider making `FolderType` a flags enum and `NoTrackNumbers` as a high-bit flag?
+						}
 					}
 					else
 					{
@@ -167,12 +180,12 @@ namespace TeslaTags
 				}
 				else if( allSameAlbumArtist )
 				{
-					if( noAlbum )
+					if( allNoAlbum )
 					{
 						messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, "Folder has no albums" ) );
 						return FolderType.UnableToDetermine;
 					}
-					else if( sameAlbum )
+					else if( allSameAlbum )
 					{
 						return FolderType.ArtistAlbumWithGuestArtists;
 					}
