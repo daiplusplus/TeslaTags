@@ -420,7 +420,13 @@
 						
 						<Separator />
 
-						<Label Content="Messages" />
+						<Label>
+							<TextBlock >
+								<Run Text="{Binding Messages.Count, Mode=OneWay}" />
+								<Run Text=" messages" />
+							</TextBlock>
+						</Label>
+
 						<DataGrid
 							ItemsSource="{Binding Messages}"
 							MaxHeight="200"
@@ -448,7 +454,14 @@
 									
 								</DataGridTextColumn>
 								<DataGridTextColumn Header="Path"     Binding="{Binding RelativePath}" ElementStyle="{StaticResource txtCol}" IsReadOnly="True" />
-								<DataGridTextColumn Header="Message"  Binding="{Binding Text}"         ElementStyle="{StaticResource txtCol}" IsReadOnly="True" MaxWidth="800" />
+								<DataGridTextColumn Header="Message"  Binding="{Binding Text}"         IsReadOnly="True" Width="700">
+									<DataGridTextColumn.ElementStyle>
+										<Style>
+											<Setter Property="TextBlock.Margin" Value="5,0,10,0" />
+											<Setter Property="TextBlock.TextWrapping" Value="Wrap" />
+										</Style>
+									</DataGridTextColumn.ElementStyle>
+								</DataGridTextColumn>
 							</DataGrid.Columns>
 						</DataGrid>
 

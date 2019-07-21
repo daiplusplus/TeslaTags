@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 
 namespace TeslaTags
 {
@@ -66,6 +67,18 @@ namespace TeslaTags
 			String messageText = String.Concat( field, ": ", oldValue, " -> ", newValue );
 
 			messages.Add( new Message( MessageSeverity.FileModification, Path.GetDirectoryName( filePath ), filePath, messageText ) );
+		}
+
+		public static Int32 GetModifiedFileCount( this IEnumerable<Message> messages )
+		{
+			if( messages == null ) throw new ArgumentNullException(nameof(messages));
+
+			Int32 modifiedFileCount = messages
+				.GroupBy( m => m.FullPath )
+				.Where( grp => grp.Any( m => m.Severity == MessageSeverity.FileModification ) )
+				.Count();
+
+			return modifiedFileCount;
 		}
 	}
 }
