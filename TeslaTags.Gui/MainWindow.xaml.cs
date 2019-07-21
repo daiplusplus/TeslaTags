@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Interop;
 using System.Windows.Navigation;
 
@@ -47,6 +48,8 @@ namespace TeslaTags.Gui
 		// HACK: Using events to avoid taking a dependency on the Blend SDK, as it's a simple application:
 		private void MainWindow_Loaded(Object sender, RoutedEventArgs e)
 		{
+			this.cvs = (CollectionViewSource)this.FindResource( "directoriesProgressCvs" );
+
 			this.ViewModel.WindowLoadedCommand.Execute( parameter: null );
 		}
 
@@ -103,6 +106,44 @@ namespace TeslaTags.Gui
 
 				this.ViewModel.SelectedDirectory.SelectedImageFileName = path;
 			}
+		}
+
+		private CollectionViewSource cvs;
+
+		// Remember, WPF has separate `Checked` and `Unchecked` events, not just a single `CheckedChanged` event like WinForms.
+		private void DirectoryFilterCheckedChanged( Object sender, RoutedEventArgs e )
+		{
+			if( this.cvs == null ) return;
+
+			this.cvs.View.Refresh();
+		}
+
+		// This method can be set as `this.csv.View.Filter = DataGridFilter` but it's unclear what the *best* way to do that is given `this.csv.View` could be recreated... I think?
+		private Boolean DataGridFilter( Object item )
+		{
+			DirectoryViewModel dvm = (DirectoryViewModel)item;
+			
+			Boolean isChecked = this.boringFilterCheckbox.IsChecked ?? false;
+			if( isChecked )
+			{
+				// TODO: Consider moving this logic into DirectoryViewModel directly.
+				Boolean isBoring =
+					( dvm.FolderType == FolderType.Empty )
+					||
+					( dvm.FilesModifiedProposed == 0 && dvm.InfoCount == 0 && dvm.WarnCount == 0 && dvm.ErrorCount == 0 );
+
+				return !isBoring;
+			}
+			else
+			{
+				return true; // Include all rows.
+			}
+		}
+
+		// ...alternatively, this alternate approach is provided:
+		private void CollectionViewSource_Filter( Object sender, FilterEventArgs e )
+		{
+			e.Accepted = this.DataGridFilter( e.Item );
 		}
 	}
 }

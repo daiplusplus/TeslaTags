@@ -13,6 +13,19 @@
 	<Application.Resources>
 		<ResourceDictionary>
 			<local:ViewModelLocator x:Key="Locator" d:IsDataSource="True" />
+
+			<!-- https://stackoverflow.com/questions/38463854/why-am-i-seeing-binding-errors-related-to-arerowdetailsfrozen-and-headersvisibil -->
+			<!-- https://web.archive.org/web/20150811234933/http://wpf.codeplex.com/discussions/47047 -->
+			<!--
+			<Style TargetType="DataGrid" x:Key="headersVisibilityBugFix">
+				<Style.Triggers>
+					<Trigger Property="HeadersVisibility" Value="Column">
+						<Setter Property="RowHeaderWidth" Value="0" />
+					</Trigger>
+				</Style.Triggers>
+			</Style>
+			-->
+			
 		</ResourceDictionary>
 	</Application.Resources>
 </Application>

@@ -1,4 +1,4 @@
-<Window
+﻿<Window
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -79,6 +79,12 @@
 			<Setter Property="Height" Value="23" />
 		</Style>
 
+		<!-- -->
+
+		<CollectionViewSource x:Key="directoriesProgressCvs" Source="{Binding DirectoriesProgress}" Filter="CollectionViewSource_Filter">
+			
+		</CollectionViewSource>
+		
 	</Window.Resources>
 
 	<Grid>
@@ -231,7 +237,7 @@
 
 						</Border>
 					</Popup>
-					
+
 					<ToggleButton Content="Genre handling..." Name="genreButton" />
 
 					<Popup
@@ -300,7 +306,10 @@
 
 					</Popup>
 
+					<!--
 					<CheckBox IsChecked="{Binding HideBoringDirectories}" Content="Hide uninteresting directories" VerticalAlignment="Center" Margin="3" ToolTip="(The vertical scrollbar will behave erratically when enabled)" ToolTipService.InitialShowDelay="0" />
+					-->
+					<CheckBox x:Name="boringFilterCheckbox" IsChecked="{Binding HideBoringDirectories}" Content="Hide uninteresting directories" VerticalAlignment="Center" Margin="3" Checked="DirectoryFilterCheckedChanged" Unchecked="DirectoryFilterCheckedChanged" />
 
 				</StackPanel>
 
@@ -315,17 +324,23 @@
 			</Grid>
 
 			<Separator />
-			
+
 		</StackPanel>
 
+		<!--
+		<DataGrid
+			ItemsSource="{Binding DirectoriesProgress}"
+			HeadersVisibility="Column" // I get this bug when this is set: https://stackoverflow.com/questions/38463854/why-am-i-seeing-binding-errors-related-to-arerowdetailsfrozen-and-headersvisibil
+		>
+		-->
 		<DataGrid
 			Grid.Row="1"
-			ItemsSource="{Binding DirectoriesProgress}"
+			ItemsSource="{Binding Source={StaticResource directoriesProgressCvs}}"
 			HorizontalGridLinesBrush="{StaticResource gl}"
 			VerticalGridLinesBrush="{StaticResource gl}"
 			AutoGenerateColumns="False"
 			SelectedItem="{Binding SelectedDirectory}"
-			HeadersVisibility="Column"
+			CanUserResizeRows="False"
 			BorderThickness="0"
 			SelectionMode="Single"
 		>
@@ -341,6 +356,7 @@
 				<DataGridTextColumn Header="Errors"         Binding="{Binding ErrorCount}"            ElementStyle="{StaticResource numCol}" IsReadOnly="True" CellStyle="{StaticResource errorCellStyle}" />
 			</DataGrid.Columns>
 
+			<!--
 			<DataGrid.RowStyle>
 				<Style TargetType="DataGridRow">
 					<Style.Triggers>
@@ -364,6 +380,7 @@
 					</Style.Triggers>
 				</Style>
 			</DataGrid.RowStyle>
+			-->
 
 			<DataGrid.RowDetailsTemplate>
 				<DataTemplate>
