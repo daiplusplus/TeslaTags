@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -101,7 +102,7 @@ namespace TeslaTags
 			}
 		}
 
-		public Task StartRetaggingAsync( RetaggingOptions options, IProgress<IReadOnlyList<String>> directoriesProgress, IProgress<DirectoryResult> directoryProgress, CancellationToken ct )
+		public Task StartRetaggingAsync( RetaggingOptions options, IProgress<IReadOnlyList<String>> directoriesProgress, IProgress<DirectoryResult> directoryProgress, CancellationToken cancellationToken )
 		{
 			TaskCompletionSource<Object> tcs = new TaskCompletionSource<Object>();
 
@@ -109,9 +110,9 @@ namespace TeslaTags
 
 				try
 				{
-					RunRetagging( options, directoriesProgress, directoryProgress, ct );
+					RunRetagging( options, directoriesProgress, directoryProgress, cancellationToken );
 
-					if( ct.IsCancellationRequested )
+					if( cancellationToken.IsCancellationRequested )
 					{
 						tcs.SetCanceled();
 					}
@@ -131,13 +132,13 @@ namespace TeslaTags
 			//return Task.Run( () => RunRetagging( musicRootDirectory, readOnly, undo, genreRules, listener ) );
 		}
 
-		public static void RunRetagging( RetaggingOptions options, IProgress<IReadOnlyList<String>> directoriesProgress, IProgress<DirectoryResult> directoryProgress, CancellationToken ct)
+		public static void RunRetagging( RetaggingOptions options, IProgress<IReadOnlyList<String>> directoriesProgress, IProgress<DirectoryResult> directoryProgress, CancellationToken cancellationToken )
 		{
 			using( LogFiles logs = LogFiles.Create( options.MusicRootDirectory ) )
 			{
 				try
 				{
-					RunRetaggingInner( logs, options, directoriesProgress, directoryProgress, ct );
+					RunRetaggingInner( logs, options, directoriesProgress, directoryProgress, cancellationToken );
 				}
 				catch( Exception ex )
 				{
@@ -147,18 +148,22 @@ namespace TeslaTags
 			}
 		}
 
-		private static void RunRetaggingInner( LogFiles logs, RetaggingOptions options, IProgress<IReadOnlyList<String>> directoriesProgress, IProgress<DirectoryResult> directoryProgress, CancellationToken ct)
+		private static void RunRetaggingInner( LogFiles logs, RetaggingOptions options, IProgress<IReadOnlyList<String>> directoriesProgress, IProgress<DirectoryResult> directoryProgress, CancellationToken cancellationToken )
 		{
+			Stopwatch sw = Stopwatch.StartNew();
+
 			logs.GeneralLogWriteLine( "Started at {0:yyyy-MM-dd HH:mm:ss} UTC\r\n".FormatInvariant( DateTime.UtcNow ) );
 
-			List<String> directories = GetDirectories( options.MusicRootDirectory );
+			List<String> directories = GetDirectories( options.DirectoryFilterPredicate, options.MusicRootDirectory );
+
+			logs.GeneralLogWriteLine( "Enumerated directories after {0:N2}ms\r\n".FormatInvariant( sw.ElapsedMilliseconds ) );
 
 			directoriesProgress.Report( directories );
 
 			Int32 i = 0;
 			foreach( String directoryPath in directories )
 			{
-				if( ct.IsCancellationRequested ) break;
+				if( cancellationToken.IsCancellationRequested ) break;
 
 				DirectoryResult result = ProcessDirectory( directoryPath, options.ReadOnly, options.Undo, options.GenreRules, logs );
 
@@ -166,7 +171,7 @@ namespace TeslaTags
 				i++;
 			}
 
-			if( ct.IsCancellationRequested )
+			if( cancellationToken.IsCancellationRequested )
 			{
 				logs.GeneralLogWriteLine( "Cancelled after processing {0} directories at {1:yyyy-MM-dd HH:mm:ss} UTC\r\n".FormatInvariant( i, DateTime.UtcNow ) );
 			}
@@ -177,9 +182,11 @@ namespace TeslaTags
 			}
 		}
 
-		public static List<String> GetDirectories(String root)
+		public static List<String> GetDirectories( IDirectoryPredicate excludePredicate, String root )
 		{
 			// Directory.EnumerateDirectories returns strings without a trailing slash.
+
+			DirectoryInfo rootDir = new DirectoryInfo( root );
 
 			List<String> list = new List<String>();
 			list.Add( root );
@@ -187,6 +194,7 @@ namespace TeslaTags
 				Directory
 					.EnumerateDirectories( root, "*", SearchOption.AllDirectories /* AllDirectories == include all descendant directories and reparse points */ )
 					.Where( s => s != null ) // I don't know why I was seeing nulls... was I?
+					.Where( directoryPath => !excludePredicate.Matches( rootDir, new DirectoryInfo( directoryPath ) ) )
 			);
 			list.Sort();
 

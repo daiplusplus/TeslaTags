@@ -85,7 +85,7 @@ namespace TeslaTags.Gui
 		private String excludeLines;
 		public String ExcludeLines
 		{
-			get { return this.excludeLines; }
+			get { return this.excludeLines ?? String.Empty; }
 			set { this.Set( nameof(this.ExcludeLines), ref this.excludeLines, value ); }
 		}
 
@@ -228,15 +228,17 @@ namespace TeslaTags.Gui
 				// Save config (so we can restore, in case it crashes during processing):
 				this.SaveConfig();
 
-				String[] directoryExcludes = this.ExcludeLines?.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries ).Select( s => s.Trim() ).ToArray() ?? new String[0];
+				IDirectoryPredicate directoryFilterPredicate;
 
-				Boolean directoryFilter(String dirPath)
-				{
-					if( directoryExcludes.Any( exclSubPath => dirPath.IndexOf( exclSubPath, StringComparison.OrdinalIgnoreCase ) > -1 ) ) return false;
-					return true;
-				}
+				List<String> excludes = this.ExcludeLines
+					.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries )
+					.Select( s => s.Trim( ' ', '\\', '/' ) )
+					.ToList();
 
-				RetaggingOptions opts = new RetaggingOptions( this.DirectoryPath, this.OnlyValidate, this.RestoreFiles, directoryFilter, this.GenreRules.GetRules() );
+				if( excludes.Count == 0 ) directoryFilterPredicate = new EmptyDirectoryPredicate();
+				else directoryFilterPredicate = new ExactPathComponentMatchPredicate( excludes );
+
+				RetaggingOptions opts = new RetaggingOptions( this.DirectoryPath, this.OnlyValidate, this.RestoreFiles, directoryFilterPredicate, this.GenreRules.GetRules() );
 			
 				Single total = 0;
 				Single progress = 0;

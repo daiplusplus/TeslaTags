@@ -7,7 +7,7 @@ namespace TeslaTags
 {
 	public interface ITeslaTagsService
 	{
-		Task StartRetaggingAsync( RetaggingOptions options, IProgress<IReadOnlyList<String>> directories, IProgress<DirectoryResult> directoryProgress, CancellationToken ct );
+		Task StartRetaggingAsync( RetaggingOptions options, IProgress<IReadOnlyList<String>> directories, IProgress<DirectoryResult> directoryProgress, CancellationToken cancellationToken );
 
 		Task<List<Message>> SetTrackNumbersFromFileNamesAsync(String directoryPath, Int32 offset, Int32? discNumber);
 
@@ -18,20 +18,20 @@ namespace TeslaTags
 
 	public class RetaggingOptions
 	{
-		public RetaggingOptions(String musicRootDirectory, Boolean readOnly, Boolean undo, Func<String,Boolean> directoryFilter, GenreRules genreRules)
+		public RetaggingOptions(String musicRootDirectory, Boolean readOnly, Boolean undo, IDirectoryPredicate directoryFilterPredicate, GenreRules genreRules)
 		{
-			this.MusicRootDirectory = musicRootDirectory ?? throw new ArgumentNullException( nameof( musicRootDirectory ) );
-			this.ReadOnly           = readOnly;
-			this.Undo               = undo;
-			this.DirectoryFilter    = directoryFilter;
-			this.GenreRules         = genreRules ?? throw new ArgumentNullException( nameof( genreRules ) );
+			this.MusicRootDirectory          = musicRootDirectory ?? throw new ArgumentNullException( nameof( musicRootDirectory ) );
+			this.ReadOnly                    = readOnly;
+			this.Undo                        = undo;
+			this.DirectoryFilterPredicate    = directoryFilterPredicate ?? new EmptyDirectoryPredicate();
+			this.GenreRules                  = genreRules ?? throw new ArgumentNullException( nameof( genreRules ) );
 		}
 
-		public String               MusicRootDirectory { get; }
-		public Boolean              ReadOnly           { get; }
-		public Boolean              Undo               { get; }
-		public Func<String,Boolean> DirectoryFilter    { get; }
-		public GenreRules           GenreRules         { get; }
+		public String              MusicRootDirectory       { get; }
+		public Boolean             ReadOnly                 { get; }
+		public Boolean             Undo                     { get; }
+		public IDirectoryPredicate DirectoryFilterPredicate { get; }
+		public GenreRules          GenreRules               { get; }
 	}
 
 	public enum AlbumArtSetMode

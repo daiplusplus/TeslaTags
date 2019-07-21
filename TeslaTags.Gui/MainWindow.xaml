@@ -1,4 +1,4 @@
-﻿<Window
+<Window
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -197,7 +197,7 @@
 
 					<CheckBox IsChecked="{Binding RestoreFiles}" Content="Restore files" VerticalAlignment="Center" Margin="3" />
 
-					<ToggleButton Content="Exclude..." Name="excludeButton" />
+					<ToggleButton Content="Directory filter..." Name="excludeButton" />
 
 					<Popup
 						Name="excludePopup"
@@ -215,11 +215,13 @@
 								<DropShadowEffect Opacity="0.2" />
 							</Border.Effect>
 
-							<StackPanel>
+							<StackPanel Width="400">
 
-								<Label Content="Excluded directories (partial matches):" />
+								<Label Content="Exclude directories that contain any of the following text:" />
 
-								<TextBox AcceptsReturn="True" Text="{Binding ExcludeLines}" Width="400" SpellCheck.IsEnabled="False" Height="400" />
+								<TextBlock Padding="5,0,5,5" HorizontalAlignment="Stretch" FontSize="10" Text="The filter will be applied to the root-relative portion of the path, so putting &quot;Dave&quot; will exclude &quot;Dave Matthews Band&quot; but will still include your music if the music root is &quot;C:\Users\Dave\Music&quot;" TextWrapping="Wrap"  />
+
+								<TextBox AcceptsReturn="True" Text="{Binding ExcludeLines}" SpellCheck.IsEnabled="False" Height="300" />
 
 							</StackPanel>
 
