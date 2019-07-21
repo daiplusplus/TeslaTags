@@ -1,277 +1,106 @@
 ﻿using System;
+using System.Globalization;
+using System.Windows.Data;
 
 namespace TeslaTags.Gui
 {
 	public class GenreRulesViewModel : BaseViewModel
 	{
-		private readonly GenreRules rules = new GenreRules();
-
-		/// <summary>Creates a copy of the underlying rules model object.</summary>
+		/// <summary>Creates a new <see cref="GenreRules"/> object.</summary>
 		public GenreRules GetRules()
 		{
-			return new GenreRules()
+			if( this.OverrideGenreTagEnabled )
 			{
-				Default                  = this.rules.Default,
-				AssortedFiles            = this.rules.AssortedFiles,
-				CompilationUseArtistName = this.rules.CompilationUseArtistName,
-				GuestArtistUseArtistName = this.rules.GuestArtistUseArtistName
-			};
+				return new GenreRules()
+				{
+					AssortedFilesAction               = this.AssortedFilesAction,
+					ArtistAlbumWithGuestArtistsAction = this.ArtistAlbumWithGuestArtistsAction,
+					ArtistAssortedAction              = this.ArtistAssortedAction,
+					ArtistAlbumAction                 = this.ArtistAlbumAction,
+					CompilationAlbumAction            = this.CompilationAlbumAction
+				};
+			}
+			else
+			{
+				return new GenreRules()
+				{
+					AssortedFilesAction               = AssortedFilesGenreAction.Preserve,
+					ArtistAlbumWithGuestArtistsAction = GenreAction.Preserve,
+					ArtistAssortedAction              = GenreAction.Preserve,
+					ArtistAlbumAction                 = GenreAction.Preserve,
+					CompilationAlbumAction            = GenreAction.Preserve
+				};
+			}
 		}
 
-		public void LoadFrom(GenreRules newRules)
+		public void LoadFrom( GenreRules newRules )
 		{
 			if( newRules == null ) throw new ArgumentNullException(nameof(newRules));
 
-			this.rules.Default                  = newRules.Default;
-			this.rules.AssortedFiles            = newRules.AssortedFiles;
-			this.rules.CompilationUseArtistName = newRules.CompilationUseArtistName;
-			this.rules.GuestArtistUseArtistName = newRules.GuestArtistUseArtistName;
+			this.OverrideGenreTagEnabled      = !newRules.AlwaysNoop;
 
-			this.RaisePropertyChanged(nameof(this.DefaultPreserve));
-			this.RaisePropertyChanged(nameof(this.DefaultClear));
-			this.RaisePropertyChanged(nameof(this.DefaultUseArtist));
-
-			this.RaisePropertyChanged(nameof(this.AssortedUseDefault));
-			this.RaisePropertyChanged(nameof(this.AssortedUseFolderName));
-			this.RaisePropertyChanged(nameof(this.AssortedUseArtistName));
-
-			this.RaisePropertyChanged(nameof(this.CompilationUseDefault));
-			this.RaisePropertyChanged(nameof(this.CompilationUseArtistName));
-
-			this.RaisePropertyChanged(nameof(this.GuestArtistUseDefault));
-			this.RaisePropertyChanged(nameof(this.GuestArtistUseArtistName));
+			this.AssortedFilesAction               = newRules.AssortedFilesAction;
+			this.ArtistAlbumWithGuestArtistsAction = newRules.ArtistAlbumWithGuestArtistsAction;
+			this.ArtistAssortedAction              = newRules.ArtistAssortedAction;
+			this.ArtistAlbumAction                 = newRules.ArtistAlbumAction;
+			this.CompilationAlbumAction            = newRules.CompilationAlbumAction;
 		}
 
-		public void SaveTo(GenreRules target)
+		private Boolean overrideGenreTagEnabled;
+		public Boolean OverrideGenreTagEnabled
 		{
-			if( target == null ) throw new ArgumentNullException(nameof(target));
-
-			target.Default                  = this.rules.Default;
-			target.AssortedFiles            = this.rules.AssortedFiles;
-			target.CompilationUseArtistName = this.rules.CompilationUseArtistName;
-			target.GuestArtistUseArtistName = this.rules.GuestArtistUseArtistName;
+			get { return this.overrideGenreTagEnabled; }
+			set { this.Set( nameof(this.OverrideGenreTagEnabled), ref this.overrideGenreTagEnabled, value ); }
 		}
 
-		public Boolean DefaultPreserve
-		{
-			get { return this.rules.Default == GenreDefault.Preserve; }
-			set
-			{
-				Boolean defaultPreserveNew = value;
-				Boolean defaultPreserveOld = this.DefaultPreserve;
+		// https://stackoverflow.com/questions/397556/how-to-bind-radiobuttons-to-an-enum
 
-				if( defaultPreserveNew != defaultPreserveOld )
-				{
-					if( defaultPreserveNew )
-					{
-						this.rules.Default = GenreDefault.Preserve;
-					}
-					else
-					{
-						this.rules.Default = GenreDefault.Clear;
-					}
-					
-					this.RaisePropertyChanged(nameof(this.DefaultPreserve));
-					this.RaisePropertyChanged(nameof(this.DefaultClear));
-					this.RaisePropertyChanged(nameof(this.DefaultUseArtist));
-				}
-			}
+		private AssortedFilesGenreAction assortedFilesAction;
+		public AssortedFilesGenreAction AssortedFilesAction
+		{
+			get { return this.assortedFilesAction; }
+			set { this.Set( nameof(this.AssortedFilesAction), ref this.assortedFilesAction, value ); }
 		}
 
-		public Boolean DefaultClear
+		private GenreAction artistAlbumWithGuestArtistsAction;
+		public GenreAction ArtistAlbumWithGuestArtistsAction
 		{
-			get { return this.rules.Default == GenreDefault.Clear; }
-			set
-			{
-				Boolean defaultClearNew = value;
-				Boolean defaultClearOld = this.DefaultClear;
-
-				if( defaultClearNew != defaultClearOld )
-				{
-					if( defaultClearNew )
-					{
-						this.rules.Default = GenreDefault.Clear;
-					}
-					else
-					{
-						this.rules.Default = GenreDefault.Preserve;
-					}
-					
-					this.RaisePropertyChanged(nameof(this.DefaultPreserve));
-					this.RaisePropertyChanged(nameof(this.DefaultClear));
-					this.RaisePropertyChanged(nameof(this.DefaultUseArtist));
-				}
-			}
+			get { return this.artistAlbumWithGuestArtistsAction; }
+			set { this.Set( nameof(this.ArtistAlbumWithGuestArtistsAction), ref this.artistAlbumWithGuestArtistsAction, value ); }
 		}
 
-		public Boolean DefaultUseArtist
+		private GenreAction artistAssortedAction;
+		public GenreAction ArtistAssortedAction
 		{
-			get { return this.rules.Default == GenreDefault.UseArtist; }
-			set
-			{
-				Boolean defaultUseArtistNew = value;
-				Boolean defaultUseArtistOld = this.DefaultUseArtist;
-
-				if( defaultUseArtistNew != defaultUseArtistOld )
-				{
-					if( defaultUseArtistNew )
-					{
-						this.rules.Default = GenreDefault.UseArtist;
-					}
-					else
-					{
-						this.rules.Default = GenreDefault.Preserve;
-					}
-					
-					this.RaisePropertyChanged(nameof(this.DefaultPreserve));
-					this.RaisePropertyChanged(nameof(this.DefaultClear));
-					this.RaisePropertyChanged(nameof(this.DefaultUseArtist));
-				}
-			}
+			get { return this.artistAssortedAction; }
+			set { this.Set( nameof(this.ArtistAssortedAction), ref this.artistAssortedAction, value ); }
 		}
 
-		public Boolean AssortedUseDefault
+		private GenreAction artistAlbumAction;
+		public GenreAction ArtistAlbumAction
 		{
-			get { return this.rules.AssortedFiles == GenreAssortedFiles.UseDefault; }
-			set
-			{
-				Boolean useDefaultNew = value;
-				Boolean useDefaultOld = this.AssortedUseDefault;
-				if( useDefaultNew != useDefaultOld )
-				{
-					if( useDefaultNew )
-					{
-						this.rules.AssortedFiles = GenreAssortedFiles.UseDefault;
-					}
-					else
-					{
-						// NOOP? What does it mean to set this property to false?
-						this.rules.AssortedFiles = GenreAssortedFiles.UseFolderName;
-					}
-					
-					this.RaisePropertyChanged(nameof(this.AssortedUseDefault));
-					this.RaisePropertyChanged(nameof(this.AssortedUseFolderName));
-					this.RaisePropertyChanged(nameof(this.AssortedUseArtistName));
-				}
-			}
+			get { return this.artistAlbumAction; }
+			set { this.Set( nameof(this.ArtistAlbumAction), ref this.artistAlbumAction, value ); }
 		}
 
-		public Boolean AssortedUseFolderName
+		private GenreAction compilationAlbumAction;
+		public GenreAction CompilationAlbumAction
 		{
-			get { return this.rules.AssortedFiles == GenreAssortedFiles.UseFolderName; }
-			set
-			{
-				Boolean useFolderNameNew = value;
-				Boolean useFolderNameOld = this.AssortedUseFolderName;
-				if( useFolderNameNew != useFolderNameOld )
-				{
-					if( useFolderNameNew )
-					{
-						this.rules.AssortedFiles = GenreAssortedFiles.UseFolderName;
-					}
-					else
-					{
-						this.rules.AssortedFiles = GenreAssortedFiles.UseDefault;
-					}
-					
-					this.RaisePropertyChanged(nameof(this.AssortedUseDefault));
-					this.RaisePropertyChanged(nameof(this.AssortedUseFolderName));
-					this.RaisePropertyChanged(nameof(this.AssortedUseArtistName));
-				}
-			}
+			get { return this.compilationAlbumAction; }
+			set { this.Set( nameof(this.CompilationAlbumAction), ref this.compilationAlbumAction, value ); }
+		}
+	}
+
+	public class ComparisonConverter : IValueConverter
+	{
+		public Object Convert( Object value, Type targetType, Object parameter, CultureInfo culture )
+		{
+			return value?.Equals( parameter );
 		}
 
-		public Boolean AssortedUseArtistName
+		public Object ConvertBack( Object value, Type targetType, Object parameter, CultureInfo culture )
 		{
-			get { return this.rules.AssortedFiles == GenreAssortedFiles.UseArtistName; }
-			set
-			{
-				Boolean useArtistNameNew = value;
-				Boolean useArtistNameOld = this.AssortedUseArtistName;
-				if( useArtistNameNew != useArtistNameOld )
-				{
-					if( useArtistNameNew )
-					{
-						this.rules.AssortedFiles = GenreAssortedFiles.UseArtistName;
-					}
-					else
-					{
-						this.rules.AssortedFiles = GenreAssortedFiles.UseDefault;
-					}
-					
-					this.RaisePropertyChanged(nameof(this.AssortedUseDefault));
-					this.RaisePropertyChanged(nameof(this.AssortedUseFolderName));
-					this.RaisePropertyChanged(nameof(this.AssortedUseArtistName));
-				}
-			}
-		}
-
-		public Boolean CompilationUseDefault
-		{
-			get { return this.rules.CompilationUseDefault; }
-			set
-			{
-				Boolean useArtistNameNew = !value;
-				Boolean useArtistNameOld = this.CompilationUseArtistName;
-				if( useArtistNameNew != useArtistNameOld )
-				{
-					this.rules.CompilationUseArtistName = useArtistNameNew;
-					
-					this.RaisePropertyChanged(nameof(this.CompilationUseDefault));
-					this.RaisePropertyChanged(nameof(this.CompilationUseArtistName));
-				}
-			}
-		}
-
-		public Boolean CompilationUseArtistName
-		{
-			get { return this.rules.CompilationUseArtistName; }
-			set
-			{
-				Boolean useArtistNameNew = value;
-				Boolean useArtistNameOld = this.CompilationUseArtistName;
-				if( useArtistNameNew != useArtistNameOld )
-				{
-					this.rules.CompilationUseArtistName = useArtistNameNew;
-					
-					this.RaisePropertyChanged(nameof(this.CompilationUseDefault));
-					this.RaisePropertyChanged(nameof(this.CompilationUseArtistName));
-				}
-			}
-		}
-
-		public Boolean GuestArtistUseDefault
-		{
-			get { return this.rules.GuestArtistUseDefault; }
-			set
-			{
-				Boolean useArtistNameNew = !value;
-				Boolean useArtistNameOld = this.GuestArtistUseArtistName;
-				if( useArtistNameNew != useArtistNameOld )
-				{
-					this.rules.GuestArtistUseArtistName = useArtistNameNew;
-					
-					this.RaisePropertyChanged(nameof(this.GuestArtistUseDefault));
-					this.RaisePropertyChanged(nameof(this.GuestArtistUseArtistName));
-				}
-			}
-		}
-
-		public Boolean GuestArtistUseArtistName
-		{
-			get { return this.rules.GuestArtistUseArtistName; }
-			set
-			{
-				Boolean useArtistNameNew = value;
-				Boolean useArtistNameOld = this.GuestArtistUseArtistName;
-				if( useArtistNameNew != useArtistNameOld )
-				{
-					this.rules.GuestArtistUseArtistName = useArtistNameNew;
-					
-					this.RaisePropertyChanged(nameof(this.GuestArtistUseDefault));
-					this.RaisePropertyChanged(nameof(this.GuestArtistUseArtistName));
-				}
-			}
+			return value?.Equals( true ) == true ? parameter : Binding.DoNothing;
 		}
 	}
 }

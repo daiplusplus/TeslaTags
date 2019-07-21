@@ -114,21 +114,28 @@ namespace TeslaTags.Gui
 				{
 					config.RootDirectory = value;
 				}
-				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.Default) ) )
+
+				// Genre rules:
+
+				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + "_2" + nameof(TeslaTags.Gui.Config.GenreRules.AssortedFilesAction) ) ) // "_2" because the config schema is different than how it was prior to Release 7.
 				{
-					if( Enum.TryParse( value, out GenreDefault genreDefaultValue ) ) config.GenreRules.Default = genreDefaultValue;
+					if( Enum.TryParse( value, out AssortedFilesGenreAction genreActionValue ) ) config.GenreRules.AssortedFilesAction = genreActionValue;
 				}
-				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.AssortedFiles) ) )
+				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + "_2" + nameof(TeslaTags.Gui.Config.GenreRules.ArtistAlbumWithGuestArtistsAction) ) )
 				{
-					if( Enum.TryParse( value, out GenreAssortedFiles genreAssortedFilesValue ) ) config.GenreRules.AssortedFiles = genreAssortedFilesValue;
+					if( Enum.TryParse( value, out GenreAction genreActionValue ) ) config.GenreRules.ArtistAlbumWithGuestArtistsAction = genreActionValue;
 				}
-				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.CompilationUseArtistName) ) )
+				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + "_2" + nameof(TeslaTags.Gui.Config.GenreRules.ArtistAssortedAction) ) )
 				{
-					if( Boolean.TryParse( value, out Boolean genreCompilationUseArtistNameValue ) ) config.GenreRules.CompilationUseArtistName = genreCompilationUseArtistNameValue;
+					if( Enum.TryParse( value, out GenreAction genreActionValue ) ) config.GenreRules.ArtistAssortedAction = genreActionValue;
 				}
-				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.GuestArtistUseArtistName) ) )
+				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + "_2" + nameof(TeslaTags.Gui.Config.GenreRules.ArtistAlbumAction) ) )
 				{
-					if( Boolean.TryParse( value, out Boolean genreGuestArtistUseArtistNameValue ) ) config.GenreRules.GuestArtistUseArtistName = genreGuestArtistUseArtistNameValue;
+					if( Enum.TryParse( value, out GenreAction genreActionValue ) ) config.GenreRules.ArtistAlbumAction = genreActionValue;
+				}
+				else if( E( key, nameof(TeslaTags.Gui.Config.GenreRules) + "_2" + nameof(TeslaTags.Gui.Config.GenreRules.CompilationAlbumAction) ) )
+				{
+					if( Enum.TryParse( value, out GenreAction genreActionValue ) ) config.GenreRules.CompilationAlbumAction = genreActionValue;
 				}
 			}
 
@@ -191,10 +198,13 @@ namespace TeslaTags.Gui
 			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.IsMaximized)           , config.IsMaximized.ToString() );
 			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.ExcludeList)           , String.Join( ";",  config.ExcludeList.Where( s => !String.IsNullOrWhiteSpace(s) ) ) );
 			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.RootDirectory)         , config.RootDirectory );
-			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.Default)                 , config.GenreRules.Default.ToString() );
-			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.AssortedFiles)           , config.GenreRules.AssortedFiles.ToString() );
-			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.CompilationUseArtistName), config.GenreRules.CompilationUseArtistName.ToString() );
-			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + nameof(TeslaTags.Gui.Config.GenreRules.GuestArtistUseArtistName), config.GenreRules.GuestArtistUseArtistName.ToString() );
+
+			// Genre rules, version 2 (Release 7+)
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + "_2" + nameof(TeslaTags.Gui.Config.GenreRules.AssortedFilesAction              ), config.GenreRules.AssortedFilesAction              .ToString() );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + "_2" + nameof(TeslaTags.Gui.Config.GenreRules.ArtistAlbumWithGuestArtistsAction), config.GenreRules.ArtistAlbumWithGuestArtistsAction.ToString() );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + "_2" + nameof(TeslaTags.Gui.Config.GenreRules.ArtistAssortedAction             ), config.GenreRules.ArtistAssortedAction             .ToString() );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + "_2" + nameof(TeslaTags.Gui.Config.GenreRules.ArtistAlbumAction                ), config.GenreRules.ArtistAlbumAction                .ToString() );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.GenreRules) + "_2" + nameof(TeslaTags.Gui.Config.GenreRules.CompilationAlbumAction           ), config.GenreRules.CompilationAlbumAction           .ToString() );
 
 			////////////////////////
 

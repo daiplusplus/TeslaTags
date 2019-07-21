@@ -196,7 +196,7 @@ namespace TeslaTags.Gui
 			config.RootDirectory        = this.DirectoryPath;
 			config.HideEmptyDirectories = this.HideBoringDirectories;
 			config.ExcludeList          = this.ExcludeLines?.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries ) ?? new String[0];
-			this.GenreRules.SaveTo( config.GenreRules );
+			config.GenreRules           = this.GenreRules.GetRules();
 
 			var window = this.windowService.GetWindowByDataContext( this );
 			var rb = window.RestoreBounds;

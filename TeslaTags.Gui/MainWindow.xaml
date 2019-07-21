@@ -1,4 +1,4 @@
-<Window
+﻿<Window
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -234,7 +234,7 @@
 						Name="genrePopup"
 						PlacementTarget="{Binding ElementName=genreButton}"
 						IsOpen="{Binding IsChecked, ElementName=genreButton}"
-						StaysOpen="False"
+						StaysOpen="True"
 					>
 
 						<Border
@@ -247,25 +247,50 @@
 								<DropShadowEffect Opacity="0.2" />
 							</Border.Effect>
 
-							<StackPanel Margin="1">
+							<StackPanel Margin="1" Width="350">
 
-								<Label Content="Default:" />
-								<RadioButton Margin="10,3,0,3"  Content="Preserve"         GroupName="g_d1" IsChecked="{Binding GenreRules.DefaultPreserve         , Mode=TwoWay}" />
-								<RadioButton Margin="10,3,0,3"  Content="Clear"            GroupName="g_d2" IsChecked="{Binding GenreRules.DefaultClear            , Mode=TwoWay}" />
-								<RadioButton Margin="10,3,0,3"  Content="Use artist name"  GroupName="g_d3" IsChecked="{Binding GenreRules.DefaultUseArtist        , Mode=TwoWay}" />
+								
+								
+								<Label Content="Genre tag handling rules" />
+								<TextBlock Padding="5" FontSize="10" TextWrapping="Wrap">You can override the 'Genre' tag to use the Genres menu in your car as a listing of contributing artists (which would normally not be listed in the Artists menu) or fast access to named music folders.</TextBlock>
 
-								<Label Content="Assorted files folders:" />
-								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="g_a1" IsChecked="{Binding GenreRules.AssortedUseDefault      , Mode=TwoWay}" />
-								<RadioButton Margin="10,3,0,3" Content="Use folder name"   GroupName="g_a2" IsChecked="{Binding GenreRules.AssortedUseFolderName   , Mode=TwoWay}" />
-								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="g_a3" IsChecked="{Binding GenreRules.AssortedUseArtistName   , Mode=TwoWay}" />
+								<CheckBox Margin="5,3,0,3" Content="Override Genre tag" IsChecked="{Binding GenreRules.OverrideGenreTagEnabled}" />
 
-								<Label Content="Compilation folders:" />
-								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="g_c1" IsChecked="{Binding GenreRules.CompilationUseDefault   , Mode=TwoWay}" />
-								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="g_c2" IsChecked="{Binding GenreRules.CompilationUseArtistName, Mode=TwoWay}" />
+								<StackPanel IsEnabled="{Binding GenreRules.OverrideGenreTagEnabled}" Margin="0,0,0,5">
+									<StackPanel.Resources>
+										<local:ComparisonConverter x:Key="cc" />
+									</StackPanel.Resources>
 
-								<Label Content="Albums' guest artists:" />
-								<RadioButton Margin="10,3,0,3" Content="Use default"       GroupName="g_g1" IsChecked="{Binding GenreRules.GuestArtistUseDefault   , Mode=TwoWay}" />
-								<RadioButton Margin="10,3,0,3" Content="Use artist name"   GroupName="g_g2" IsChecked="{Binding GenreRules.GuestArtistUseArtistName, Mode=TwoWay}" />
+									<TextBlock Padding="5" FontWeight="Bold" TextWrapping="Wrap" Text="In folders containing assorted music files by different artists without an album tag:" />
+
+									<RadioButton Margin="10,3,0,3"  GroupName="g_a" IsChecked="{Binding GenreRules.AssortedFilesAction              , Converter={StaticResource cc}, ConverterParameter={x:Static tt:AssortedFilesGenreAction.Preserve}      }" Content="Keep current genre tag value"               />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_a" IsChecked="{Binding GenreRules.AssortedFilesAction              , Converter={StaticResource cc}, ConverterParameter={x:Static tt:AssortedFilesGenreAction.Clear}         }" Content="Clear genre tag"                            />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_a" IsChecked="{Binding GenreRules.AssortedFilesAction              , Converter={StaticResource cc}, ConverterParameter={x:Static tt:AssortedFilesGenreAction.UseArtist}     }" Content="Set genre tag to artist name (recommended)" />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_a" IsChecked="{Binding GenreRules.AssortedFilesAction              , Converter={StaticResource cc}, ConverterParameter={x:Static tt:AssortedFilesGenreAction.UseFolderName} }" Content="Set genre tag to folder name"               />
+
+
+									<TextBlock Padding="5" FontWeight="Bold" TextWrapping="Wrap" Text="In folders containing &quot;Various Artists&quot; compilation albums:" />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_c" IsChecked="{Binding GenreRules.CompilationAlbumAction           , Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.Preserve} }" Content="Keep current genre tag value"               />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_c" IsChecked="{Binding GenreRules.CompilationAlbumAction           , Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.Clear}    }" Content="Clear genre tag"                            />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_c" IsChecked="{Binding GenreRules.CompilationAlbumAction           , Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.UseArtist}}" Content="Set genre tag to artist name (recommended)" />
+
+									<TextBlock Padding="5" FontWeight="Bold" TextWrapping="Wrap" Text="Guest artist tracks in single-artist albums:" />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_g" IsChecked="{Binding GenreRules.ArtistAlbumWithGuestArtistsAction, Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.Preserve} }" Content="Keep current genre tag value"               />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_g" IsChecked="{Binding GenreRules.ArtistAlbumWithGuestArtistsAction, Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.Clear}    }" Content="Clear genre tag"                            />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_g" IsChecked="{Binding GenreRules.ArtistAlbumWithGuestArtistsAction, Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.UseArtist}}" Content="Set genre tag to artist name (recommended)" />
+
+									<TextBlock Padding="5" FontWeight="Bold" TextWrapping="Wrap" Text="Other tracks in single-artist albums:" />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_l" IsChecked="{Binding GenreRules.ArtistAlbumAction                , Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.Preserve} }" Content="Keep current genre tag value"               />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_l" IsChecked="{Binding GenreRules.ArtistAlbumAction                , Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.Clear}    }" Content="Clear genre tag"                            />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_l" IsChecked="{Binding GenreRules.ArtistAlbumAction                , Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.UseArtist}}" Content="Set genre tag to artist name (recommended)" />
+
+									<TextBlock Padding="5" FontWeight="Bold" TextWrapping="Wrap" Text="In folders containing non-album tracks by a single artist:" />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_b" IsChecked="{Binding GenreRules.ArtistAssortedAction             , Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.Preserve} }" Content="Keep current genre tag value"               />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_b" IsChecked="{Binding GenreRules.ArtistAssortedAction             , Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.Clear}    }" Content="Clear genre tag"                            />
+									<RadioButton Margin="10,3,0,3"  GroupName="g_b" IsChecked="{Binding GenreRules.ArtistAssortedAction             , Converter={StaticResource cc}, ConverterParameter={x:Static tt:GenreAction.UseArtist}}" Content="Set genre tag to artist name (recommended)" />
+
+
+								</StackPanel>
 
 							</StackPanel>
 

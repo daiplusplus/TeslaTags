@@ -240,7 +240,9 @@ namespace TeslaTags
 		{
 			if( genreRules.AlwaysNoop ) return;
 
-			String folderName = files.FirstOrDefault()?.FileInfo.Directory.Name;
+			if( files.Count == 0 ) return;
+
+			String folderName = files.First().FileInfo.Directory.Name;
 
 			foreach( LoadedFile file in files )
 			{
@@ -248,82 +250,87 @@ namespace TeslaTags
 				{
 				case FolderType.ArtistAlbumWithGuestArtists:
 
-					if( genreRules.GuestArtistUseDefault )
-					{
-						goto default;
-					}
-					else if( genreRules.GuestArtistUseArtistName )
-					{
-						String originalArtist = file.RecoveryTag.Artist;
-						if( !String.IsNullOrWhiteSpace( originalArtist ) )
-						{
-							TagWriter.SetGenre( file, messages, originalArtist );
-						}
-					}
+					
 
+					RetagFileForGenre( file, genreRules.ArtistAlbumWithGuestArtistsAction, messages );
 					break;
 
 				case FolderType.AssortedFiles:
 
-					if( genreRules.AssortedFiles == GenreAssortedFiles.UseDefault )
-					{
-						goto default;
-					}
-					else if( genreRules.AssortedFiles == GenreAssortedFiles.UseArtistName )
-					{
-						String artistName = file.Tag.FirstPerformer;
-						if( !String.IsNullOrWhiteSpace( artistName ) )
-						{
-							TagWriter.SetGenre( file, messages, artistName );
-						}
-					}
-					else if( genreRules.AssortedFiles == GenreAssortedFiles.UseFolderName )
+					if( genreRules.AssortedFilesAction == AssortedFilesGenreAction.UseFolderName )
 					{
 						TagWriter.SetGenre( file, messages, folderName );
 					}
-
+					else
+					{
+						GenreAction action = (GenreAction)genreRules.AssortedFilesAction;
+						RetagFileForGenre( file, action, messages );
+					}
 					break;
+
 				case FolderType.CompilationAlbum:
 
-					if( genreRules.CompilationUseDefault )
-					{
-						goto default;
-					}
-					else if( genreRules.CompilationUseArtistName )
-					{
-						String originalArtist = file.RecoveryTag.Artist;
-						if( !String.IsNullOrWhiteSpace( originalArtist ) )
-						{
-							TagWriter.SetGenre( file, messages, originalArtist );
-						}
-					}
-
+					RetagFileForGenre( file, genreRules.CompilationAlbumAction, messages );
 					break;
+
+				case FolderType.ArtistAssorted:
+					
+					RetagFileForGenre( file, genreRules.ArtistAssortedAction, messages );
+					break;
+
+				case FolderType.ArtistAlbum:
+				case FolderType.ArtistAlbumNoTrackNumbers:
+				
+					RetagFileForGenre( file, genreRules.ArtistAlbumAction, messages );
+					break;
+
+				case FolderType.Empty:
+				case FolderType.Reverted:
+				case FolderType.Skipped:
+				case FolderType.UnableToDetermine:
 				default:
 
-					if( genreRules.Default == GenreDefault.Clear )
-					{
-						TagWriter.SetGenre( file, messages, null );
-					}
-					else if( genreRules.Default == GenreDefault.Preserve )
-					{
-						// NOOP
-					}
-					else if( genreRules.Default == GenreDefault.UseArtist )
-					{
-						String originalArtist = file.RecoveryTag.Artist;
-						if( !String.IsNullOrWhiteSpace( originalArtist ) )
-						{
-							TagWriter.SetGenre( file, messages, originalArtist );
-						}
-						else
-						{
-							TagWriter.SetGenre( file, messages, file.Tag.FirstPerformer );
-						}
-					}
-
+					// NOOp.
 					break;
 				}
+			}
+		}
+
+		private static void RetagFileForGenre( LoadedFile loadedFile, GenreAction action, List<Message> messages )
+		{
+			switch( action )
+			{
+			case GenreAction.Clear:
+
+				TagWriter.SetGenre( loadedFile, messages, newGenre: null );
+				break;
+			
+			case GenreAction.Preserve:
+				// NOOP
+				break;
+
+			case GenreAction.UseArtist:
+
+				// Get the actual artist name, NOT the current Artist tag value. This will be available in the RecoveryTag.
+				// If the RecoveryTag.Artist value is empty, then the Artist tag ("Performers" property) will have it.
+
+				// Note that TagligSharp joins performers with "; " inside `Tag.JoinedPerformers` whereas ID3 uses "/" - do this to get back "AC/DC" instead of "AC; DC".
+
+				String originalArtist = loadedFile.RecoveryTag.Artist;
+
+				if( String.IsNullOrWhiteSpace( originalArtist ) )
+				{
+					originalArtist = String.Join( "/", loadedFile.Tag.Performers );
+				}
+
+				if( !String.IsNullOrWhiteSpace( originalArtist ) )
+				{
+					TagWriter.SetGenre( loadedFile, messages, originalArtist );
+				}
+				break;
+
+			default:
+				throw new ArgumentOutOfRangeException( paramName: nameof(action), actualValue: action, message: "Unrecognized enum value." );
 			}
 		}
 

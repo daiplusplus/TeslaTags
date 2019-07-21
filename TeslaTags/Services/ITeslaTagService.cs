@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,37 +39,4 @@ namespace TeslaTags
 		Replace,
 		AddIfMissing
 	}
-
-	public class GenreRules
-	{
-		public GenreDefault Default { get; set; }
-
-		public GenreAssortedFiles AssortedFiles { get; set; }
-
-		public Boolean CompilationUseDefault => !this.CompilationUseArtistName;
-		public Boolean CompilationUseArtistName { get; set; }
-
-		public Boolean GuestArtistUseDefault => !this.GuestArtistUseArtistName;
-		public Boolean GuestArtistUseArtistName { get; set; }
-
-		public Boolean AlwaysNoop =>
-			this.Default == GenreDefault.Preserve &&
-			this.AssortedFiles == GenreAssortedFiles.UseDefault &&
-			this.CompilationUseDefault &&
-			this.GuestArtistUseDefault;
 	}
-
-	public enum GenreDefault
-	{
-		Preserve,
-		Clear,
-		UseArtist
-	}
-
-	public enum GenreAssortedFiles
-	{
-		UseDefault,
-		UseFolderName,
-		UseArtistName
-	}
-}
