@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -83,7 +84,11 @@ namespace TeslaTags.Gui
 		public Single ProgressPerc
 		{
 			get { return this.progressPerc; }
-			set { this.Set( nameof(this.ProgressPerc), ref this.progressPerc, value ); }
+			set
+			{
+				this.Set( nameof(this.ProgressPerc), ref this.progressPerc, value );
+				this.RaisePropertyChanged( nameof(this.WindowTitle) );
+			}
 		}
 
 		private ProgressState progressStatus;
@@ -94,6 +99,7 @@ namespace TeslaTags.Gui
 			{
 				this.Set( nameof(this.ProgressStatus), ref this.progressStatus, value );
 				this.RaisePropertyChanged( nameof(this.TaskbarProgressStatus) );
+				this.RaisePropertyChanged( nameof(this.WindowTitle) );
 			}
 		}
 
@@ -106,9 +112,9 @@ namespace TeslaTags.Gui
 				case ProgressState.StartingIndeterminate: return System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
 				case ProgressState.Running              : return System.Windows.Shell.TaskbarItemProgressState.Normal;
 				case ProgressState.Error                : return System.Windows.Shell.TaskbarItemProgressState.Error;
+				case ProgressState.Canceled             : return System.Windows.Shell.TaskbarItemProgressState.Paused;
 
 				case ProgressState.Completed:
-				case ProgressState.Canceled:
 				case ProgressState.NotStarted:
 				default:
 					return System.Windows.Shell.TaskbarItemProgressState.None;
@@ -116,7 +122,26 @@ namespace TeslaTags.Gui
 			}
 		}
 
-		public String Version { get; }
+		public String WindowTitle
+		{
+			get
+			{
+				switch( this.ProgressStatus )
+				{
+				case ProgressState.StartingIndeterminate: return "TeslaTags - Starting...";
+				case ProgressState.Running              : return "TeslaTags - " + this.ProgressPerc.ToString( "P0", CultureInfo.CurrentCulture ) + " complete.";
+				case ProgressState.Error                : return "TeslaTags - Error";
+				case ProgressState.Completed            : return "TeslaTags - Complete";
+				case ProgressState.Canceled:
+				case ProgressState.NotStarted:
+				default:
+					return "TeslaTags";
+				}
+			}
+		}
+
+		public String Version    { get; }
+
 		public String ReadmeLink { get; }
 
 		#endregion
