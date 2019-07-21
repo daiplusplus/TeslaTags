@@ -250,9 +250,17 @@ namespace TeslaTags
 				{
 				case FolderType.ArtistAlbumWithGuestArtists:
 
-					
+					Boolean isGuestArtist = ( file.Tag.GetPerformers() != file.Tag.GetAlbumArtist() );
 
-					RetagFileForGenre( file, genreRules.ArtistAlbumWithGuestArtistsAction, messages );
+					if( isGuestArtist )
+					{
+						RetagFileForGenre( file, genreRules.ArtistAlbumWithGuestArtistsAction, messages );
+					}
+					else
+					{
+						RetagFileForGenre( file, genreRules.ArtistAlbumAction, messages );
+					}
+					
 					break;
 
 				case FolderType.AssortedFiles:
@@ -320,7 +328,7 @@ namespace TeslaTags
 
 				if( String.IsNullOrWhiteSpace( originalArtist ) )
 				{
-					originalArtist = String.Join( "/", loadedFile.Tag.Performers );
+					originalArtist = loadedFile.Tag.GetPerformers();
 				}
 
 				if( !String.IsNullOrWhiteSpace( originalArtist ) )
