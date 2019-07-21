@@ -13,10 +13,10 @@ namespace TeslaTags
 {
 	public partial class RealTeslaTagService
 	{
-		private static List<Message> Wrap( String directoryPath, Action<String,List<LoadedFile>,List<Message>> action )
+		private static List<Message> Wrap( String directoryPath, HashSet<String> fileExtensionsToLoad, Action<String,List<LoadedFile>,List<Message>> action )
 		{
 			List<Message> messages = new List<Message>();
-			List<LoadedFile> files = TeslaTagFolderProcessor.LoadFiles( directoryPath, messages );
+			List<LoadedFile> files = TeslaTagFolderProcessor.LoadFiles( directoryPath, fileExtensionsToLoad, messages );
 			try
 			{
 				action( directoryPath, files, messages );
@@ -32,12 +32,12 @@ namespace TeslaTags
 			}
 		}
 
-		public Task<List<Message>> RemoveApeTagsAsync(String directoryPath)
+		public Task<List<Message>> RemoveApeTagsAsync( String directoryPath, HashSet<String> fileExtensionsToLoad )
 		{
-			return Task.Run( () => Wrap( directoryPath, RemoveApeTagsInner ) );
+			return Task.Run( () => Wrap( directoryPath, fileExtensionsToLoad, RemoveApeTagsInner ) );
 		}
 
-		private static void RemoveApeTagsInner(String directoryPath, List<LoadedFile> files, List<Message> messages)
+		private static void RemoveApeTagsInner( String directoryPath, List<LoadedFile> files, List<Message> messages )
 		{
 			foreach( MpegLoadedFile mpegFile in files.OfType<MpegLoadedFile>() )
 			{
@@ -51,14 +51,14 @@ namespace TeslaTags
 			}
 		}
 
-		public Task<List<Message>> SetAlbumArtAsync(String directoryPath, String imageFileName, AlbumArtSetMode mode)
+		public Task<List<Message>> SetAlbumArtAsync( String directoryPath, HashSet<String> fileExtensionsToLoad, String imageFileName, AlbumArtSetMode mode )
 		{
 			if( String.IsNullOrWhiteSpace( directoryPath ) || !Directory.Exists( directoryPath ) ) throw new ArgumentException( "Value must be a valid path to a directory that exists.", nameof(directoryPath) );
 			if( String.IsNullOrWhiteSpace( imageFileName ) ) throw new ArgumentNullException( nameof(imageFileName) );
 			imageFileName = Path.IsPathRooted( imageFileName ) ? imageFileName : Path.Combine( directoryPath, imageFileName );
 			if( !System.IO.File.Exists( imageFileName ) ) throw new ArgumentException( "Value must be a file that exists.", nameof(imageFileName ) );
 
-			return Task.Run( () => Wrap( directoryPath, (dp, files, messages) => SetAlbumArtInner( files, messages, imageFileName, mode ) ) );
+			return Task.Run( () => Wrap( directoryPath, fileExtensionsToLoad, (dp, files, messages) => SetAlbumArtInner( files, messages, imageFileName, mode ) ) );
 		}
 
 		private static void SetAlbumArtInner(List<LoadedFile> files, List<Message> messages, String imageFileName, AlbumArtSetMode mode)
@@ -129,11 +129,11 @@ namespace TeslaTags
 			}
 		}
 
-		public Task<List<Message>> SetTrackNumbersFromFileNamesAsync(String directoryPath, Int32 offset, Int32? discNumber)
+		public Task<List<Message>> SetTrackNumbersFromFileNamesAsync( String directoryPath, HashSet<String> fileExtensionsToLoad, Int32 offset, Int32? discNumber )
 		{
 			if( String.IsNullOrWhiteSpace( directoryPath ) || !Directory.Exists( directoryPath ) ) throw new ArgumentException( "Value must be a valid path to a directory that exists.", nameof(directoryPath) );
 
-			return Task.Run( () => Wrap( directoryPath, (dp, files, messages) => SetTrackNumbersFromFileNamesInner( dp, files, messages, offset, discNumber ) ) );
+			return Task.Run( () => Wrap( directoryPath, fileExtensionsToLoad, (dp, files, messages) => SetTrackNumbersFromFileNamesInner( dp, files, messages, offset, discNumber ) ) );
 		}
 
 		private static void SetTrackNumbersFromFileNamesInner(String directoryPath, List<LoadedFile> files, List<Message> messages, Int32 offset, Int32? discNumber)

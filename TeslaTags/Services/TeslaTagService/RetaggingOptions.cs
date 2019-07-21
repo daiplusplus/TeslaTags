@@ -8,19 +8,19 @@ namespace TeslaTags
 {
 	public class RetaggingOptions
 	{
-		public RetaggingOptions(String musicRootDirectory, Boolean readOnly, Boolean undo, IDirectoryPredicate directoryFilterPredicate, GenreRules genreRules)
+		public RetaggingOptions(String musicRootDirectory, Boolean readOnly, Boolean undo, FileSystemPredicate fsPredicate, GenreRules genreRules)
 		{
 			this.MusicRootDirectory          = musicRootDirectory ?? throw new ArgumentNullException( nameof( musicRootDirectory ) );
 			this.ReadOnly                    = readOnly;
 			this.Undo                        = undo;
-			this.DirectoryFilterPredicate    = directoryFilterPredicate ?? new EmptyDirectoryPredicate();
+			this.FileSystemPredicate         = fsPredicate ?? throw new ArgumentNullException( nameof(fsPredicate) );
 			this.GenreRules                  = genreRules ?? throw new ArgumentNullException( nameof( genreRules ) );
 		}
 
-		public String              MusicRootDirectory       { get; }
-		public Boolean             ReadOnly                 { get; }
-		public Boolean             Undo                     { get; }
-		public IDirectoryPredicate DirectoryFilterPredicate { get; }
-		public GenreRules          GenreRules               { get; }
+		public String              MusicRootDirectory  { get; }
+		public Boolean             ReadOnly            { get; }
+		public Boolean             Undo                { get; }
+		public FileSystemPredicate FileSystemPredicate { get; }
+		public GenreRules          GenreRules          { get; }
 	}
 }

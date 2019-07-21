@@ -154,7 +154,7 @@ namespace TeslaTags
 
 			logs.GeneralLogWriteLine( "Started at {0:yyyy-MM-dd HH:mm:ss} UTC\r\n".FormatInvariant( DateTime.UtcNow ) );
 
-			List<String> directories = GetDirectories( options.DirectoryFilterPredicate, options.MusicRootDirectory );
+			List<String> directories = GetDirectories( options.FileSystemPredicate.Directories, options.MusicRootDirectory );
 
 			logs.GeneralLogWriteLine( "Enumerated directories after {0:N2}ms\r\n".FormatInvariant( sw.ElapsedMilliseconds ) );
 
@@ -165,7 +165,7 @@ namespace TeslaTags
 			{
 				if( cancellationToken.IsCancellationRequested ) break;
 
-				DirectoryResult result = ProcessDirectory( directoryPath, options.ReadOnly, options.Undo, options.GenreRules, logs );
+				DirectoryResult result = ProcessDirectory( directoryPath, options.FileSystemPredicate.FileExtensionsToLoad, options.ReadOnly, options.Undo, options.GenreRules, logs );
 
 				directoryProgress.Report( result );
 				i++;
@@ -202,7 +202,7 @@ namespace TeslaTags
 		}
 
 		/// <param name="readOnly">If true, then warnings and errors will be generated, but files will not be modified.</param>
-		private static DirectoryResult ProcessDirectory(String directoryPath, Boolean readOnly, Boolean undo, GenreRules genreRules, LogFiles logs)
+		private static DirectoryResult ProcessDirectory( String directoryPath, HashSet<String> fileExtensionsToLoad, Boolean readOnly, Boolean undo, GenreRules genreRules, LogFiles logs )
 		{
 			List<Message> messages = new List<Message>();
 
@@ -214,7 +214,7 @@ namespace TeslaTags
 				return new DirectoryResult( directoryPath, FolderType.Skipped, 0, 0, 0, messages );
 			}
 
-			(FolderType folderType, Int32 modifiedCountProposed, Int32 modifiedCountActual, Int32 totalCount) = TeslaTagFolderProcessor.Process( directoryPath, readOnly, undo, genreRules, messages );
+			(FolderType folderType, Int32 modifiedCountProposed, Int32 modifiedCountActual, Int32 totalCount) = TeslaTagFolderProcessor.Process( directoryPath, fileExtensionsToLoad, readOnly, undo, genreRules, messages );
 
 			try
 			{

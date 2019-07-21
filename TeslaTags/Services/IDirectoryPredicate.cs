@@ -2,11 +2,54 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TeslaTags
 {
+	public class FileSystemPredicate
+	{
+		public static IReadOnlyList<String> DefaultExtensions { get; } = new List<String>()
+		{
+			// https://github.com/Jehoel/TeslaTags/issues/6 <-- lists the file-types supported by Tesla's MCU.
+			
+			// MP3:
+			".mp3",
+			".mpeg3",
+			
+			// RIFF Wave:
+			".wav",
+			".wave",
+
+			// MP4 + AAC
+			".aac",
+			".mp4",
+			".m4a",
+
+			// OGG:
+			".ogg",
+
+			// FLAC:
+			".flac",
+
+			// AIFF:
+			".aiff",
+		};
+
+		public FileSystemPredicate( IDirectoryPredicate directoryPredicate, IEnumerable<String> caseInsensitiveFileExtensions )
+		{
+			this.Directories = directoryPredicate ?? new EmptyDirectoryPredicate();
+
+			IEnumerable<String> exts = ( caseInsensitiveFileExtensions ?? Array.Empty<String>() )
+				.Where( ext => !String.IsNullOrWhiteSpace( ext ) )
+				.Select( ext => ext.StartsWith( ".", StringComparison.Ordinal ) ? ext : ( "." + ext ) );
+				
+			this.FileExtensionsToLoad = new HashSet<String>( exts, StringComparer.OrdinalIgnoreCase );
+		}
+
+		public IDirectoryPredicate Directories { get; }
+
+		public HashSet<String> FileExtensionsToLoad { get; }
+	}
+
 	public interface IDirectoryPredicate
 	{
 		/// <summary>Indicates if the specified <paramref name="directory"/> matches some condition.</summary>

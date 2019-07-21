@@ -9,9 +9,9 @@ namespace TeslaTags
 {
 	public static class TeslaTagFolderProcessor
 	{
-		public static (FolderType folderType, Int32 modifiedCountProposed, Int32 modifiedCountActual, Int32 totalCount) Process(String directoryPath, Boolean readOnly, Boolean undo, GenreRules genreRules, List<Message> messages)
+		public static (FolderType folderType, Int32 modifiedCountProposed, Int32 modifiedCountActual, Int32 totalCount) Process(String directoryPath, HashSet<String> fileExtensionsToLoad, Boolean readOnly, Boolean undo, GenreRules genreRules, List<Message> messages)
 		{
-			List<LoadedFile> files = LoadFiles( directoryPath, messages );
+			List<LoadedFile> files = LoadFiles( directoryPath, fileExtensionsToLoad, messages );
 			try
 			{
 				FolderType folderType;
@@ -85,19 +85,14 @@ namespace TeslaTags
 			}
 		}
 
-		public static List<LoadedFile> LoadFiles( String directoryPath, List<Message> messages )
+		public static List<LoadedFile> LoadFiles( String directoryPath, HashSet<String> fileExtensionsToLoad, List<Message> messages )
 		{
 			DirectoryInfo di = new DirectoryInfo( directoryPath );
 
-			List<FileInfo> audioFiles = new List<FileInfo>();
-			audioFiles.AddRange( di.GetFiles("*.mp3") );
-			audioFiles.AddRange( di.GetFiles("*.flac") );
-
 			List<LoadedFile> loadedFiles = new List<LoadedFile>();
-			foreach( FileInfo fi in audioFiles )
+			foreach( FileInfo fi in di.GetFiles().Where( fi => fileExtensionsToLoad.Contains( fi.Extension ) ) )
 			{
-				LoadedFile loadedFile = LoadedFile.LoadFromFile( fi, messages );
-				if( loadedFile != null )
+				if( LoadedFile.TryLoadFromFile( fi, messages, out LoadedFile loadedFile ) )
 				{
 					loadedFiles.Add( loadedFile );
 				}

@@ -19,7 +19,12 @@ namespace TeslaTags
 			String root = args[0];
 			Boolean readOnly = Boolean.Parse( args.ElementAtOrDefault(1) ?? "false" ); // `Boolean.Parse` is case-insensitive
 			
-			RetaggingOptions opts = new RetaggingOptions( root, readOnly, undo: false, directoryFilterPredicate: new EmptyDirectoryPredicate(), genreRules: new GenreRules() );
+			FileSystemPredicate fsp = new FileSystemPredicate(
+				directoryPredicate: null,
+				caseInsensitiveFileExtensions: FileSystemPredicate.DefaultExtensions
+			);
+
+			RetaggingOptions opts = new RetaggingOptions( root, readOnly, undo: false, fsp, genreRules: new GenreRules() );
 
 			RealTeslaTagService service = new RealTeslaTagService();
 
