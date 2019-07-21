@@ -128,7 +128,7 @@ namespace TeslaTags.Gui
 			}
 		}
 
-		public Task<List<Message>> RemoveApeTagsAsync(String directoryPath)
+		public Task<List<Message>> RemoveApeTagsAsync(String directoryPath, HashSet<String> fileExtensionsToLoad)
 		{
 			List<Message> messages = new List<Message>();
 			messages.Add( new Message( MessageSeverity.Warning, @"C:\Music", @"C:\Music\Foo.mp3", "Nothing happened. This is a design-mode class." ) );
@@ -136,7 +136,7 @@ namespace TeslaTags.Gui
 			return Task.FromResult( messages );
 		}
 
-		public Task<List<Message>> SetAlbumArtAsync(String directoryPath, String imageFileName, AlbumArtSetMode mode)
+		public Task<List<Message>> SetAlbumArtAsync(String directoryPath, HashSet<String> fileExtensionsToLoad, String imageFileName, AlbumArtSetMode mode)
 		{
 			List<Message> messages = new List<Message>();
 			messages.Add( new Message( MessageSeverity.Warning, @"C:\Music", @"C:\Music\Foo.mp3", "Nothing happened. This is a design-mode class." ) );
@@ -144,7 +144,7 @@ namespace TeslaTags.Gui
 			return Task.FromResult( messages );
 		}
 
-		public Task<List<Message>> SetTrackNumbersFromFileNamesAsync(String directoryPath, Int32 offset, Int32? discNumber)
+		public Task<List<Message>> SetTrackNumbersFromFileNamesAsync(String directoryPath, HashSet<String> fileExtensionsToLoad, Int32 offset, Int32? discNumber)
 		{
 			List<Message> messages = new List<Message>();
 			messages.Add( new Message( MessageSeverity.Warning, @"C:\Music", @"C:\Music\Foo.mp3", "Nothing happened. This is a design-mode class." ) );

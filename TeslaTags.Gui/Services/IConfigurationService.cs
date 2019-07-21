@@ -20,15 +20,20 @@ namespace TeslaTags.Gui
 
 	public class Config
 	{
-		public Boolean DesignMode { get; set; }
-		public String RootDirectory { get; set; }
-		public String[] ExcludeList { get; set; }
-		public Boolean HideEmptyDirectories { get; set; }
+		public Boolean    DesignMode           { get; set; }
 
-		public GenreRules GenreRules { get; set; }
+		public String     RootDirectory        { get; set; }
+
+		public String[]   ExcludeList          { get; set; }
+		public String[]   FileExtensions       { get; set; }
+
+		public Boolean    HideEmptyDirectories { get; set; }
+
+		public GenreRules GenreRules           { get; set; }
 
 		public (Int32 X, Int32 Y, Int32 Width, Int32 Height) RestoredWindowPosition { get; set; }
-		public Boolean IsMaximized { get; set; }
+
+		public Boolean    IsMaximized          { get; set; }
 	}
 
 	public class XmlDocumentConfigurationService : IConfigurationService
@@ -56,7 +61,8 @@ namespace TeslaTags.Gui
 			Config config = new Config();
 
 			// Set defaults:
-			config.ExcludeList = new String[] { "iTunes", "License Backup" };
+			config.ExcludeList    = FileSystemPredicate.DefaultExcludeFolders.ToArray();
+			config.FileExtensions = FileSystemPredicate.DefaultExtensions.ToArray();
 
 			XDocument doc = OpenAppConfig();
 			if( doc != null )
@@ -109,6 +115,11 @@ namespace TeslaTags.Gui
 				{
 					String[] excludeList = value?.Split( _directoryListSeparators, StringSplitOptions.RemoveEmptyEntries ) ?? null;
 					if( excludeList != null && excludeList.Length > 0 ) config.ExcludeList = excludeList;
+				}
+				else if( E( key, nameof(TeslaTags.Gui.Config.FileExtensions) ) )
+				{
+					String[] extensionList = value?.Split( _directoryListSeparators, StringSplitOptions.RemoveEmptyEntries ) ?? null;
+					if( extensionList != null && extensionList.Length > 0 ) config.FileExtensions = extensionList;
 				}
 				else if( E( key, nameof(TeslaTags.Gui.Config.RootDirectory) ) )
 				{
@@ -196,7 +207,8 @@ namespace TeslaTags.Gui
 			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.HideEmptyDirectories)  , config.HideEmptyDirectories.ToString() );
 			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.RestoredWindowPosition), restoredWindowPositionValue );
 			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.IsMaximized)           , config.IsMaximized.ToString() );
-			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.ExcludeList)           , String.Join( ";",  config.ExcludeList.Where( s => !String.IsNullOrWhiteSpace(s) ) ) );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.ExcludeList)           , String.Join( ";",  config.ExcludeList   .Where( s => !String.IsNullOrWhiteSpace(s) ).OrderBy( s => s ) ) );
+			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.FileExtensions)        , String.Join( ";",  config.FileExtensions.Where( s => !String.IsNullOrWhiteSpace(s) ).OrderBy( s => s ) ) );
 			SetAppSetting( appSettingsElement, appSettingsDict, nameof(TeslaTags.Gui.Config.RootDirectory)         , config.RootDirectory );
 
 			// Genre rules, version 2 (Release 7+)

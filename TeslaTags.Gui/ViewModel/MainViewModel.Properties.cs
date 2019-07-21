@@ -27,11 +27,6 @@ namespace TeslaTags.Gui
 			}
 		}
 
-		private Boolean DirectoryPathIsValid()
-		{
-			return !String.IsNullOrWhiteSpace( this.DirectoryPath ) && Directory.Exists( this.DirectoryPath );
-		}
-
 		private Boolean onlyValidate;
 		public Boolean OnlyValidate
 		{
@@ -44,6 +39,13 @@ namespace TeslaTags.Gui
 		{
 			get { return this.excludeLines ?? String.Empty; }
 			set { this.Set( nameof(this.ExcludeLines), ref this.excludeLines, value ); }
+		}
+
+		private String fileExtensionsToLoad;
+		public String FileExtensionsToLoad
+		{
+			get { return this.fileExtensionsToLoad ?? String.Empty; }
+			set { this.Set( nameof(this.FileExtensionsToLoad), ref this.fileExtensionsToLoad, value ); }
 		}
 
 		private Boolean restoreFiles;

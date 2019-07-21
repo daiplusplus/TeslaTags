@@ -197,7 +197,7 @@
 
 					<CheckBox IsChecked="{Binding RestoreFiles}" Content="Restore files" VerticalAlignment="Center" Margin="3" />
 
-					<ToggleButton Content="Directory filter..." Name="excludeButton" />
+					<ToggleButton Content="File and Directory filter..." Name="excludeButton" />
 
 					<Popup
 						Name="excludePopup"
@@ -221,7 +221,11 @@
 
 								<TextBlock Padding="5,0,5,5" HorizontalAlignment="Stretch" FontSize="10" Text="The filter will be applied to the root-relative portion of the path, so putting &quot;Dave&quot; will exclude &quot;Dave Matthews Band&quot; but will still include your music if the music root is &quot;C:\Users\Dave\Music&quot;" TextWrapping="Wrap"  />
 
-								<TextBox AcceptsReturn="True" Text="{Binding ExcludeLines}" SpellCheck.IsEnabled="False" Height="300" />
+								<TextBox AcceptsReturn="True" Text="{Binding ExcludeLines}" SpellCheck.IsEnabled="False" Height="150" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto" />
+
+								<Label Content="Load these file extensions:" />
+
+								<TextBox AcceptsReturn="True" Text="{Binding FileExtensionsToLoad}" SpellCheck.IsEnabled="False" Height="150" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto" />
 
 							</StackPanel>
 
@@ -249,8 +253,6 @@
 
 							<StackPanel Margin="1" Width="350">
 
-								
-								
 								<Label Content="Genre tag handling rules" />
 								<TextBlock Padding="5" FontSize="10" TextWrapping="Wrap">You can override the 'Genre' tag to use the Genres menu in your car as a listing of contributing artists (which would normally not be listed in the Artists menu) or fast access to named music folders.</TextBlock>
 

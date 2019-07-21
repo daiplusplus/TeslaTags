@@ -10,7 +10,7 @@ using GalaSoft.MvvmLight.CommandWpf;
 
 namespace TeslaTags.Gui
 {
-	public partial class MainViewModel : BaseViewModel
+	public partial class MainViewModel : BaseViewModel, ILiveConfigurationService
 	{
 		private readonly ITeslaTagsService     teslaTagsService;
 		private readonly IConfigurationService configurationService;
@@ -43,7 +43,7 @@ namespace TeslaTags.Gui
 			{
 				for( Int32 i = 0; i < 10; i++ )
 				{
-					this.DirectoriesProgress.Add( new DirectoryViewModel( teslaTagsService, @"C:\TestData\Folder" + i, @"C:\TestData" ) );
+					this.DirectoriesProgress.Add( new DirectoryViewModel( teslaTagsService, liveConfiguration: this, @"C:\TestData\Folder" + i, @"C:\TestData" ) );
 				}
 				this.SelectedDirectory = this.DirectoriesProgress[2];
 
@@ -53,6 +53,11 @@ namespace TeslaTags.Gui
 				this.SelectedDirectory.Messages.Add( new Message( MessageSeverity.Info            , dir, Path.Combine( dir, "File.mp3" ), "Message text" ) );
 				this.SelectedDirectory.Messages.Add( new Message( MessageSeverity.Warning         , dir, Path.Combine( dir, "File.mp3" ), "Message text" ) );
 			}
+		}
+
+		private Boolean DirectoryPathIsValid()
+		{
+			return !String.IsNullOrWhiteSpace( this.DirectoryPath ) && Directory.Exists( this.DirectoryPath );
 		}
 
 		private void WindowLoaded()
@@ -75,8 +80,9 @@ namespace TeslaTags.Gui
 			}
 			
 			this.HideBoringDirectories = config.HideEmptyDirectories;
-			this.ExcludeLines          = String.Join( "\r\n", config.ExcludeList ?? new String[0] );
-			
+			this.ExcludeLines          = String.Join( "\r\n", ( config.ExcludeList    ?? Array.Empty<String>() ).OrderBy( s => s ) );
+			this.FileExtensionsToLoad  = String.Join( "\r\n", ( config.FileExtensions ?? Array.Empty<String>() ).OrderBy( s => s ) );
+
 			if( config.GenreRules != null )
 			{
 				this.GenreRules.LoadFrom( config.GenreRules );
@@ -105,7 +111,8 @@ namespace TeslaTags.Gui
 
 			config.RootDirectory        = this.DirectoryPath;
 			config.HideEmptyDirectories = this.HideBoringDirectories;
-			config.ExcludeList          = this.ExcludeLines?.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries ) ?? new String[0];
+			config.ExcludeList          = this.ExcludeLines        .Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries ) ?? Array.Empty<String>();
+			config.FileExtensions       = this.FileExtensionsToLoad.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries ) ?? Array.Empty<String>();
 			config.GenreRules           = this.GenreRules.GetRules();
 
 			var window = this.windowService.GetWindowByDataContext( this );
@@ -117,6 +124,22 @@ namespace TeslaTags.Gui
 			/////
 
 			this.configurationService.SaveConfig( config );
+		}
+
+		public FileSystemPredicate CreateFileSystemPredicate()
+		{
+			List<String> directoryExclusions = this.ExcludeLines
+					.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries )
+					.Select( line => line.Trim( ' ', '\\', '/' ) )
+					.ToList();
+
+			IDirectoryPredicate directoryFilterPredicate = ( directoryExclusions.Count == 0 ) ? (IDirectoryPredicate)new EmptyDirectoryPredicate() : new ExactPathComponentMatchPredicate( directoryExclusions );
+
+			IEnumerable<String> extensions = this.FileExtensionsToLoad
+				.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries ); // `FileSystemPredicate` sanitizes the extensions and is case-insensitive too.
+
+			FileSystemPredicate fsp = new FileSystemPredicate( directoryFilterPredicate, extensions );
+			return fsp;
 		}
 
 		private async void Start()
@@ -134,17 +157,9 @@ namespace TeslaTags.Gui
 				// Save config (so we can restore, in case it crashes during processing):
 				this.SaveConfig();
 
-				IDirectoryPredicate directoryFilterPredicate;
+				FileSystemPredicate fsp = this.CreateFileSystemPredicate();
 
-				List<String> excludes = this.ExcludeLines
-					.Split( new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries )
-					.Select( s => s.Trim( ' ', '\\', '/' ) )
-					.ToList();
-
-				if( excludes.Count == 0 ) directoryFilterPredicate = new EmptyDirectoryPredicate();
-				else directoryFilterPredicate = new ExactPathComponentMatchPredicate( excludes );
-
-				RetaggingOptions opts = new RetaggingOptions( this.DirectoryPath, this.OnlyValidate, this.RestoreFiles, directoryFilterPredicate, this.GenreRules.GetRules() );
+				RetaggingOptions opts = new RetaggingOptions( this.DirectoryPath, this.OnlyValidate, this.RestoreFiles, fsp, this.GenreRules.GetRules() );
 			
 				Single total = 0;
 				Single progress = 0;
@@ -159,7 +174,7 @@ namespace TeslaTags.Gui
 					{
 						if( directoryPath == null ) continue;
 
-						DirectoryViewModel dirVM = new DirectoryViewModel( this.teslaTagsService, directoryPath, prefix: this.DirectoryPath );
+						DirectoryViewModel dirVM = new DirectoryViewModel( this.teslaTagsService, liveConfiguration: this, directoryPath, prefix: this.DirectoryPath );
 						this.viewModelDict.Add( directoryPath, dirVM );
 						this.DirectoriesProgress.Add( dirVM );
 					}

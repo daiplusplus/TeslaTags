@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -12,13 +12,17 @@ namespace TeslaTags.Gui
 {
 	public partial class DirectoryViewModel : BaseViewModel
 	{
-		private readonly ITeslaTagsService teslaTagService;
+		private readonly ITeslaTagsService         teslaTagService;
+		private readonly ILiveConfigurationService liveConfiguration;
 
-		public DirectoryViewModel(ITeslaTagsService teslaTagService, String directoryPath, String prefix)
+		public DirectoryViewModel( ITeslaTagsService teslaTagService, ILiveConfigurationService liveConfiguration, String directoryPath, String prefix )
 		{
-			this.teslaTagService = teslaTagService;
+			this.teslaTagService   = teslaTagService   ?? throw new ArgumentNullException(nameof(teslaTagService)); 
+			this.liveConfiguration = liveConfiguration ?? throw new ArgumentNullException(nameof(liveConfiguration));
 
-			this.FullDirectoryPath    = directoryPath;
+			//
+
+			this.FullDirectoryPath    = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
 			this.DisplayDirectoryPath = directoryPath.StartsWith( prefix, StringComparison.OrdinalIgnoreCase ) ? directoryPath.Substring( prefix.Length ) : directoryPath;
 
 			this.Messages.CollectionChanged += this.Messages_CollectionChanged;
@@ -30,7 +34,7 @@ namespace TeslaTags.Gui
 
 			IEnumerable<String> imageFiles = Enumerable
 				.Empty<String>()
-				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.jpg" ) )
+				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.jpg" ) ) // TODO: Ewww... fix this.
 				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.jpeg" ) )
 				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.png" ) )
 				.Concat( Directory.GetFiles( this.FullDirectoryPath, "*.bmp" ) )
@@ -89,7 +93,9 @@ namespace TeslaTags.Gui
 
 			this.IsBusy = true;
 
-			List<Message> messages = await this.teslaTagService.SetAlbumArtAsync( this.FullDirectoryPath, this.SelectedImageFileName, this.ReplaceAllAlbumArt ? AlbumArtSetMode.Replace : AlbumArtSetMode.AddIfMissing );
+			FileSystemPredicate fsp = this.liveConfiguration.CreateFileSystemPredicate();
+
+			List<Message> messages = await this.teslaTagService.SetAlbumArtAsync( this.FullDirectoryPath, fsp.FileExtensionsToLoad, this.SelectedImageFileName, this.ReplaceAllAlbumArt ? AlbumArtSetMode.Replace : AlbumArtSetMode.AddIfMissing );
 			this.Messages.AddRange( messages );
 
 			this.IsBusy = false;
@@ -101,7 +107,9 @@ namespace TeslaTags.Gui
 		{
 			this.IsBusy = true;
 
-			List<Message> messages = await this.teslaTagService.RemoveApeTagsAsync( this.FullDirectoryPath );
+			FileSystemPredicate fsp = this.liveConfiguration.CreateFileSystemPredicate();
+
+			List<Message> messages = await this.teslaTagService.RemoveApeTagsAsync( this.FullDirectoryPath, fsp.FileExtensionsToLoad );
 			this.Messages.AddRange( messages );
 
 			this.IsBusy = false;
@@ -113,7 +121,9 @@ namespace TeslaTags.Gui
 		{
 			this.IsBusy = true;
 
-			List<Message> messages = await this.teslaTagService.SetTrackNumbersFromFileNamesAsync( this.FullDirectoryPath, this.TrackNumberOffset, this.DiscNumber );
+			FileSystemPredicate fsp = this.liveConfiguration.CreateFileSystemPredicate();
+
+			List<Message> messages = await this.teslaTagService.SetTrackNumbersFromFileNamesAsync( this.FullDirectoryPath, fsp.FileExtensionsToLoad, this.TrackNumberOffset, this.DiscNumber );
 			this.Messages.AddRange( messages );
 
 			this.IsBusy = false;

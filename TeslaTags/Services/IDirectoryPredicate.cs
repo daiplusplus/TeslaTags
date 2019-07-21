@@ -34,11 +34,19 @@ namespace TeslaTags
 			".aiff",
 		};
 
+		public static IReadOnlyList<String> DefaultExcludeFolders { get; } = new List<String>()
+		{
+			"iTunes",
+			"License Backup"
+		};
+
 		public FileSystemPredicate( IDirectoryPredicate directoryPredicate, IEnumerable<String> caseInsensitiveFileExtensions )
 		{
 			this.Directories = directoryPredicate ?? new EmptyDirectoryPredicate();
 
 			IEnumerable<String> exts = ( caseInsensitiveFileExtensions ?? Array.Empty<String>() )
+				.Select( ext => ext.Trim() )
+				.Select( ext => ext.Trim( '*' ) )
 				.Where( ext => !String.IsNullOrWhiteSpace( ext ) )
 				.Select( ext => ext.StartsWith( ".", StringComparison.Ordinal ) ? ext : ( "." + ext ) );
 				
