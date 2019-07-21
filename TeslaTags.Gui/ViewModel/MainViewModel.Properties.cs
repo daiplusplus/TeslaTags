@@ -1,11 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 using GalaSoft.MvvmLight.CommandWpf;
 

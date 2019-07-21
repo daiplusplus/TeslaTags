@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -31,8 +30,8 @@ namespace TeslaTags.Gui
 
 			///////////
 			
-			this.directoryPath     = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
-			this.onlyValidate      = true;
+			this.directoryPath        = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+			this.onlyValidate         = true;
 
 			this.Version = typeof(MainViewModel).Assembly.GetName().Version.ToString() + " (Release 6)";
 			this.ReadmeLink = @"https://github.com/Jehoel/TeslaTags/blob/release-4/README.md";
