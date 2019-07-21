@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
 using System.Windows.Navigation;
 
@@ -19,8 +20,24 @@ namespace TeslaTags.Gui
 
 			this.browseButton.Click += this.BrowseButton_Click;
 
-			this.Loaded += this.MainWindow_Loaded;
+			this.Loaded  += this.MainWindow_Loaded;
 			this.Closing += this.MainWindow_Closing;
+
+			// Nudge the popup targets: // https://stackoverflow.com/questions/1600218/how-can-i-move-a-wpf-popup-when-its-anchor-element-moves
+			// The main fix in that QA is for Popups inside a UserControl - as they're in a Window we can access events directly:
+			this.LocationChanged += this.WindowRectangleChange;
+			this.SizeChanged     += this.WindowRectangleChange;
+		}
+
+		private void WindowRectangleChange( Object sender, EventArgs e )
+		{
+			Double offset = this.excludePopup.HorizontalOffset;
+			this.excludePopup.HorizontalOffset = offset + 1; // Trigger reflow
+			this.excludePopup.HorizontalOffset = offset; // ...but don't make it a visual change.
+
+			offset = this.genrePopup.HorizontalOffset;
+			this.genrePopup.HorizontalOffset = offset + 1;
+			this.genrePopup.HorizontalOffset = offset;
 		}
 
 		#region Window Events
@@ -85,6 +102,5 @@ namespace TeslaTags.Gui
 				this.ViewModel.SelectedDirectory.SelectedImageFileName = path;
 			}
 		}
-
 	}
 }
