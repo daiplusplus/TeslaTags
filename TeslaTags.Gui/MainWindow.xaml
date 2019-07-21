@@ -79,10 +79,8 @@
 
 		<!-- -->
 
-		<CollectionViewSource x:Key="directoriesProgressCvs" Source="{Binding DirectoriesProgress}" Filter="CollectionViewSource_Filter">
-			
-		</CollectionViewSource>
-		
+		<CollectionViewSource x:Key="directoriesProgressCvs" Source="{Binding DirectoriesProgress}" Filter="CollectionViewSource_Filter" />
+
 	</Window.Resources>
 
 	<Grid>

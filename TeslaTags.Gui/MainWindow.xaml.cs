@@ -111,6 +111,9 @@ namespace TeslaTags.Gui
 		private CollectionViewSource cvs;
 
 		// Remember, WPF has separate `Checked` and `Unchecked` events, not just a single `CheckedChanged` event like WinForms.
+		// BTW - this still causes incorrect DataGrid scrollbar calculations resulting in a scrollbar thumb that changes height as you drag it
+		// The only *trivial* solution is to switch to pixel-based scrolling instead of row-item-based scrolling: http://wpfthoughts.blogspot.com/2014/05/datagrid-vertical-scrolling-issues.html
+		// ...but is there a way to get both - so it does item height calculations for scrolling based on pixels but the scroll-stops are snapped to each row-item? (i.e. support for variable-height rows)? TODO.
 		private void DirectoryFilterCheckedChanged( Object sender, RoutedEventArgs e )
 		{
 			if( this.cvs == null ) return;
