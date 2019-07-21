@@ -76,6 +76,7 @@ namespace TeslaTags.Gui
 			set { this.Set( nameof(this.ReplaceAllAlbumArt), ref this.replaceAllAlbumArt, value ); }
 		}
 
+		/// <summary>Contains file-names, not file-paths.</summary>
 		public ObservableCollection<String> ImagesInFolder { get; } = new ObservableCollection<String>();
 
 		#endregion

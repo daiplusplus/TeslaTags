@@ -62,7 +62,7 @@ namespace TeslaTags.Gui
 
 			// Set defaults:
 			config.ExcludeList    = FileSystemPredicate.DefaultExcludeFolders.ToArray();
-			config.FileExtensions = FileSystemPredicate.DefaultExtensions.ToArray();
+			config.FileExtensions = FileSystemPredicate.DefaultAudioFileExtensions.ToArray();
 
 			XDocument doc = OpenAppConfig();
 			if( doc != null )

@@ -65,7 +65,7 @@ namespace TeslaTags.QuickFix
 
 		private static void MainInner( String directoryPath, String operation, String value, Mode mode )
 		{
-			FileSystemPredicate fsp = new FileSystemPredicate( directoryPredicate: new EmptyDirectoryPredicate(), caseInsensitiveFileExtensions: FileSystemPredicate.DefaultExtensions );
+			FileSystemPredicate fsp = new FileSystemPredicate( directoryPredicate: new EmptyDirectoryPredicate(), caseInsensitiveFileExtensions: FileSystemPredicate.DefaultAudioFileExtensions );
 
 			List<Message> messages = new List<Message>();
 			List<LoadedFile> files = TeslaTagFolderProcessor.LoadFiles( directoryPath, fsp.FileExtensionsToLoad, messages );

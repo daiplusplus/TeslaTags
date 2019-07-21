@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,7 +7,7 @@ namespace TeslaTags
 {
 	public class FileSystemPredicate
 	{
-		public static IReadOnlyList<String> DefaultExtensions { get; } = new List<String>()
+		public static IReadOnlyList<String> DefaultAudioFileExtensions { get; } = new List<String>()
 		{
 			// https://github.com/Jehoel/TeslaTags/issues/6 <-- lists the file-types supported by Tesla's MCU.
 			

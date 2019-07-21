@@ -5,7 +5,7 @@ namespace TeslaTags
 	public class RecoveryTag
 	{
 		public String Album       { get; set; }
-		public String Artist      { get; set; } // TODO: Change to "[]"?
+		public String Artist      { get; set; }
 		public String Genre       { get; set; }
 		public Int32? TrackNumber { get; set; }
 		public String Title       { get; set; }

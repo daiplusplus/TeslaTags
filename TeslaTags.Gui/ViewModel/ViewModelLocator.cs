@@ -34,7 +34,6 @@ namespace TeslaTags.Gui
 
 		public static void Cleanup()
 		{
-			// TODO Clear the ViewModels
 		}
 	}
 }

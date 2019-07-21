@@ -106,6 +106,7 @@ namespace TeslaTags
 				IPicture[] art = file.Tag.Pictures;
 				if( art == null || art.Length == 0 )
 				{
+					// TODO: Missing album-art is more of a "minor warning" than a "serious warning" imo - there needs to be another message severity level.
 					messages.AddFileWarning( file.FileInfo.FullName, "No Album Art." ); // TODO: Validate the name/description of the IPicture? I'm not sure how Id3v2 stores it (using a 0-255 byte enum? but there are strings too, so does it matter?)
 				}
 				else if( art.Length > 1 )

@@ -21,7 +21,7 @@ namespace TeslaTags
 			
 			FileSystemPredicate fsp = new FileSystemPredicate(
 				directoryPredicate: null,
-				caseInsensitiveFileExtensions: FileSystemPredicate.DefaultExtensions
+				caseInsensitiveFileExtensions: FileSystemPredicate.DefaultAudioFileExtensions
 			);
 
 			RetaggingOptions opts = new RetaggingOptions( root, readOnly, undo: false, fsp, genreRules: new GenreRules() );
