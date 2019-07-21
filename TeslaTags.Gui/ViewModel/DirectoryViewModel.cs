@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -55,6 +55,9 @@ namespace TeslaTags.Gui
 			this.RaisePropertyChanged( nameof(this.InfoCount) );
 			this.RaisePropertyChanged( nameof(this.WarnCount) );
 			this.RaisePropertyChanged( nameof(this.ErrorCount) );
+
+			this.RaisePropertyChanged( nameof(this.ShowWarnColor) );
+			this.RaisePropertyChanged( nameof(this.ShowErrorColor) );
 		}
 
 		public ObservableCollection<Message> Messages { get; } = new ObservableCollection<Message>();
@@ -62,6 +65,9 @@ namespace TeslaTags.Gui
 		public Int32   InfoCount      => this.Messages.Count( m => m.Severity == MessageSeverity.Info    );
 		public Int32   WarnCount      => this.Messages.Count( m => m.Severity == MessageSeverity.Warning );
 		public Int32   ErrorCount     => this.Messages.Count( m => m.Severity == MessageSeverity.Error   );
+
+		public Boolean ShowWarnColor  => this.Messages.Any( m => m.Severity == MessageSeverity.Warning );
+		public Boolean ShowErrorColor => this.Messages.Any( m => m.Severity == MessageSeverity.Error   );
 
 		#endregion
 

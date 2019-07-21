@@ -1,4 +1,4 @@
-<Window
+﻿<Window
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -28,19 +28,17 @@
 		</Style>
 
 		<Style TargetType="{x:Type DataGridCell}" x:Key="warnCellStyle">
-			<Setter Property="Background" Value="#FFFFC846" />
 			<Style.Triggers>
-				<DataTrigger Binding="{Binding WarnCount}" Value="0">
-					<Setter Property="Background" Value="White" />
+				<DataTrigger Binding="{Binding ShowWarnColor}" Value="True">
+					<Setter Property="Background" Value="#FFFFC846" />
 				</DataTrigger>
 			</Style.Triggers>
 		</Style>
 
 		<Style TargetType="{x:Type DataGridCell}" x:Key="errorCellStyle">
-			<Setter Property="Background" Value="#FFFF8080" />
 			<Style.Triggers>
-				<DataTrigger Binding="{Binding ErrorCount}" Value="0">
-					<Setter Property="Background" Value="White" />
+				<DataTrigger Binding="{Binding ShowErrorColor}" Value="True">
+					<Setter Property="Background" Value="#FFFF8080" />
 				</DataTrigger>
 			</Style.Triggers>
 		</Style>
@@ -238,7 +236,7 @@
 						</Border>
 					</Popup>
 
-					<ToggleButton Content="Genre handling..." Name="genreButton" />
+					<ToggleButton Content="Genre tag handling..." Name="genreButton" />
 
 					<Popup
 						Name="genrePopup"
