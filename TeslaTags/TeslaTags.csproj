@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -50,21 +50,30 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DirectoryResult.cs" />
+    <Compile Include="Services\Pocos\DirectoryResult.cs" />
+    <Compile Include="Files\FlacLoadedFile.cs" />
+    <Compile Include="Files\MpegLoadedFile.cs" />
+    <Compile Include="Files\OggLoadedFile.cs" />
+    <Compile Include="Files\RiffLoadedFile.cs" />
+    <Compile Include="Services\Pocos\MessageExtensions.cs" />
+    <Compile Include="Services\TeslaTagService\DiscAndTrackNumberHelper.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="Message.cs" />
+    <Compile Include="Services\Pocos\Message.cs" />
     <Compile Include="Services\IDirectoryPredicate.cs" />
     <Compile Include="Services\TeslaTagService\GenreRules.cs" />
-    <Compile Include="TeslaTagFolderProcessor.cs" />
-    <Compile Include="LoadedFile.cs" />
+    <Compile Include="Services\TeslaTagService\RecoveryTag.cs" />
+    <Compile Include="Services\TeslaTagService\RetaggingOptions.cs" />
+    <Compile Include="Services\TeslaTagService\TagExtensions.cs" />
+    <Compile Include="Services\TeslaTagService\TeslaTagFolderProcessor.cs" />
+    <Compile Include="Files\LoadedFile.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Retagger.cs" />
+    <Compile Include="Services\TeslaTagService\Retagger.cs" />
     <Compile Include="Services\ITeslaTagService.cs" />
     <Compile Include="Services\RealTeslaTagService.cs" />
     <Compile Include="Services\RealTeslaTagUtilityService.cs" />
     <Compile Include="TagExperiments.cs" />
-    <Compile Include="TagWriter.cs" />
+    <Compile Include="Services\TeslaTagService\TagWriter.cs" />
     <Compile Include="Values.cs" />
   </ItemGroup>
   <ItemGroup>

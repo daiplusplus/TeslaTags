@@ -21,7 +21,7 @@ namespace TeslaTags
 
 		public static void SetArtist( LoadedFile file, List<Message> messages, String newArtist )
 		{
-			String oldArtist = file.Tag.JoinedPerformers;
+			String oldArtist = file.Tag.GetPerformers();
 
 			if( String.Equals( oldArtist, newArtist, StringComparison.Ordinal ) ) return; // NOOP, includes null
 
@@ -84,11 +84,6 @@ namespace TeslaTags
 		public static void Revert( LoadedFile file, List<Message> messages )
 		{
 			RecoveryTag rt = file.RecoveryTag;
-			if( rt == null )
-			{
-				messages.AddInfoFile( file.FileInfo.FullName, "No recovery information found in file." );
-				return;
-			}
 
 			if( rt.Artist      != null ) file.Tag.Performers = new String[] { rt.Artist };
 			if( rt.Album       != null ) file.Tag.Album      = rt.Album;
@@ -100,33 +95,6 @@ namespace TeslaTags
 			file.IsModified = true;
 
 			messages.AddInfoFile( file.FileInfo.FullName, "File recovered." );
-		}
-	}
-
-	public class RecoveryTag
-	{
-		public String Album       { get; set; }
-		public String Artist      { get; set; } // TODO: Change to "[]"?
-		public String Genre       { get; set; }
-		public Int32? TrackNumber { get; set; }
-		public String Title       { get; set; }
-
-		public Boolean IsEmpty =>
-			this.Album       == null &&
-			this.Artist      == null &&
-			this.Genre       == null &&
-			this.TrackNumber == null &&
-			this.Title       == null;
-
-		public Boolean IsSet => !this.IsEmpty;
-
-		public void Clear()
-		{
-			this.Album       = null;
-			this.Artist      = null;
-			this.Genre       = null;
-			this.TrackNumber = null;
-			this.Title       = null;
 		}
 	}
 }
