@@ -7,6 +7,28 @@ namespace TeslaTags
 {
 	public static partial class Extensions
 	{
+		public static String FormatCurrent(this String format, Object arg0)
+		{
+			return String.Format( CultureInfo.CurrentCulture, format, arg0 );
+		}
+
+		public static String FormatCurrent(this String format, Object arg0, Object arg1)
+		{
+			return String.Format( CultureInfo.CurrentCulture, format, arg0, arg1 );
+		}
+
+		public static String FormatCurrent(this String format, Object arg0, Object arg1, Object arg2)
+		{
+			return String.Format( CultureInfo.CurrentCulture, format, arg0, arg1, arg2 );
+		}
+
+		public static String FormatCurrent(this String format, params Object[] args)
+		{
+			return String.Format( CultureInfo.CurrentCulture, format, args );
+		}
+
+		//
+
 		public static String FormatInvariant(this String format, Object arg0)
 		{
 			return String.Format( CultureInfo.InvariantCulture, format, arg0 );
@@ -26,6 +48,8 @@ namespace TeslaTags
 		{
 			return String.Format( CultureInfo.InvariantCulture, format, args );
 		}
+
+		//
 
 		/// <summary>Performs an ordinal case-insensitive equality check.</summary>
 		public static Boolean EqualsCI( this String x, String y )

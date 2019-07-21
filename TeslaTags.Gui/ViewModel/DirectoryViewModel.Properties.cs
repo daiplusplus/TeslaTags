@@ -44,6 +44,13 @@ namespace TeslaTags.Gui
 			set { this.Set( nameof(this.FolderType), ref this.folderType, value ); }
 		}
 		
+		private String lastOperationSummary;
+		public String LastOperationSummary
+		{
+			get { return this.lastOperationSummary ?? String.Empty; }
+			set { this.Set( nameof(this.LastOperationSummary), ref this.lastOperationSummary, value ); }
+		}
+
 		#endregion
 
 		#region Apply Album Art:

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -59,9 +59,9 @@ namespace TeslaTags.Gui
 
 		public ObservableCollection<Message> Messages { get; } = new ObservableCollection<Message>();
 
-		public Int32 InfoCount  => this.Messages.Count( m => m.Severity == MessageSeverity.Info );
-		public Int32 WarnCount  => this.Messages.Count( m => m.Severity == MessageSeverity.Warning );
-		public Int32 ErrorCount => this.Messages.Count( m => m.Severity == MessageSeverity.Error );
+		public Int32   InfoCount      => this.Messages.Count( m => m.Severity == MessageSeverity.Info    );
+		public Int32   WarnCount      => this.Messages.Count( m => m.Severity == MessageSeverity.Warning );
+		public Int32   ErrorCount     => this.Messages.Count( m => m.Severity == MessageSeverity.Error   );
 
 		#endregion
 
@@ -98,6 +98,9 @@ namespace TeslaTags.Gui
 			List<Message> messages = await this.teslaTagService.SetAlbumArtAsync( this.FullDirectoryPath, fsp.FileExtensionsToLoad, this.SelectedImageFileName, this.ReplaceAllAlbumArt ? AlbumArtSetMode.Replace : AlbumArtSetMode.AddIfMissing );
 			this.Messages.AddRange( messages );
 
+			String summary = "Set album art in {0:N0} files.".FormatCurrent( messages.Count( m => m.Severity == MessageSeverity.FileModification ) );
+			this.LastOperationSummary = summary;
+
 			this.IsBusy = false;
 		}
 
@@ -112,6 +115,9 @@ namespace TeslaTags.Gui
 			List<Message> messages = await this.teslaTagService.RemoveApeTagsAsync( this.FullDirectoryPath, fsp.FileExtensionsToLoad );
 			this.Messages.AddRange( messages );
 
+			String summary = "Removed APE tags from {0:N0} files.".FormatCurrent( messages.Count( m => m.Severity == MessageSeverity.FileModification ) );
+			this.LastOperationSummary = summary;
+
 			this.IsBusy = false;
 		}
 
@@ -125,6 +131,9 @@ namespace TeslaTags.Gui
 
 			List<Message> messages = await this.teslaTagService.SetTrackNumbersFromFileNamesAsync( this.FullDirectoryPath, fsp.FileExtensionsToLoad, this.TrackNumberOffset, this.DiscNumber );
 			this.Messages.AddRange( messages );
+
+			String summary = "Set track numbers in {0:N0} files.".FormatCurrent( messages.Count( m => m.Severity == MessageSeverity.FileModification ) );
+			this.LastOperationSummary = summary;
 
 			this.IsBusy = false;
 		}
