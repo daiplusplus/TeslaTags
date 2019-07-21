@@ -106,6 +106,7 @@ namespace TeslaTags
 			return loadedFiles;
 		}
 
+		/// <summary>Creates a comma-separated lexicographically-ordered list of distinct values in <paramref name="files"/> using <paramref name="selector"/> to get each value. Nonempty values are wrapped in double-quotes. Empty values are displayed as "null".</summary>
 		private static String GetList( List<LoadedFile> files, Func<Tag,String> selector )
 		{
 			List<String> values = files
@@ -124,11 +125,11 @@ namespace TeslaTags
 
 			Boolean allAlbumArtistsAreVariousArtists = files.All( f => f.Tag.FirstAlbumArtist.EqualsCI( Values.VariousArtistsConst ) );
 
-			String  firstAlbumArtist   = files.First().Tag.FirstAlbumArtist;
-			Boolean allSameAlbumArtist = !String.IsNullOrWhiteSpace( firstAlbumArtist ) && files.All( f => f.Tag.FirstAlbumArtist.EqualsCI( firstAlbumArtist ) );
+			String  firstAlbumArtist   = files.First().Tag.GetAlbumArtist();
+			Boolean allSameAlbumArtist = !String.IsNullOrWhiteSpace( firstAlbumArtist ) && files.All( f => f.Tag.GetAlbumArtist().EqualsCI( firstAlbumArtist ) );
 
-			String  firstArtist        = files.First().Tag.FirstPerformer;
-			Boolean allSameArtist      = !String.IsNullOrWhiteSpace( firstArtist ) && files.All( ft => ft.Tag.FirstPerformer.EqualsCI( firstArtist ) );
+			String  firstArtist        = files.First().Tag.GetPerformers();
+			Boolean allSameArtist      = !String.IsNullOrWhiteSpace( firstArtist ) && files.All( ft => ft.Tag.GetPerformers().EqualsCI( firstArtist ) );
 
 			String  firstAlbum         = files.First().Tag.Album;
 			Boolean sameAlbum          = !String.IsNullOrWhiteSpace( firstAlbum ) && files.All( ft => ft.Tag.Album.EqualsCI( firstAlbum ) );
@@ -182,7 +183,7 @@ namespace TeslaTags
 					}
 					else
 					{
-						String differentArtists = GetList( files, ft => ft.FirstPerformer );
+						String differentArtists = GetList( files, ft => ft.GetPerformers() );
 						String differentAlbums  = GetList( files, ft => ft.Album );
 
 						messages.Add( new Message( MessageSeverity.Error, directoryPath, directoryPath, "Folder has same album-artist, but multiple artists (" + differentArtists + ") or multiple albums (" + differentAlbums + "). " ) );
