@@ -27,6 +27,8 @@ namespace TeslaTags.Gui
 			// The main fix in that QA is for Popups inside a UserControl - as they're in a Window we can access events directly:
 			this.LocationChanged += this.WindowRectangleChange;
 			this.SizeChanged     += this.WindowRectangleChange;
+
+			//this.DataContextChanged += this.MainWindow_DataContextChanged;
 		}
 
 		private void WindowRectangleChange( Object sender, EventArgs e )

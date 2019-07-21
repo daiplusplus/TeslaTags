@@ -90,7 +90,30 @@ namespace TeslaTags.Gui
 		public ProgressState ProgressStatus
 		{
 			get { return this.progressStatus; }
-			set { this.Set( nameof(this.ProgressStatus), ref this.progressStatus, value ); }
+			set
+			{
+				this.Set( nameof(this.ProgressStatus), ref this.progressStatus, value );
+				this.RaisePropertyChanged( nameof(this.TaskbarProgressStatus) );
+			}
+		}
+
+		public System.Windows.Shell.TaskbarItemProgressState TaskbarProgressStatus
+		{
+			get
+			{
+				switch( this.ProgressStatus )
+				{
+				case ProgressState.StartingIndeterminate: return System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
+				case ProgressState.Running              : return System.Windows.Shell.TaskbarItemProgressState.Normal;
+				case ProgressState.Error                : return System.Windows.Shell.TaskbarItemProgressState.Error;
+
+				case ProgressState.Completed:
+				case ProgressState.Canceled:
+				case ProgressState.NotStarted:
+				default:
+					return System.Windows.Shell.TaskbarItemProgressState.None;
+				}
+			}
 		}
 
 		public String Version { get; }

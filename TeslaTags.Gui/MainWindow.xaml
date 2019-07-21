@@ -451,6 +451,13 @@
 		</StatusBar>
 		
 	</Grid>
-	
+
+	<Window.TaskbarItemInfo>
+		<TaskbarItemInfo
+			ProgressState="{Binding TaskbarProgressStatus}"
+			ProgressValue="{Binding ProgressPerc}"
+		/>
+	</Window.TaskbarItemInfo>
+
 </Window>
  
